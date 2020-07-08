@@ -26,6 +26,7 @@
     "node-fetch": "^2.6.0",
     "password-hash": "^1.2.2",
     "pg": "^7.18.2",
+    "sqlite3": "^5.0.0",
     "reflect-metadata": "^0.1.13",
     "request": "^2.88.2",
     "sequelize": "^5.22.3",
