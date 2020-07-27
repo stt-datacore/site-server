@@ -9,6 +9,8 @@ import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
 
+require('dotenv').config();
+
 // Create a new express application instance
 const app: express.Application = express();
 
@@ -41,7 +43,7 @@ app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 // Add CORS support
 let corsOptions: any = {
 	// localhost is temporary for testing
-	origin: ['https://datacore.app', 'http://localhost:81'],
+	origin: [process.env.CORS_ORIGIN, 'http://localhost:81'],
 	optionsSuccessStatus: 200 // some legacy browsers choke on 204
 };
 

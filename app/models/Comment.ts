@@ -3,7 +3,7 @@ import { Model, Column, Table, DataType, ForeignKey, BelongsTo, CreatedAt } from
 import { User } from './User';
 
 @Table
-export class Comment extends Model<Comment> {
+export class Comment extends Model {
 	@Column
     symbol!: string;
 

@@ -10,6 +10,7 @@ import { loadCommentsDB, saveCommentDB } from './commenttools';
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'not_very_secret';
+const CLIENT_API = 15;
 
 export class ApiResult {
 	Status: number = 200;
@@ -72,7 +73,7 @@ export class ApiClass {
 		}
 
 		this._player_data[dbid] = new Date().toUTCString();
-		fs.writeFileSync(`static/${dbid}`, JSON.stringify(player_data));
+		fs.writeFileSync(`${process.env.PROFILE_PATH}/${dbid}`, JSON.stringify(player_data));
 
 		return {
 			Status: 200,
@@ -90,7 +91,7 @@ export class ApiClass {
 		}
 
 		let response = await fetch(
-			`https://stt.disruptorbeam.com/gauntlet/status?access_token=${process.env.BOT_TOKEN}&client_api=15`
+			`https://stt.disruptorbeam.com/gauntlet/status?access_token=${process.env.BOT_TOKEN}&client_api=${CLIENT_API}`
 		).then(res => res.json());
 
 		let reply = undefined;
@@ -114,15 +115,15 @@ export class ApiClass {
 		}
 
 		let fleet = await fetch(
-			`https://stt.disruptorbeam.com/fleet/${fleetId}?access_token=${process.env.BOT_TOKEN}&client_api=15`
+			`https://stt.disruptorbeam.com/fleet/${fleetId}?access_token=${process.env.BOT_TOKEN}&client_api=${CLIENT_API}`
 		).then(res => res.json());
 
 		let fleet_members_with_rank = await fetch(
-			`https://stt.disruptorbeam.com/fleet/members_with_rank/${fleetId}?s=0&m=10&access_token=${process.env.BOT_TOKEN}&client_api=15`
+			`https://stt.disruptorbeam.com/fleet/members_with_rank/${fleetId}?s=0&m=10&access_token=${process.env.BOT_TOKEN}&client_api=${CLIENT_API}`
 		).then(res => res.json());
 
 		let fleet_squads = await fetch(
-			`https://stt.disruptorbeam.com/fleet/getsquads?gid=${fleetId}&s=0&m=10&access_token=${process.env.BOT_TOKEN}&client_api=15`
+			`https://stt.disruptorbeam.com/fleet/getsquads?gid=${fleetId}&s=0&m=10&access_token=${process.env.BOT_TOKEN}&client_api=${CLIENT_API}`
 		).then(res => res.json());
 
 		const params = new URLSearchParams();
