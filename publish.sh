@@ -1,10 +1,8 @@
 #!/bin/bash
-GIT_PATH=/home/stt/site-server
+GIT_PATH=/home/stt/prod/site-server
+DATA_PATH=/home/stt/prod/data
 
 pushd $GIT_PATH
-# This would be more thorough but would also require re-installing all dependencies in node_modules
-#git clean -x
-rm -rf ./build/
 
 git pull 2>&1
 if [ $? -ne 0 ]
@@ -13,22 +11,25 @@ then
     exit 1
 fi
 
-npm install 2>&1
+# TODO: versioning?
+docker build --tag stt-datacore/site-server:latest .
 if [ $? -ne 0 ]
 then
-    echo "Failed during npm install"
-    exit 2
-fi
-
-npm run tsc
-if [ $? -ne 0 ]
-then
-    echo "Failed during npm build"
+    echo "Failed during Docker build"
     exit 3
 fi
 
 popd
 
-sudo pm2 restart server
+# TODO: remove old image and restart; is there a best practices for this?
+docker stop DCSiteServer
+docker rm DCSiteServer
 
-# sudo systemctl restart nginx
+docker run -d --name=DCSiteServer \
+    --restart unless-stopped \
+    --publish 4420:4420 \
+    --mount type=bind,source="$DATA_PATH",target=/data \
+    --env PROFILE_DATA_PATH=/data/profiles \
+    --env DB_CONNECTION_STRING=sqlite:/data/datacore.db \
+    --env-file "$DATA_PATH/env.list" \
+    stt-datacore/site-server:latest

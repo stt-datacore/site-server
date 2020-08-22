@@ -8,4 +8,4 @@ COPY . .
 
 RUN npm install && npm run build
 
-#CMD [ "node", "build/server.js" ]
+ENTRYPOINT [ "node", "build/server.js" ]
