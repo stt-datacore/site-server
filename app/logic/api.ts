@@ -83,7 +83,7 @@ export class ApiClass {
 
 	async loadGauntletStatus(logData: LogData): Promise<ApiResult> {
 		Logger.info('Load gauntlet status', { logData });
-		if (!process.env.BOT_TOKEN) {
+		if (!process.env.STT_BOT_TOKEN) {
 			return {
 				Status: 404,
 				Body: 'Aah, something went wrong!'
@@ -91,7 +91,7 @@ export class ApiClass {
 		}
 
 		let response = await fetch(
-			`https://stt.disruptorbeam.com/gauntlet/status?access_token=${process.env.BOT_TOKEN}&client_api=${CLIENT_API}`
+			`https://stt.disruptorbeam.com/gauntlet/status?access_token=${process.env.STT_BOT_TOKEN}&client_api=${CLIENT_API}`
 		).then(res => res.json());
 
 		let reply = undefined;
@@ -107,7 +107,7 @@ export class ApiClass {
 
 	async loadFleetInfo(fleetId: string, logData: LogData): Promise<ApiResult> {
 		Logger.info('Load fleet info', { fleetId, logData });
-		if (!process.env.BOT_TOKEN) {
+		if (!process.env.STT_BOT_TOKEN) {
 			return {
 				Status: 404,
 				Body: 'Aah, something went wrong!'
@@ -115,19 +115,19 @@ export class ApiClass {
 		}
 
 		let fleet = await fetch(
-			`https://stt.disruptorbeam.com/fleet/${fleetId}?access_token=${process.env.BOT_TOKEN}&client_api=${CLIENT_API}`
+			`https://stt.disruptorbeam.com/fleet/${fleetId}?access_token=${process.env.STT_BOT_TOKEN}&client_api=${CLIENT_API}`
 		).then(res => res.json());
 
 		let fleet_members_with_rank = await fetch(
-			`https://stt.disruptorbeam.com/fleet/members_with_rank/${fleetId}?s=0&m=10&access_token=${process.env.BOT_TOKEN}&client_api=${CLIENT_API}`
+			`https://stt.disruptorbeam.com/fleet/members_with_rank/${fleetId}?s=0&m=10&access_token=${process.env.STT_BOT_TOKEN}&client_api=${CLIENT_API}`
 		).then(res => res.json());
 
 		let fleet_squads = await fetch(
-			`https://stt.disruptorbeam.com/fleet/getsquads?gid=${fleetId}&s=0&m=10&access_token=${process.env.BOT_TOKEN}&client_api=${CLIENT_API}`
+			`https://stt.disruptorbeam.com/fleet/getsquads?gid=${fleetId}&s=0&m=10&access_token=${process.env.STT_BOT_TOKEN}&client_api=${CLIENT_API}`
 		).then(res => res.json());
 
 		const params = new URLSearchParams();
-		params.append('access_token', process.env.BOT_TOKEN);
+		params.append('access_token', process.env.STT_BOT_TOKEN);
 		params.append('guild_id', fleetId);
 		params.append('event_index', '0');
 
