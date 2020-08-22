@@ -73,7 +73,7 @@ export class ApiClass {
 		}
 
 		this._player_data[dbid] = new Date().toUTCString();
-		fs.writeFileSync(`${process.env.PROFILE_PATH}/${dbid}`, JSON.stringify(player_data));
+		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
 
 		return {
 			Status: 200,
