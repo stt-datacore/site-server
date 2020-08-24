@@ -31,5 +31,6 @@ docker run -d --name=DCSiteServer \
     --mount type=bind,source="$DATA_PATH",target=/data \
     --env PROFILE_DATA_PATH=/data/profiles \
     --env DB_CONNECTION_STRING=sqlite:/data/datacore.db \
+    --env LOG_PATH=/data/logs/ \
     --env-file "$DATA_PATH/env.list" \
     stt-datacore/site-server:latest
