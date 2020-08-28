@@ -55,10 +55,12 @@ export async function uploadProfile(dbid: string, player_data: any, lastUpdate: 
 	if (res.length === 0) {
 		return await Profile.create({ dbid, buffConfig: calculateBuffConfig(player_data.player), shortCrewList, captainName, lastUpdate });
 	} else {
-		return await Profile.update(
+		let updated = await Profile.update(
 			{ dbid, buffConfig: calculateBuffConfig(player_data.player), shortCrewList, captainName, lastUpdate },
 			{ where: { dbid } }
 		);
+
+		return updated[1][0];
 	}
 }
 
