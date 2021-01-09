@@ -4,7 +4,7 @@ import fetch from 'node-fetch';
 import { sign, verify } from 'jsonwebtoken';
 
 import { Logger, LogData } from './logger';
-import { uploadProfile, loadProfileCache, loginUser } from './profiletools';
+import { uploadProfile, loadProfileCache, loginUser, getDBIDbyDiscord } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 
 require('dotenv').config();
@@ -206,6 +206,25 @@ export class ApiClass {
 			Body: comments
 		};
 	}
+
+	async getDBIDbyDiscord(discordUserName: string, discordUserDiscriminator: string): Promise<ApiResult> {
+		Logger.info('Get dbid for Discord user', { discordUserName, discordUserDiscriminator });
+
+		let dbid = await getDBIDbyDiscord(discordUserName, discordUserDiscriminator);
+
+		if (dbid) {
+			return {
+				Status: 200,
+				Body: JSON.stringify({ dbid }),
+			}
+		} else {
+			return {
+				Status: 404,
+				Body: JSON.stringify({ error: 'No DBID found for Discord user' }),
+			}
+		}
+	}
+
 }
 
 export let DataCoreAPI = new ApiClass();

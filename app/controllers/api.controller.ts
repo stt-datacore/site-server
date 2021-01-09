@@ -115,5 +115,19 @@ router.get('/gauntlet_info', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.get('/get_dbid_from_discord', async (req: Request, res: Response, next) => {
+	if (!req.query || !req.query.username || !req.query.discriminator) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let apiResult = await DataCoreAPI.getDBIDbyDiscord(req.query.username.toString(), req.query.discriminator.toString());
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
 // Export the express.Router() instance to be used by server.ts
 export const ApiController: Router = router;

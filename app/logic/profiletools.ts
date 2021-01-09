@@ -98,3 +98,12 @@ export async function addBookUser(loginUserName: string, password: string) {
 
 	return res;
 }
+
+export async function getDBIDbyDiscord(discordUserName: string, discordUserDiscriminator: string) {
+	let user = await User.findOne({ where: { discordUserName, discordUserDiscriminator }, include: [Profile] });
+	if (user && user.profiles && user.profiles.length === 1) {
+		return user.profiles[0].dbid;
+	} else {
+		return undefined;
+	}
+}
