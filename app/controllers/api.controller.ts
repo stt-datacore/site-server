@@ -115,6 +115,15 @@ router.get('/gauntlet_info', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.get('/offer_info', async (req: Request, res: Response, next) => {
+	try {
+		let apiResult = await DataCoreAPI.loadStoreCrewOffers(getLogDataFromReq(req));
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
 router.get('/get_dbid_from_discord', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.username || !req.query.discriminator) {
 		res.status(400).send('Whaat?');
