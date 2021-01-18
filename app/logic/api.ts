@@ -175,6 +175,33 @@ export class ApiClass {
 		};
 	}
 
+	async loadStoreCrewOffers(logData: LogData): Promise<ApiResult> {
+		Logger.info('Load store crew offers', { logData });
+		if (!process.env.STT_BOT_TOKEN) {
+			return {
+				Status: 404,
+				Body: 'Aah, something went wrong!'
+			};
+		}
+
+		let response = await fetch(
+			`https://stt.disruptorbeam.com/commerce/store_layout_v2/crew?access_token=${process.env.STT_BOT_TOKEN}&client_api=${CLIENT_API}`
+		).then(res => res.json());
+		let reply = undefined;
+		if (response) {
+			let content = response.find((r: any) => r.symbol === 'crew');
+			let limitedTimeOffers = content.grids.filter((offer: any) => {
+				return offer?.primary_content[0].offer?.seconds_remain > 0
+			});
+			reply = limitedTimeOffers
+		}
+
+		return {
+			Status: 200,
+			Body: reply
+		};
+	}
+
 	async loadComments(symbol: string, logData: LogData): Promise<ApiResult> {
 		Logger.info('Load comments', { symbol, logData });
 
