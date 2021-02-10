@@ -131,6 +131,11 @@ export class ApiClass {
 		params.append('guild_id', fleetId);
 		params.append('event_index', '0');
 
+		let complete_member_info = await fetch(`https://stt.disruptorbeam.com/fleet/complete_member_info`, {
+			method: 'POST',
+			body: params
+		}).then(res => res.json());
+
 		let fleet_leader1 = await fetch(`https://stt.disruptorbeam.com/fleet/leaderboard`, {
 			method: 'POST',
 			body: params
@@ -167,7 +172,24 @@ export class ApiClass {
 			{ fleet_rank: fleet_leader3.fleet_rank, index: fleet_leader3.index, event_name: fleet_leader3.event_name }
 		];
 
-		// https://stt.disruptorbeam.com/player/inspect/player_id would give us level and a few more details
+		// add more details for members
+		for(let member of fleet.members) {
+			let memberInfo = complete_member_info.members.find((m: any) => m.pid === member.pid);
+			if (memberInfo) {
+				member.squad = '';
+				if (memberInfo.squad_id) {
+					let squadInfo = complete_member_info.squads.find((s: any) => s.id === memberInfo.squadInfo);
+					if (squadInfo) {
+						member.squad = squadInfo.name;
+					}
+				}
+
+				member.level = memberInfo.level;
+				member.last_active = memberInfo.last_active;
+				member.daily_activity = memberInfo.daily_activity;
+				member.event_rank = memberInfo.event_rank;
+			}
+		}
 
 		return {
 			Status: 200,
