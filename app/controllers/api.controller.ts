@@ -9,6 +9,9 @@ function getLogDataFromReq(req: Request): LogData {
 	logData.ip = req.get('cf-connecting-ip') || req.get('x-forwarded-for') || req.ip;
 	logData.cfCountry = req.get('cf-ipcountry');
 	logData.userAgent = req.get('user-agent');
+	if (req.get('x-requested-with')) {
+		logData.requestedWith = req.get('x-requested-with');
+	}
 	return logData;
 }
 
