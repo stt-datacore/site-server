@@ -16,4 +16,5 @@ export class LogData {
 	ip: string = '';
 	cfCountry?: string;
 	userAgent?: string;
+	requestedWith?: string;
 };
