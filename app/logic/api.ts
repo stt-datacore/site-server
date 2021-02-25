@@ -155,6 +155,7 @@ export class ApiClass {
 
 		fleet = fleet.fleet;
 		delete fleet.chatchannels;
+		delete fleet.motd;
 		fleet.members = fleet_members_with_rank.fleet.members.map((member: any) => ({
 			dbid: member.dbid,
 			display_name: member.display_name,
