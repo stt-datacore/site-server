@@ -141,5 +141,39 @@ router.get('/get_dbid_from_discord', async (req: Request, res: Response, next) =
 	}
 });
 
+router.get('/telemetry', async (req: Request, res: Response, next) => {
+	if (!req.query || !req.query.type) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let apiResult = await DataCoreAPI.getTelemetry(
+			req.query.type.toString()
+		);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.post('/telemetry', async (req: Request, res: Response, next) => {
+	if (!req.body || !req.body.type || !req.body.data) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let apiResult = await DataCoreAPI.recordTelemetry(
+			req.body.type, req.body.data
+		);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+
+
 // Export the express.Router() instance to be used by server.ts
 export const ApiController: Router = router;

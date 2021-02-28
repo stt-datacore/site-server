@@ -6,6 +6,7 @@ import { sign, verify } from 'jsonwebtoken';
 import { Logger, LogData } from './logger';
 import { uploadProfile, loadProfileCache, loginUser, getDBIDbyDiscord } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
+import { recordTelemetryDB, getTelemetryDB } from './telemetry';
 
 require('dotenv').config();
 
@@ -275,6 +276,32 @@ export class ApiClass {
 		}
 	}
 
+	async recordTelemetry(type: string, data: any): Promise<ApiResult> {
+		Logger.info('Record telemetry', { type });
+
+		let result = await recordTelemetryDB(type, data);
+		if (result) {
+			return {
+				Status: 200,
+				Body: JSON.stringify({ success: true }),
+			}
+		} else {
+			return {
+				Status: 500,
+				Body: JSON.stringify({ success: false }),
+			}
+		}
+	}
+
+	async getTelemetry(type: string): Promise<ApiResult> {
+		Logger.info('Get telemetry', { type });
+
+		let result = await getTelemetryDB(type);
+		return {
+			Status: 200,
+			Body: result
+		}
+	}
 }
 
 export let DataCoreAPI = new ApiClass();
