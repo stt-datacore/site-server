@@ -4,8 +4,11 @@ import { Sequelize } from 'sequelize-typescript';
 
 export async function recordTelemetryDB(type: string, data: any) {
 	switch (type) {
+		// Backwards-compatibility, remove once new version of site fully deployed/propagated
 		case 'voyage':
 			return recordVoyage(data);
+		case 'voyageCalc':
+			return recordVoyageCalc(data);
 		default:
 			throw new Error(`Unknown telemetry type: ${type}`);
 	}
@@ -20,6 +23,7 @@ export async function getTelemetryDB(type: string) {
 	}
 }
 
+// Backwards-compatibility, remove once new version of site fully deployed/propagated
 async function recordVoyage(voyagers: string[]) {
 	for (let i in voyagers) {
 		const crewSymbol = voyagers[i];
@@ -28,10 +32,18 @@ async function recordVoyage(voyagers: string[]) {
 	return true;
 }
 
+async function recordVoyageCalc({ voyagers, estimatedDuration }: { voyagers: string[]; estimatedDuration: number;}) {
+	for (let i in voyagers) {
+		const crewSymbol = voyagers[i];
+		await VoyageRecord.create({ crewSymbol, estimatedDuration });
+	}
+	return true;
+}
+
 async function getVoyageStats() {
 	const baseFilter = {
 		group: ['crewSymbol'],
-		attributes: ['crewSymbol', [Sequelize.fn('COUNT', 'crewSymbol'), 'crewCount']],
+		attributes: ['crewSymbol', [Sequelize.fn('COUNT', 'crewSymbol'), 'crewCount'], [Sequelize.fn('AVG', 'estimatedDuration'), 'averageDuration']],
 	} as any;
 	const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 	const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);

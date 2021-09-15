@@ -5,6 +5,9 @@ export class VoyageRecord extends Model {
 	@Column(DataType.TEXT)
     crewSymbol!: string;
 
+    @Column
+    estimatedDuration?: number;
+
 	@CreatedAt
     voyageDate!: Date;
 }
