@@ -17,7 +17,7 @@
     "express": "^4.17.1",
     "express-winston": "^4.0.3",
     "jsonwebtoken": "^8.5.1",
-    "node-fetch": "^2.6.1",
+    "node-fetch": "^3.1.1",
     "password-hash": "^1.2.2",
     "pg": "^8.5.1",
     "reflect-metadata": "^0.1.13",
