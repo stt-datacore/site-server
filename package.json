@@ -21,7 +21,7 @@
     "password-hash": "^1.2.2",
     "pg": "^8.5.1",
     "reflect-metadata": "^0.1.13",
-    "sequelize": "^6.5.0",
+    "sequelize": "^6.28.2",
     "sequelize-typescript": "^2.0.0",
     "sqlite3": "^5.0.1",
     "winston": "^3.3.3",
