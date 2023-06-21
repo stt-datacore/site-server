@@ -105,7 +105,7 @@ export class ApiClass {
 		Logger.info('Load gauntlet status', { logData });
 
 		let response = await fetch(
-			`https://stt.disruptorbeam.com/gauntlet/status?access_token=${this._stt_token}&client_api=${CLIENT_API}`
+			`https://app.startrektimelines.com/gauntlet/status?access_token=${this._stt_token}&client_api=${CLIENT_API}`
 		).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
 		let reply = undefined;
@@ -123,15 +123,15 @@ export class ApiClass {
 		Logger.info('Load fleet info', { fleetId, logData });
 
 		let fleet = await fetch(
-			`https://stt.disruptorbeam.com/fleet/${fleetId}?access_token=${this._stt_token}&client_api=${CLIENT_API}`
+			`https://app.startrektimelines.com/fleet/${fleetId}?access_token=${this._stt_token}&client_api=${CLIENT_API}`
 		).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
 		let fleet_members_with_rank = await fetch(
-			`https://stt.disruptorbeam.com/fleet/members_with_rank/${fleetId}?s=0&m=10&access_token=${this._stt_token}&client_api=${CLIENT_API}`
+			`https://app.startrektimelines.com/fleet/members_with_rank/${fleetId}?s=0&m=10&access_token=${this._stt_token}&client_api=${CLIENT_API}`
 		).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
 		let fleet_squads = await fetch(
-			`https://stt.disruptorbeam.com/fleet/getsquads?gid=${fleetId}&s=0&m=10&access_token=${this._stt_token}&client_api=${CLIENT_API}`
+			`https://app.startrektimelines.com/fleet/getsquads?gid=${fleetId}&s=0&m=10&access_token=${this._stt_token}&client_api=${CLIENT_API}`
 		).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
 		const params = new URLSearchParams();
@@ -139,24 +139,24 @@ export class ApiClass {
 		params.append('guild_id', fleetId);
 		params.append('event_index', '0');
 
-		let complete_member_info = await fetch(`https://stt.disruptorbeam.com/fleet/complete_member_info`, {
+		let complete_member_info = await fetch(`https://app.startrektimelines.com/fleet/complete_member_info`, {
 			method: 'POST',
 			body: params
 		}).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
-		let fleet_leader1 = await fetch(`https://stt.disruptorbeam.com/fleet/leaderboard`, {
+		let fleet_leader1 = await fetch(`https://app.startrektimelines.com/fleet/leaderboard`, {
 			method: 'POST',
 			body: params
 		}).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
 		params.set('event_index', '1');
-		let fleet_leader2 = await fetch(`https://stt.disruptorbeam.com/fleet/leaderboard`, {
+		let fleet_leader2 = await fetch(`https://app.startrektimelines.com/fleet/leaderboard`, {
 			method: 'POST',
 			body: params
 		}).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
 		params.set('event_index', '2');
-		let fleet_leader3 = await fetch(`https://stt.disruptorbeam.com/fleet/leaderboard`, {
+		let fleet_leader3 = await fetch(`https://app.startrektimelines.com/fleet/leaderboard`, {
 			method: 'POST',
 			body: params
 		}).then(this.checkSTTResponse.bind(this)).then(res => res.json());
@@ -210,7 +210,7 @@ export class ApiClass {
 		Logger.info('Load store crew offers', { logData });
 
 		let response = await fetch(
-			`https://stt.disruptorbeam.com/commerce/store_layout_v2/crew?access_token=${this._stt_token}&client_api=${CLIENT_API}`
+			`https://app.startrektimelines.com/commerce/store_layout_v2/crew?access_token=${this._stt_token}&client_api=${CLIENT_API}`
 		).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 		let reply = undefined;
 		if (response) {
