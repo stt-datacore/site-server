@@ -39,11 +39,19 @@ let expressLogger = expressWinston.logger({
 
 app.use(bodyParser.json({ limit: '20mb' })); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-
+// https://dev-2-0.website-i3mu.pages.dev/
 // Add CORS support
-let corsOptions: any = {
-	// localhost is temporary for testing
-	origin: [process.env.CORS_ORIGIN, 'http://localhost:81'],
+let corsOptions: any = {	
+	origin: [
+		// Main site
+		process.env.CORS_ORIGIN, 
+		// Beta site
+		'https://beta.datacore.app', 
+		// Alpha sites
+		/https:\/\/[a-zA-Z0-9_.-]+\.website-i3mu\.pages\.dev/, 
+		// localhost is temporary for testing
+		'http://localhost:81'
+	],
 	optionsSuccessStatus: 200 // some legacy browsers choke on 204
 };
 
