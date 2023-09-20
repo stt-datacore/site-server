@@ -39,7 +39,7 @@ let expressLogger = expressWinston.logger({
 
 app.use(bodyParser.json({ limit: '20mb' })); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
-// https://dev-2-0.website-i3mu.pages.dev/
+
 // Add CORS support
 let corsOptions: any = {	
 	origin: [
