@@ -4,10 +4,12 @@ import fetch, { Response } from 'node-fetch';
 import { sign, verify } from 'jsonwebtoken';
 
 import { Logger, LogData } from './logger';
-import { uploadProfile, loadProfileCache, loginUser, getDBIDbyDiscord } from './profiletools';
+import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB } from './telemetry';
 import { getSTTToken } from './stttools';
+import { getProfile, uploadProfile as mongoProfile } from './mongotools';
+import PlayerProfile from '../mongoModels/playerProfile';
 
 require('dotenv').config();
 
@@ -86,10 +88,18 @@ export class ApiClass {
 		try {
 			await uploadProfile(dbid, player_data, new Date());
 		} catch (err) {
-			return {
-				Status: 500,
-				Body: err.toString()
-			};
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
 		}
 
 		this._player_data[dbid] = new Date().toUTCString();
@@ -99,6 +109,78 @@ export class ApiClass {
 			Status: 200,
 			Body: 'OK'
 		};
+	}
+
+	async postPlayerData2(dbid: number, player_data: any, logData: LogData): Promise<ApiResult> {
+		Logger.info('Post player data', { dbid, logData });
+
+		try {
+			await mongoProfile(dbid, player_data, new Date());
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		this._player_data[dbid] = new Date().toUTCString();
+		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
+
+		return {
+			Status: 200,
+			Body: {
+				'dbid': dbid,
+				'timeStamp': this._player_data[dbid]
+			}
+		};
+	}
+
+	async getPlayerData2(dbid: number): Promise<ApiResult> {
+		Logger.info('Post player data', { dbid });
+		let player: PlayerProfile | null = null;
+
+		try {
+			player = await getProfile(dbid);
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (player?.playerJson) {
+			return {
+				Status: 200,
+				Body: {
+					dbid: dbid,
+					timeStamp: player.timeStamp,
+					playerData: JSON.parse(player.playerJson)
+				}
+			};	
+		}
+		else {
+			return {
+				Status: 404,
+				Body: ''
+			};	
+		}
+
 	}
 
 	async loadGauntletStatus(logData: LogData): Promise<ApiResult> {

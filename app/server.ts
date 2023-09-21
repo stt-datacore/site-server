@@ -8,6 +8,7 @@ import expressWinston from 'express-winston';
 import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
+import { connectToMongo } from './mongo';
 
 require('dotenv').config();
 
@@ -62,6 +63,7 @@ app.use('/api', nocache, expressLogger, ApiController);
 
 (async () => {
 	await sequelize.sync();
+	await connectToMongo();
 
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();

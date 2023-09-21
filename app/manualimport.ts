@@ -46,7 +46,7 @@ require('dotenv').config();
     profiles.forEach(async (csvProfile) => {
         let profileDB = await uploadProfile(csvProfile.dbid, JSON.parse(fs.readFileSync(`${process.env.PROFILE_DATA_PATH}/${csvProfile.dbid}`, 'utf-8')), csvProfile.lastUpdate);
 
-        if (csvProfile.userId != NaN) {
+        if (!Number.isNaN(csvProfile.userId)) {
             // user associations
             let usr = users.find(u => u.id === csvProfile.userId);
             if (!usr) {

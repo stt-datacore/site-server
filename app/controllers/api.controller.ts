@@ -29,6 +29,34 @@ router.post('/post_profile', async (req: Request, res: Response, next) => {
 	}
 });
 
+
+router.post('/post_profile2', async (req: Request, res: Response, next) => {
+	if (!req.body) {
+		res.status(400).send('Whaat?');
+		return;
+	}	
+	try {
+		let playerData = req.body;
+		let apiResult = await DataCoreAPI.postPlayerData2(playerData.player.dbid, JSON.stringify(req.body), getLogDataFromReq(req));
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {		
+		next(e);
+	}
+});
+
+router.get('/profile2', async (req: Request, res: Response, next) => {
+	if (!req.query || !req.query.dbid) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let apiResult = await DataCoreAPI.getPlayerData2(Number.parseInt(req.query.dbid.toString()));
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
 router.post('/login', async (req: Request, res: Response, next) => {
 	if (!req.body || !req.body.user || !req.body.password) {
 		res.status(400).send('Whaat?');
