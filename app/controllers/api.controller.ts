@@ -300,6 +300,24 @@ router.get('/getAssignments', async (req: Request, res: Response, next) => {
 });
 
 
+router.get('/getTrackedData', async (req: Request, res: Response, next) => {
+	if (!req.query || (!req.query.dbid && !req.query.trackerId )) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
+		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
+		let apiResult = await DataCoreAPI.mongoGetTrackedData(dbid, trackerId);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+
+
 
 
 
