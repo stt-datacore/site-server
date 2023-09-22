@@ -33,7 +33,7 @@ export async function postOrPutProfile(dbid: number, player_data: PlayerData, ti
                 { $set: res }
             );
             
-            return !!(updres?.upsertedId) ? 200 : 400;
+            return !!(updres?.modifiedCount) ? 200 : 400;
         }    
     }
 

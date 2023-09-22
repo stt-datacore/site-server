@@ -5,7 +5,8 @@
   "main": "build/server.js",
   "scripts": {
     "build": "tsc",
-    "start": "node ./build/server.js"
+    "start": "node ./build/server.js",
+    "debug": "node --inspect ./build/server.js"
   },
   "keywords": [],
   "author": "",
