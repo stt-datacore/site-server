@@ -1,5 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { DataCoreAPI, LogData } from '../logic';
+import { PlayerData } from '../datacore/player';
+import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
 
 // Assign router to the express.Router() instance
 const router: Router = Router();
@@ -30,21 +32,21 @@ router.post('/post_profile', async (req: Request, res: Response, next) => {
 });
 
 
-router.post('/post_profile2', async (req: Request, res: Response, next) => {
+router.post('/postProfile', async (req: Request, res: Response, next) => {
 	if (!req.body) {
 		res.status(400).send('Whaat?');
 		return;
 	}	
 	try {
-		let playerData = req.body;
-		let apiResult = await DataCoreAPI.mongoPostPlayerData(playerData.player.dbid, JSON.stringify(req.body), getLogDataFromReq(req));
+		let playerData = req.body as PlayerData;
+		let apiResult = await DataCoreAPI.mongoPostPlayerData(playerData.player.dbid, playerData, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
 	}
 });
 
-router.get('/profile2', async (req: Request, res: Response, next) => {
+router.get('/getProfile', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.dbid) {
 		res.status(400).send('Whaat?');
 		return;
@@ -57,6 +59,72 @@ router.get('/profile2', async (req: Request, res: Response, next) => {
 		next(e);
 	}
 });
+
+router.post('/postVoyage', async (req: Request, res: Response, next) => {
+	if (!req.body) {
+		res.status(400).send('Whaat?');
+		return;
+	}	
+	try {
+		let dbid = req.body.dbid;
+		let voyage = req.body.voyage as ITrackedVoyage;		
+		let apiResult = await DataCoreAPI.mongoPostTrackedVoyage(dbid, voyage, getLogDataFromReq(req));
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {		
+		next(e);
+	}
+});
+
+router.get('/getVoyages', async (req: Request, res: Response, next) => {
+	if (!req.query || (!req.query.dbid && !req.query.trackerId )) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {		
+		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
+		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
+		let apiResult = await DataCoreAPI.mongoGetTrackedVoyages(dbid, trackerId);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.post('/postAssignment', async (req: Request, res: Response, next) => {
+	if (!req.body) {
+		res.status(400).send('Whaat?');
+		return;
+	}	
+	
+	try {
+		let dbid = req.body.dbid;
+		let crew = req.body.crew;		
+		let assignment = req.body.assignment as ITrackedAssignment;
+		let apiResult = await DataCoreAPI.mongoPostTrackedAssignment(dbid, crew, assignment, getLogDataFromReq(req));
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {		
+		next(e);
+	}
+});
+
+router.get('/getAssignments', async (req: Request, res: Response, next) => {
+	if (!req.query || (!req.query.dbid && !req.query.trackerId )) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
+		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
+		let apiResult = await DataCoreAPI.mongoGetTrackedVoyages(dbid, trackerId);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+
 router.post('/login', async (req: Request, res: Response, next) => {
 	if (!req.body || !req.body.user || !req.body.password) {
 		res.status(400).send('Whaat?');

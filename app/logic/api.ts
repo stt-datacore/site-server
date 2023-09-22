@@ -8,8 +8,11 @@ import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile } from './
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB } from './telemetry';
 import { getSTTToken } from './stttools';
-import { getProfile, postOrPutProfile } from './mongotools';
+import { getAssignmentsByDbid, getAssignmentsByTrackerId, getProfile, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutProfile, postOrPutVoyage } from './mongotools';
 import { PlayerProfile } from '../mongoModels/playerProfile';
+import { PlayerData } from '../datacore/player';
+import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
+import { TrackedAssignment, TrackedVoyage } from '../mongoModels/voyageHistory';
 
 require('dotenv').config();
 
@@ -109,87 +112,6 @@ export class ApiClass {
 			Status: 200,
 			Body: 'OK'
 		};
-	}
-
-	async mongoPostPlayerData(dbid: number, player_data: any, logData: LogData): Promise<ApiResult> {
-		Logger.info('Post player data', { dbid, logData });
-
-		try {
-			let res = await postOrPutProfile(dbid, player_data, new Date());			
-			if (!res) {
-				return {
-					Status: 500,
-					Body: {
-						'dbid': dbid,
-						'error': 'Unknown error, unable to insert profile record.'						
-					}
-				};
-			}
-		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
-		}		
-
-		this._player_data[dbid] = new Date().toUTCString();
-		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
-
-		return {
-			Status: 200,
-			Body: {
-				'dbid': dbid,
-				'timeStamp': this._player_data[dbid]
-			}
-		};
-	}
-
-	async mongoGetPlayerData(dbid: number): Promise<ApiResult> {
-		Logger.info('Post player data', { dbid });
-		let player: PlayerProfile | null = null;
-
-		try {
-			player = await getProfile(dbid);
-		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
-		}
-
-		if (player?.playerJson) {
-			return {
-				Status: 200,
-				Body: {
-					dbid: dbid,
-					timeStamp: player.timeStamp,
-					playerData: JSON.parse(player.playerJson)
-				}
-			};	
-		}
-		else {
-			return {
-				Status: 404,
-				Body: ''
-			};	
-		}
-
 	}
 
 	async loadGauntletStatus(logData: LogData): Promise<ApiResult> {
@@ -393,6 +315,254 @@ export class ApiClass {
 			Status: 200,
 			Body: result
 		}
+	}
+
+	/** MongoDB Methods */
+
+	async mongoPostPlayerData(dbid: number, player_data: PlayerData, logData: LogData): Promise<ApiResult> {
+		Logger.info('Post player data', { dbid, logData });
+		
+		const timeStamp = new Date();
+
+		try {
+			let res = await postOrPutProfile(dbid, player_data, timeStamp);			
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert profile record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 200,
+			Body: {
+				'dbid': dbid,
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+	async mongoGetPlayerData(dbid: number): Promise<ApiResult> {
+		Logger.info('Get player data', { dbid });
+		let player: PlayerProfile | null = null;
+
+		try {
+			player = await getProfile(dbid);
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (player?.playerData) {
+			return {
+				Status: 200,
+				Body: player
+			};	
+		}
+		else {
+			return {
+				Status: 404,
+				Body: ''
+			};	
+		}
+
+	}
+
+
+	async mongoPostTrackedVoyage(dbid: number, voyage: ITrackedVoyage, logData: LogData): Promise<ApiResult> {
+		Logger.info('Tracked Voyage data', { dbid, voyage, logData });
+		
+		const timeStamp = new Date();
+
+		try {
+			let res = await postOrPutVoyage(dbid, voyage, timeStamp);
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 200,
+			Body: {
+				'dbid': dbid,
+				'trackerId': voyage.tracker_id,
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+	async mongoGetTrackedVoyages(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		Logger.info('Get voyage data', { dbid, trackerId });
+		let voyages: TrackedVoyage[] | null = null;
+		
+		if (!dbid && !trackerId) return {
+				Status: 400,
+				Body: 'No Input'
+			} 
+
+		try {
+			voyages = dbid ? await getVoyagesByDbid(dbid) : (trackerId ? await getVoyagesByTrackerId(trackerId) : null);
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (voyages) {
+			return {
+				Status: 200,
+				Body: voyages
+			};	
+		}
+		else {
+			return {
+				Status: 404,
+				Body: ''
+			};	
+		}
+
+	}
+
+	
+
+	async mongoPostTrackedAssignment(dbid: number, crew: string, assignment: ITrackedAssignment, logData: LogData): Promise<ApiResult> {
+		Logger.info('Tracked Voyage data', { dbid, voyage: assignment, logData });
+		
+		const timeStamp = new Date();
+
+		try {
+			let res = await postOrPutAssignment(dbid, crew, assignment, timeStamp);
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 200,
+			Body: {
+				'dbid': dbid,
+				'trackerId': assignment.tracker_id,
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+	async mongoGetTrackedAssignments(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		Logger.info('Get voyage data', { dbid, trackerId });
+		let assignments: TrackedAssignment[] | null = null;
+		
+		if (!dbid && !trackerId) return {
+				Status: 400,
+				Body: 'No Input'
+			} 
+
+		try {
+			assignments = dbid ? await getAssignmentsByDbid(dbid) : (trackerId ? await getAssignmentsByTrackerId(trackerId) : null);
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (assignments) {
+			return {
+				Status: 200,
+				Body: assignments
+			};	
+		}
+		else {
+			return {
+				Status: 404,
+				Body: ''
+			};	
+		}
+
 	}
 }
 
