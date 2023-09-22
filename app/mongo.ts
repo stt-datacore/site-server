@@ -32,6 +32,7 @@ export async function connectToMongo() {
         collections.trackedAssignments = trackedAssignmentsCollection;    
         
         collections.trackedAssignments.createIndex("dbid");
+        collections.trackedAssignments.createIndex("crew");
         collections.trackedAssignments.createIndex("trackerId");
     
         console.log(`Successfully connected to MongoDB database: ${db.databaseName}`);  
