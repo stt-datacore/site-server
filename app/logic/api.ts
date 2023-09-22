@@ -13,6 +13,7 @@ import { PlayerProfile } from '../mongoModels/playerProfile';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
 import { TrackedAssignment, TrackedVoyage } from '../mongoModels/voyageHistory';
+import { connectToMongo } from '../mongo';
 
 require('dotenv').config();
 
@@ -27,6 +28,8 @@ export class ApiResult {
 export class ApiClass {
 	private _player_data: any;
 	private _stt_token: any;
+
+	public mongoAvailable: boolean = false;
 
 	async initializeCache() {
 		this._player_data = await loadProfileCache();
@@ -319,13 +322,24 @@ export class ApiClass {
 
 	/** MongoDB Methods */
 
+	async tryInitMongo() {
+		try {
+			return await connectToMongo();
+		}
+		catch {
+			return false;
+		}
+	}
+
 	async mongoPostPlayerData(dbid: number, player_data: PlayerData, logData: LogData): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
 		Logger.info('Post player data', { dbid, logData });
 		
 		const timeStamp = new Date();
+		let res = 0;
 
 		try {
-			let res = await postOrPutProfile(dbid, player_data, timeStamp);			
+			res = await postOrPutProfile(dbid, player_data, timeStamp);			
 			if (res >= 300) {
 				return {
 					Status: res,
@@ -352,7 +366,7 @@ export class ApiClass {
 		}		
 
 		return {
-			Status: 200,
+			Status: res,
 			Body: {
 				'dbid': dbid,
 				timeStamp: timeStamp.toISOString()
@@ -361,6 +375,8 @@ export class ApiClass {
 	}
 
 	async mongoGetPlayerData(dbid: number): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
 		Logger.info('Get player data', { dbid });
 		let player: PlayerProfile | null = null;
 
@@ -398,6 +414,8 @@ export class ApiClass {
 
 
 	async mongoPostTrackedVoyage(dbid: number, voyage: ITrackedVoyage, logData: LogData): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
 		Logger.info('Tracked Voyage data', { dbid, voyage, logData });
 		
 		const timeStamp = new Date();
@@ -430,7 +448,7 @@ export class ApiClass {
 		}		
 
 		return {
-			Status: 200,
+			Status: 201,
 			Body: {
 				'dbid': dbid,
 				'trackerId': voyage.tracker_id,
@@ -440,6 +458,8 @@ export class ApiClass {
 	}
 
 	async mongoGetTrackedVoyages(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
 		Logger.info('Get voyage data', { dbid, trackerId });
 		let voyages: TrackedVoyage[] | null = null;
 		
@@ -483,6 +503,8 @@ export class ApiClass {
 	
 
 	async mongoPostTrackedAssignment(dbid: number, crew: string, assignment: ITrackedAssignment, logData: LogData): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
 		Logger.info('Tracked Voyage data', { dbid, voyage: assignment, logData });
 		
 		const timeStamp = new Date();
@@ -515,7 +537,7 @@ export class ApiClass {
 		}		
 
 		return {
-			Status: 200,
+			Status: 201,
 			Body: {
 				'dbid': dbid,
 				'trackerId': assignment.tracker_id,
@@ -525,6 +547,8 @@ export class ApiClass {
 	}
 
 	async mongoGetTrackedAssignments(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
 		Logger.info('Get voyage data', { dbid, trackerId });
 		let assignments: TrackedAssignment[] | null = null;
 		
@@ -564,6 +588,58 @@ export class ApiClass {
 		}
 
 	}
+
+
+	async mongoGetTrackedData(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
+		Logger.info('Get tracked data', { dbid, trackerId });
+		let voyages: TrackedVoyage[] | null = null;
+		let assignments: TrackedAssignment[] | null = null;
+		
+		if (!dbid && !trackerId) return {
+				Status: 400,
+				Body: 'No Input'
+			} 
+
+		try {
+			voyages = dbid ? await getVoyagesByDbid(dbid) : (trackerId ? await getVoyagesByTrackerId(trackerId) : null);
+			assignments = dbid ? await getAssignmentsByDbid(dbid) : (trackerId ? await getAssignmentsByTrackerId(trackerId) : null);
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (voyages || assignments) {
+			return {
+				Status: 200,
+				Body: {
+					voyages,
+					assignments
+				}
+			};	
+		}
+		else {
+			return {
+				Status: 404,
+				Body: ''
+			};	
+		}
+
+	}
+
+	
+
 }
 
 export let DataCoreAPI = new ApiClass();

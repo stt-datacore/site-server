@@ -61,12 +61,30 @@ app.use(cors(corsOptions));
 // Mount the controllers' routes
 app.use('/api', nocache, expressLogger, ApiController);
 
+const cycleInitMongo = async (force?: boolean) => {
+	if (DataCoreAPI.mongoAvailable && !force) return;
+
+	try {		
+		DataCoreAPI.mongoAvailable = await connectToMongo();		
+	}
+	catch {
+		DataCoreAPI.mongoAvailable = false;
+	}
+
+	if (!DataCoreAPI.mongoAvailable) {
+		console.log("MongoDB is not available. Disabling affected routes. Will try again in 60 seconds.");
+		setTimeout(() => {
+			cycleInitMongo();
+		}, 60000);
+	}
+};
+
 (async () => {
 	await sequelize.sync();
-	await connectToMongo();
-
+	
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
+	await cycleInitMongo();
 
 	// Serve the application at the given port
 	app.listen(port, '0.0.0.0', () => {
