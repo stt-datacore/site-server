@@ -74,6 +74,7 @@ const cycleInitMongo = async (force?: boolean) => {
 	if (!DataCoreAPI.mongoAvailable) {
 		console.log("MongoDB is not available. Disabling affected routes. Will try again in 60 seconds.");
 		setTimeout(() => {
+			console.log("Re-attempting MongoDB connection...")
 			cycleInitMongo();
 		}, 60000);
 	}
