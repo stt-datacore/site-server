@@ -8,8 +8,8 @@ import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile } from './
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB } from './telemetry';
 import { getSTTToken } from './stttools';
-import { getProfile, uploadProfile as mongoProfile } from './mongotools';
-import PlayerProfile from '../mongoModels/playerProfile';
+import { getProfile, postOrPutProfile } from './mongotools';
+import { PlayerProfile } from '../mongoModels/playerProfile';
 
 require('dotenv').config();
 
@@ -111,11 +111,20 @@ export class ApiClass {
 		};
 	}
 
-	async postPlayerData2(dbid: number, player_data: any, logData: LogData): Promise<ApiResult> {
+	async mongoPostPlayerData(dbid: number, player_data: any, logData: LogData): Promise<ApiResult> {
 		Logger.info('Post player data', { dbid, logData });
 
 		try {
-			await mongoProfile(dbid, player_data, new Date());
+			let res = await postOrPutProfile(dbid, player_data, new Date());			
+			if (!res) {
+				return {
+					Status: 500,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unknown error, unable to insert profile record.'						
+					}
+				};
+			}
 		} catch (err) {
 			if (typeof err === 'string') {
 				return {
@@ -129,7 +138,7 @@ export class ApiClass {
 					Body: err.toString()
 				};
 			}
-		}
+		}		
 
 		this._player_data[dbid] = new Date().toUTCString();
 		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
@@ -143,7 +152,7 @@ export class ApiClass {
 		};
 	}
 
-	async getPlayerData2(dbid: number): Promise<ApiResult> {
+	async mongoGetPlayerData(dbid: number): Promise<ApiResult> {
 		Logger.info('Post player data', { dbid });
 		let player: PlayerProfile | null = null;
 

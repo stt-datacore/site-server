@@ -37,7 +37,7 @@ router.post('/post_profile2', async (req: Request, res: Response, next) => {
 	}	
 	try {
 		let playerData = req.body;
-		let apiResult = await DataCoreAPI.postPlayerData2(playerData.player.dbid, JSON.stringify(req.body), getLogDataFromReq(req));
+		let apiResult = await DataCoreAPI.mongoPostPlayerData(playerData.player.dbid, JSON.stringify(req.body), getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -51,7 +51,7 @@ router.get('/profile2', async (req: Request, res: Response, next) => {
 	}
 
 	try {
-		let apiResult = await DataCoreAPI.getPlayerData2(Number.parseInt(req.query.dbid.toString()));
+		let apiResult = await DataCoreAPI.mongoGetPlayerData(Number.parseInt(req.query.dbid.toString()));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
