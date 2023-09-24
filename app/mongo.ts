@@ -22,6 +22,8 @@ export async function connectToMongo() {
     
         collections.profiles = profilesCollection;
         collections.profiles.createIndex("dbid");
+        collections.profiles.createIndex("fleet");
+        collections.profiles.createIndex("squadron");
     
         collections.trackedVoyages = trackedVoyagesCollection;    
         

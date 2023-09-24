@@ -20,14 +20,18 @@ export async function postOrPutProfile(dbid: number, player_data: PlayerData, ti
     if (collections.profiles) {        
         let res = (await collections.profiles.findOne<WithId<PlayerProfile>>({ dbid: dbid })) as PlayerProfile;	
         
+        let fleet = player_data.player.fleet?.id ?? 0;
+        let squadron = player_data.player.squad?.id ?? 0;
+
         if (!res) {
-            res = new PlayerProfile(dbid, player_data, timeStamp);            
+            res = new PlayerProfile(dbid, player_data, timeStamp, fleet, squadron);
             let insres = await collections.profiles?.insertOne(res);            
             return !!(insres?.insertedId) ? 201 : 400;
         } else {            
             res.playerData = player_data;
             res.timeStamp = timeStamp;
-            
+            res.fleet = fleet;
+            res.squadron = squadron;            
             let updres = await collections.profiles.updateOne(
                 { dbid },
                 { $set: res }
