@@ -235,6 +235,22 @@ router.get('/getProfile', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.get('/getProfiles', async (req: Request, res: Response, next) => {
+	if (!req.query || (!req.query.fleet && !req.query.squadron )) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {		
+		let fleet = req.query?.fleet ? Number.parseInt(req.query.fleet.toString()) : undefined;
+		let squadron = req.query?.squadron ? Number.parseInt(req.query.squadron.toString()) : undefined;
+		let apiResult = await DataCoreAPI.mongoGetManyPlayers(fleet, squadron);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
 router.post('/postVoyage', async (req: Request, res: Response, next) => {
 	if (!req.body) {
 		res.status(400).send('Whaat?');

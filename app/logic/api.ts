@@ -8,7 +8,7 @@ import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile } from './
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB } from './telemetry';
 import { getSTTToken } from './stttools';
-import { getAssignmentsByDbid, getAssignmentsByTrackerId, getProfile, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutProfile, postOrPutVoyage } from './mongotools';
+import { getAssignmentsByDbid, getAssignmentsByTrackerId, getProfile, getProfiles, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutProfile, postOrPutVoyage } from './mongotools';
 import { PlayerProfile } from '../mongoModels/playerProfile';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
@@ -412,6 +412,43 @@ export class ApiClass {
 
 	}
 
+	async mongoGetManyPlayers(fleet?: number, squadron?: number): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
+		Logger.info('Get many players', { fleet, squadron });
+		let players: PlayerProfile[] | null = null;
+
+		try {
+			players = await getProfiles(fleet, squadron);
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (players?.length) {
+			return {
+				Status: 200,
+				Body: players
+			};	
+		}
+		else {
+			return {
+				Status: 404,
+				Body: ''
+			};	
+		}
+
+	}
 
 	async mongoPostTrackedVoyage(dbid: number, voyage: ITrackedVoyage, logData: LogData): Promise<ApiResult> {
 		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };

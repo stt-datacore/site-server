@@ -15,6 +15,20 @@ export async function getProfile(dbid: number) {
 
     return res;
 }
+export async function getProfiles(fleet?: number, squadron?: number) {
+    let res: PlayerProfile[] | null = null;
+
+    if (collections.profiles) {
+        if (fleet) {
+            res = (await collections.profiles.find<WithId<PlayerProfile>>({ fleet }).toArray()) as PlayerProfile[];    
+        }
+        else if (squadron) {
+            res = (await collections.profiles.find<WithId<PlayerProfile>>({ squadron }).toArray()) as PlayerProfile[];    
+        }
+    }
+
+    return res;
+}
 
 export async function postOrPutProfile(dbid: number, player_data: PlayerData, timeStamp: Date = new Date()) {    
     if (collections.profiles) {        
