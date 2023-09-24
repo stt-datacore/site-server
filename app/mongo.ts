@@ -9,7 +9,7 @@ export const collections: {
 require('dotenv').config();
 
 export async function connectToMongo() {
-    
+    //
     try {
         const client: mongoDB.MongoClient = new mongoDB.MongoClient(process.env.MONGO_CONN_STRING as string);
         await client.connect();
