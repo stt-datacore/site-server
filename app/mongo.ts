@@ -7,7 +7,7 @@ export const collections: {
 } = {}
 
 require('dotenv').config();
- 
+// 
 export async function connectToMongo() {
     
     try {
