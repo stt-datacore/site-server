@@ -13,7 +13,7 @@ export async function connectToMongo() {
     try {
         const client: mongoDB.MongoClient = new mongoDB.MongoClient(process.env.MONGO_CONN_STRING as string);
         await client.connect();
-        // test gittower
+        
         const db: mongoDB.Db = client.db(process.env.MONGO_DB_NAME);
        
         const profilesCollection: mongoDB.Collection = db.collection(process.env.MONGO_PROFILE_COLLECTION as string);
