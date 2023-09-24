@@ -315,7 +315,6 @@ router.get('/getAssignments', async (req: Request, res: Response, next) => {
 	}
 });
 
-
 router.get('/getTrackedData', async (req: Request, res: Response, next) => {
 	if (!req.query || (!req.query.dbid && !req.query.trackerId )) {
 		res.status(400).send('Whaat?');
@@ -331,11 +330,6 @@ router.get('/getTrackedData', async (req: Request, res: Response, next) => {
 		next(e);
 	}
 });
-
-
-
-
-
 
 // Export the express.Router() instance to be used by server.ts
 export const ApiController: Router = router;
