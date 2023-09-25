@@ -8,11 +8,11 @@ import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile } from './
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB } from './telemetry';
 import { getSTTToken } from './stttools';
-import { getAssignmentsByDbid, getAssignmentsByTrackerId, getProfile, getProfiles, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutProfile, postOrPutVoyage } from './mongotools';
+import { getAssignmentsByDbid, getAssignmentsByTrackerId, getProfile, getProfiles, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutAssignmentsMany, postOrPutProfile, postOrPutVoyage } from './mongotools';
 import { PlayerProfile } from '../mongoModels/playerProfile';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
-import { TrackedAssignment, TrackedVoyage } from '../mongoModels/voyageHistory';
+import { TrackedCrew, TrackedVoyage } from '../mongoModels/voyageHistory';
 import { connectToMongo } from '../mongo';
 
 require('dotenv').config();
@@ -583,11 +583,57 @@ export class ApiClass {
 		};
 	}
 
+
+	async mongoPostTrackedAssignmentsMany(dbid: number, crew: string[], assignments: ITrackedAssignment[], logData: LogData): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
+		Logger.info('Tracked Voyage data', { dbid, voyage: assignments, logData });
+		
+		const timeStamp = new Date();
+		
+		try {
+			let res = await postOrPutAssignmentsMany(dbid, crew, assignments, timeStamp);
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 201,
+			Body: {
+				'dbid': dbid,
+				'trackerIds': assignments.map(a => a.tracker_id),
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+
 	async mongoGetTrackedAssignments(dbid?: number, trackerId?: number): Promise<ApiResult> {
 		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
 
 		Logger.info('Get voyage data', { dbid, trackerId });
-		let assignments: TrackedAssignment[] | null = null;
+		let assignments: TrackedCrew[] | null = null;
 		
 		if (!dbid && !trackerId) return {
 				Status: 400,
@@ -632,7 +678,7 @@ export class ApiClass {
 
 		Logger.info('Get tracked data', { dbid, trackerId });
 		let voyages: TrackedVoyage[] | null = null;
-		let assignments: TrackedAssignment[] | null = null;
+		let assignments: TrackedCrew[] | null = null;
 		
 		if (!dbid && !trackerId) return {
 				Status: 400,

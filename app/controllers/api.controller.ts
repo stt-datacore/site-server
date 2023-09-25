@@ -299,6 +299,24 @@ router.post('/postAssignment', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.post('/postAssignments', async (req: Request, res: Response, next) => {
+	if (!req.body) {
+		res.status(400).send('Whaat?');
+		return;
+	}	
+	
+	try {
+		let dbid = req.body.dbid;
+		let assign = req.body.assigments as { [key: string]: ITrackedAssignment };
+		let crew = Object.keys(assign);
+		let assignments = Object.values(assign);		
+		let apiResult = await DataCoreAPI.mongoPostTrackedAssignmentsMany(dbid, crew, assignments, getLogDataFromReq(req));
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {		
+		next(e);
+	}
+});
+
 router.get('/getAssignments', async (req: Request, res: Response, next) => {
 	if (!req.query || (!req.query.dbid && !req.query.trackerId )) {
 		res.status(400).send('Whaat?');

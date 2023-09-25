@@ -4,7 +4,7 @@ import { collections } from "../mongo";
 import { PlayerProfile } from "../mongoModels/playerProfile";
 import { PlayerData } from "../datacore/player";
 import { ITrackedAssignment, ITrackedVoyage, IVoyageHistory } from "../datacore/voyage";
-import { TrackedAssignment, TrackedVoyage } from "../mongoModels/voyageHistory";
+import { TrackedCrew, TrackedVoyage } from "../mongoModels/voyageHistory";
 
 export async function getProfile(dbid: number) {
     let res: PlayerProfile | null = null;
@@ -86,7 +86,6 @@ export async function postOrPutVoyage(
         let insres = await collections.trackedVoyages?.insertOne({ 
                 dbid,
                 trackerId: voyage.tracker_id,
-                voyageId: voyage.voyage_id,
                 voyage,
                 timeStamp
             } as TrackedVoyage);
@@ -98,20 +97,20 @@ export async function postOrPutVoyage(
 }
 
 export async function getAssignmentsByDbid(dbid: number) {
-    let res: TrackedAssignment[] | null = null;
+    let res: TrackedCrew[] | null = null;
 
     if (collections.trackedAssignments) {
-        res = await collections.trackedAssignments.find<WithId<TrackedAssignment>>({ dbid: dbid }).toArray();        
+        res = await collections.trackedAssignments.find<WithId<TrackedCrew>>({ dbid: dbid }).toArray();        
     }
 
     return res;
 }
 
 export async function getAssignmentsByTrackerId(trackerId: number) {
-    let res: TrackedAssignment[] | null = null;
+    let res: TrackedCrew[] | null = null;
 
     if (collections.trackedAssignments) {
-        res = await collections.trackedAssignments.find<WithId<TrackedAssignment>>({ trackerId: trackerId }).toArray();        
+        res = await collections.trackedAssignments.find<WithId<TrackedCrew>>({ trackerId: trackerId }).toArray();        
     }
 
     return res;
@@ -129,7 +128,7 @@ export async function postOrPutAssignment(
                 trackerId: assignment.tracker_id,
                 assignment,
                 timeStamp
-            } as TrackedAssignment);
+            } as TrackedCrew);
         
         return !!(insres?.insertedId) ? 201 : 400;
     }
@@ -137,4 +136,32 @@ export async function postOrPutAssignment(
     return 500;
 }
 
+export async function postOrPutAssignmentsMany(
+    dbid: number, 
+    crew: string[],
+    assignments: ITrackedAssignment[],
+    timeStamp: Date = new Date()) {
+    let result = true;
+    if (collections.profiles) {    
+        const newdata = [] as TrackedCrew[];
+        let x = 0;
+        for (let crewMember of crew) {
+            let assignment  = assignments[x++];
+            
+            newdata.push({ 
+                dbid,                
+                crew: crewMember,     
+                trackerId: assignment.tracker_id,
+                assignment,
+                timeStamp
+            } as TrackedCrew);
+            
+        }
+        let insres = await collections.profiles?.insertMany(newdata);
+        result &&= !!insres && Object.keys(insres.insertedIds).length === newdata.length;
+        return result ? 201 : 400;
+    }
+
+    return 500;
+}
 

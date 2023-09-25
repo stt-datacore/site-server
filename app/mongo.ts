@@ -29,7 +29,6 @@ export async function connectToMongo() {
         
         collections.trackedVoyages.createIndex("dbid");
         collections.trackedVoyages.createIndex("trackerId");
-        collections.trackedVoyages.createIndex("voyageId");
     
         collections.trackedAssignments = trackedAssignmentsCollection;    
         
