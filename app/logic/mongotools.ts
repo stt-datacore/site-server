@@ -173,8 +173,8 @@ export async function postOrPutBossBattle(
     
     if (collections.bossBattles) {            
         let roomCode = seedrandom.default(battle.bossBattleId.toString())().toLocaleString();
-        let insres = await collections.profiles?.updateOne({ 
-            bossBattleId: battle.bossBattleId }, 
+        let insres = await collections.profiles?.updateOne(
+            { bossBattleId: battle.bossBattleId }, 
             { 
                 $set: { 
                     ... battle,
@@ -183,7 +183,8 @@ export async function postOrPutBossBattle(
             }, 
             { 
                 upsert: true 
-            });
+            }
+        );
 
         result &&= !!insres && !!insres.upsertedId;
         return result ? 201 : 400;

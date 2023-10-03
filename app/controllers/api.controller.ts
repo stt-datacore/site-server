@@ -360,6 +360,7 @@ router.post('/postBossBattle', async (req: Request, res: Response, next) => {
 	try {		
 		if ("id" in req.body) {
 			req.body.bossBattleId = req.body.id;
+			delete req.body.id;
 		}
 		let battle = req.body as IFBB_BossBattle_Document;
 		let apiResult = await DataCoreAPI.mongoPostBossBattle(battle);
