@@ -1,4 +1,3 @@
-
 import { Ship } from "./ship"
 import { PotentialReward } from "./player"
 import { Icon } from "./game-elements"

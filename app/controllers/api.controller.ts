@@ -2,6 +2,8 @@ import { Router, Request, Response } from 'express';
 import { DataCoreAPI, LogData } from '../logic';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
+import { IFBB_BossBattle_Document } from '../mongoModels/playerCollab';
+import { CrewTrial, Solve } from '../datacore/boss';
 
 // Assign router to the express.Router() instance
 const router: Router = Router();
@@ -343,6 +345,96 @@ router.get('/getTrackedData', async (req: Request, res: Response, next) => {
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
 		let apiResult = await DataCoreAPI.mongoGetTrackedData(dbid, trackerId);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.post('/postBossBattle', async (req: Request, res: Response, next) => {
+	if (!req.body) {
+		res.status(400).send('Whaat?');
+		return;
+	}	
+	
+	try {		
+		if ("id" in req.body) {
+			req.body.bossBattleId = req.body.id;
+		}
+		let battle = req.body as IFBB_BossBattle_Document;
+		let apiResult = await DataCoreAPI.mongoPostBossBattle(battle);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {		
+		next(e);
+	}
+});
+
+
+router.post('/postBossBattleSolves', async (req: Request, res: Response, next) => {
+	if (!req.body) {
+		res.status(400).send('Whaat?');
+		return;
+	}	
+	
+	try {		
+		let bossBattleId = req.body.bossBattleId as number;
+		let chainIndex = req.body.chainIndex as number;
+		let solves = req.body.solves as Solve[];
+
+		if (!bossBattleId || !chainIndex || !solves) {
+			res.status(400).send("Bad data");
+		}
+
+		let apiResult = await DataCoreAPI.mongoPostSolves(bossBattleId, chainIndex, solves);
+
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {		
+		next(e);
+	}
+});
+
+router.post('/postBossBattleTrials', async (req: Request, res: Response, next) => {
+	if (!req.body) {
+		res.status(400).send('Whaat?');
+		return;
+	}	
+	
+	try {		
+		let bossBattleId = req.body.bossBattleId as number;
+		let chainIndex = req.body.chainIndex as number;
+		let Trials = req.body.Trials as CrewTrial[];
+
+		if (!bossBattleId || !chainIndex || !Trials) {
+			res.status(400).send("Bad data");
+		}
+
+		let apiResult = await DataCoreAPI.mongoPostTrials(bossBattleId, chainIndex, Trials);
+
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {		
+		next(e);
+	}
+});
+
+
+router.get('/getBossBattle', async (req: Request, res: Response, next) => {
+	if (!req.query || (!req.query.room && !req.query.id )) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {		
+		let room = undefined as string | undefined;		
+		let id = undefined as number | undefined;
+
+		if (req.query.room) {
+			room = req.query.room as string;
+		}
+		if (req.query.id) {
+			id = Number.parseInt(req.query.id as string);
+		}
+
+		let apiResult = await DataCoreAPI.mongoGetCollaboration(id, room);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);

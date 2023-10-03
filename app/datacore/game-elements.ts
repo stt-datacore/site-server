@@ -122,7 +122,7 @@ export interface RarityOptions {
   key: string;
   value?: string | null | undefined;
   text: string;
-  content?: string | any;
+  content?: string;
 }
 
 

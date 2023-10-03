@@ -5,7 +5,9 @@ import { PlayerProfile } from "../mongoModels/playerProfile";
 import { PlayerData } from "../datacore/player";
 import { ITrackedAssignment, ITrackedVoyage, IVoyageHistory } from "../datacore/voyage";
 import { TrackedCrew, TrackedVoyage } from "../mongoModels/voyageHistory";
-
+import { BossBattleDocument, IFBB_BossBattle_Document, SolveDocument, TrialDocument } from "../mongoModels/playerCollab";
+import * as seedrandom from 'seedrandom';
+import { Collaboration, CrewTrial, Solve } from "../datacore/boss";
 export async function getProfile(dbid: number) {
     let res: PlayerProfile | null = null;
 
@@ -165,3 +167,119 @@ export async function postOrPutAssignmentsMany(
     return 500;
 }
 
+export async function postOrPutBossBattle(
+    battle: IFBB_BossBattle_Document) {
+    let result = true;
+    
+    if (collections.bossBattles) {            
+        let roomCode = seedrandom.default(battle.bossBattleId.toString())().toLocaleString();
+        let insres = await collections.profiles?.updateOne({ 
+            bossBattleId: battle.bossBattleId }, 
+            { 
+                $set: { 
+                    ... battle,
+                    roomCode 
+                } as IFBB_BossBattle_Document
+            }, 
+            { 
+                upsert: true 
+            });
+
+        result &&= !!insres && !!insres.upsertedId;
+        return result ? 201 : 400;
+    }
+
+    return 500;
+}
+
+export async function postOrPutSolves(
+	bossBattleId: number,
+	chainIndex: number,
+	solves: Solve[]) {
+
+    let result = true;
+    if (collections.solves) {
+        const newdata = [] as SolveDocument[];
+
+        for (let solve of solves) {
+            newdata.push({
+                bossBattleId,
+                chainIndex,
+                solve,
+                timeStamp: new Date(),
+            })
+        }
+
+        let insres = await collections.solves.insertMany(newdata);
+        result &&= !!insres && Object.keys(insres.insertedIds).length === newdata.length;
+        return result ? 201 : 400;        
+    }
+
+    return 500;
+}
+
+
+export async function postOrPutTrials(
+	bossBattleId: number,
+	chainIndex: number,
+	trials: CrewTrial[]) {
+
+    let result = true;
+    if (collections.trials) {
+        const newdata = [] as TrialDocument[];
+
+        for (let trial of trials) {
+            newdata.push({
+                bossBattleId,
+                chainIndex,
+                trial,
+                timeStamp: new Date(),
+            })
+        }
+
+        let insres = await collections.trials.insertMany(newdata);
+        result &&= !!insres && Object.keys(insres.insertedIds).length === newdata.length;
+        return result ? 201 : 400;        
+    }
+
+    return 500;
+}
+
+export async function getCollaborationById(
+    bossBattleId?: number,
+    roomCode?: string) {
+
+    if (collections.bossBattles && collections.solves && collections.trials && (!!bossBattleId || !!roomCode)) {
+        let bossBattleDoc: BossBattleDocument | null = null;
+        
+        if (bossBattleDoc) {
+            bossBattleDoc = await collections.bossBattles.findOne<WithId<BossBattleDocument>>({ bossBattleId }) as BossBattleDocument;
+        }
+        else if (roomCode) {
+            bossBattleDoc = await collections.bossBattles.findOne<WithId<BossBattleDocument>>({ roomCode }) as BossBattleDocument;
+        }
+        
+        if (bossBattleDoc) {
+            let solveFind = collections.solves.find<WithId<SolveDocument>>({ bossBattleId, chainIndex: bossBattleDoc.chainIndex });
+            let trialFind = collections.trials.find<WithId<TrialDocument>>({ bossBattleId, chainIndex: bossBattleDoc.chainIndex });
+    
+            let solves = await solveFind?.toArray() ?? [];
+            let trials = await trialFind?.toArray() ?? [];
+    
+            return [{
+                bossBattleId,
+                fleetId: bossBattleDoc.fleetId,
+                bossGroup: bossBattleDoc.bossGroup,
+                difficultyId: bossBattleDoc.difficultyId,
+                chainIndex: bossBattleDoc.chainIndex,
+                chain: bossBattleDoc.chain,
+                description: bossBattleDoc.description,
+                roomCode: bossBattleDoc.roomCode,
+                solves: solves.map(solveDoc => solveDoc.solve) as Solve[],
+                trials: trials.map(trialDoc => trialDoc.trial) as CrewTrial[]
+            }] as Collaboration[];
+        }
+    }
+
+    return null;
+}

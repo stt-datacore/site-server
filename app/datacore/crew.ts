@@ -83,28 +83,6 @@ export interface BaseSkills {
   engineering_skill?: Skill
 }
 
-type SkillType = 'security_skill' | 'command_skill' | 'medicine_skill' | 'diplomacy_skill' | 'engineering_skill' | 'science_skill';
-
-export function getSkillsRanked(skills: BaseSkills) {
-  let sn = [] as string[];
-  let mskills = Object.keys(skills)
-      .filter(skill => skills[skill as SkillType] !== undefined && (skills[skill as SkillType] ?? { core: 0 }).core > 0)
-      .map(skill => {
-        
-        (skills[skill as SkillType] ?? { skill: 0}).skill = skill;
-        return skills[skill as SkillType] as Skill;
-      });
-
-  mskills.sort((a,b) => {
-    let r = b.core - a.core;
-    if (r) return r;
-    r = b.range_max - a.range_max;
-    if (r) return r;
-    r = b.range_min - a.range_min;
-    return r;
-  });
-  return mskills;
-}
 
 export interface Skill {
   core: number

@@ -8,12 +8,14 @@ import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile } from './
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB } from './telemetry';
 import { getSTTToken } from './stttools';
-import { getAssignmentsByDbid, getAssignmentsByTrackerId, getProfile, getProfiles, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutAssignmentsMany, postOrPutProfile, postOrPutVoyage } from './mongotools';
+import { getAssignmentsByDbid, getAssignmentsByTrackerId, getCollaborationById, getProfile, getProfiles, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutAssignmentsMany, postOrPutBossBattle, postOrPutProfile, postOrPutSolves, postOrPutTrials, postOrPutVoyage } from './mongotools';
 import { PlayerProfile } from '../mongoModels/playerProfile';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
 import { TrackedCrew, TrackedVoyage } from '../mongoModels/voyageHistory';
 import { connectToMongo } from '../mongo';
+import { IFBB_BossBattle_Document, IFBB_Solve_Document, IFBB_Trial_Document } from '../mongoModels/playerCollab';
+import { CrewTrial, Solve } from '../datacore/boss';
 
 require('dotenv').config();
 
@@ -721,7 +723,89 @@ export class ApiClass {
 
 	}
 
-	
+	async mongoPostBossBattle(battle: IFBB_BossBattle_Document) {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		Logger.info('Post boss battle', { battle });		
+
+		try {
+			let res = await postOrPutBossBattle(battle);
+			return {
+				Status: res,
+				Body: ''
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: ''
+			}
+		}
+	}
+
+	async mongoGetCollaboration(bossBattleId?: number, roomCode?: string) {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		Logger.info('Get boss battle', { bossBattleId });		
+
+		try {
+			let battle = await getCollaborationById(bossBattleId, roomCode);
+			if (!battle) {
+				return {
+					Status: 404,
+					Body: ''
+				}
+			}
+			return {
+				Status: 200,
+				Body: battle
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: ''
+			}
+		}
+
+	}
+
+	async mongoPostSolves(bossBattleId: number, chainIndex: number, solves: Solve[]) {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		Logger.info('Post trials', { solves });		
+
+		try {
+			let res = await postOrPutSolves(bossBattleId, chainIndex, solves);
+			return {
+				Status: res,
+				Body: ''
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: ''
+			}
+		}
+	}
+
+	async mongoPostTrials(bossBattleId: number, chainIndex: number, trials: CrewTrial[]) {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		Logger.info('Post trials', { trials });		
+
+		try {
+			let res = await postOrPutTrials(bossBattleId, chainIndex, trials);
+			return {
+				Status: res,
+				Body: ''
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: ''
+			}
+		}
+	}
+
 
 }
 

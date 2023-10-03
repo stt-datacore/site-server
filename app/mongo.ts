@@ -2,8 +2,11 @@ import * as mongoDB from "mongodb";
 
 export const collections: { 
     profiles?: mongoDB.Collection;
-    trackedVoyages?: mongoDB.Collection  
-    trackedAssignments?: mongoDB.Collection  
+    trackedVoyages?: mongoDB.Collection;
+    trackedAssignments?: mongoDB.Collection;
+    solves?: mongoDB.Collection;
+    trials?: mongoDB.Collection;
+    bossBattles?: mongoDB.Collection;
 } = {}
 
 require('dotenv').config();
@@ -19,7 +22,10 @@ export async function connectToMongo() {
         const profilesCollection: mongoDB.Collection = db.collection(process.env.MONGO_PROFILE_COLLECTION as string);
         const trackedVoyagesCollection: mongoDB.Collection = db.collection(process.env.MONGO_TRACKED_VOYAGES_COLLECTION as string);
         const trackedAssignmentsCollection: mongoDB.Collection = db.collection(process.env.MONGO_TRACKED_ASSIGNMENTS_COLLECTION as string);
-    
+        const solves: mongoDB.Collection = db.collection(process.env.MONGO_FBB_SOLVES_COLLECTION as string);    
+        const trials: mongoDB.Collection = db.collection(process.env.MONGO_FBB_TRIALS_COLLECTION as string);    
+        const fbb: mongoDB.Collection = db.collection(process.env.MONGO_FBB__COLLECTION as string);    
+
         collections.profiles = profilesCollection;
         collections.profiles.createIndex("dbid");
         collections.profiles.createIndex("fleet");
@@ -36,6 +42,18 @@ export async function connectToMongo() {
         collections.trackedAssignments.createIndex("crew");
         collections.trackedAssignments.createIndex("trackerId");
     
+        collections.solves = solves;
+        collections.solves.createIndex("bossBattleId");
+        collections.solves.createIndex("chainIndex");
+
+        collections.trials = trials;
+        collections.trials.createIndex("bossBattleId");
+        collections.trials.createIndex("chainIndex");
+
+        collections.bossBattles = fbb;
+        collections.bossBattles.createIndex("bossBattleId");
+        collections.bossBattles.createIndex("fleetId");
+
         console.log(`Successfully connected to MongoDB database: ${db.databaseName}`);  
         Object.values(collections).forEach((col: mongoDB.Collection) => {
             console.log(` - Collection: ${col.collectionName}`);
