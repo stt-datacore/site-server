@@ -24,7 +24,7 @@ export async function connectToMongo() {
         const trackedAssignmentsCollection: mongoDB.Collection = db.collection(process.env.MONGO_TRACKED_ASSIGNMENTS_COLLECTION as string);
         const solves: mongoDB.Collection = db.collection(process.env.MONGO_FBB_SOLVES_COLLECTION as string);    
         const trials: mongoDB.Collection = db.collection(process.env.MONGO_FBB_TRIALS_COLLECTION as string);    
-        const fbb: mongoDB.Collection = db.collection(process.env.MONGO_FBB__COLLECTION as string);    
+        const fbb: mongoDB.Collection = db.collection(process.env.MONGO_FBB_COLLECTION as string);    
 
         collections.profiles = profilesCollection;
         collections.profiles.createIndex("dbid");
