@@ -8,7 +8,7 @@ export const collections: {
     trials?: mongoDB.Collection;
     bossBattles?: mongoDB.Collection;
 } = {}
-// test gittower
+
 require('dotenv').config();
 
 export async function connectToMongo() {
