@@ -52,7 +52,11 @@ export async function connectToMongo() {
 
         collections.bossBattles = fbb;
         collections.bossBattles.createIndex("bossBattleId");
-        collections.bossBattles.createIndex("fleetId");
+        collections.bossBattles.createIndex({
+            bossBattleId: 1,
+            fleetId: 1,
+            difficultyId: 1
+        });
 
         console.log(`Successfully connected to MongoDB database: ${db.databaseName}`);  
         Object.values(collections).forEach((col: mongoDB.Collection) => {
