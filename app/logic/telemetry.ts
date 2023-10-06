@@ -41,20 +41,22 @@ async function recordVoyageCalc({ voyagers, estimatedDuration }: { voyagers: str
 }
 
 async function getVoyageStats() {
-	const baseFilter = {
-		group: ['crewSymbol'],
-		attributes: ['crewSymbol', [Sequelize.fn('COUNT', Sequelize.col('crewSymbol')), 'crewCount'], [Sequelize.fn('AVG', Sequelize.col('estimatedDuration')), 'averageDuration']],
-	} as any;
-	const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
-	const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-	const allTime = await VoyageRecord.findAll({ ...baseFilter });
-	const allSinceNewTelemetry = await VoyageRecord.findAll({ ...baseFilter, where: { estimatedDuration: { [Op.ne]: null } } });
-	const lastSevenDays = await VoyageRecord.findAll({ ...baseFilter, where: { voyageDate: { [Op.gt]: sevenDaysAgo } } });
-	const lastThirtyDays = await VoyageRecord.findAll({ ...baseFilter, where: { voyageDate: { [Op.gt]: thirtyDaysAgo } } });
-	return {
-		allTime,
-		allSinceNewTelemetry,
-		lastSevenDays,
-		lastThirtyDays
-	}
+	const findAll = await VoyageRecord.findAll();
+	return findAll;
+	// const baseFilter = {
+	// 	group: ['crewSymbol'],
+	// 	attributes: ['crewSymbol', [Sequelize.fn('COUNT', Sequelize.col('crewSymbol')), 'crewCount'], [Sequelize.fn('AVG', Sequelize.col('estimatedDuration')), 'averageDuration']],
+	// } as any;
+	// const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+	// const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+	// const allTime = await VoyageRecord.findAll({ ...baseFilter });
+	// const allSinceNewTelemetry = await VoyageRecord.findAll({ ...baseFilter, where: { estimatedDuration: { [Op.ne]: null } } });
+	// const lastSevenDays = await VoyageRecord.findAll({ ...baseFilter, where: { voyageDate: { [Op.gt]: sevenDaysAgo } } });
+	// const lastThirtyDays = await VoyageRecord.findAll({ ...baseFilter, where: { voyageDate: { [Op.gt]: thirtyDaysAgo } } });
+	// return {
+	// 	allTime,
+	// 	allSinceNewTelemetry,
+	// 	lastSevenDays,
+	// 	lastThirtyDays
+	// }
 }
