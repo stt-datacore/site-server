@@ -85,7 +85,10 @@ const cycleInitMongo = async (force?: boolean) => {
 	
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
-	await cycleInitMongo();
+
+	setTimeout(async () => {
+		await cycleInitMongo();
+	})
 
 	// Serve the application at the given port
 	app.listen(port, '0.0.0.0', () => {
