@@ -95,6 +95,17 @@ export class ApiClass {
 
 		try {
 			await uploadProfile(dbid, player_data, new Date());
+			if (this.mongoAvailable) {
+				try {
+					console.log("Posting to Mongo, also ...");
+					await this.mongoPostPlayerData(Number.parseInt(dbid), player_data, logData);
+					console.log("Success!");
+				}
+				catch {
+					console.log("Failed!");
+				}
+			}
+
 		} catch (err) {
 			if (typeof err === 'string') {
 				return {

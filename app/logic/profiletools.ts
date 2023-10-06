@@ -37,8 +37,7 @@ function calculateBuffConfig(playerData: any): { [index: string]: IBuffStat } {
 	return buffConfig;
 }
 
-export async function uploadProfile(dbid: string, player_data: any, lastUpdate: Date = new Date()) {
-	// Validate player_data
+export function createProfileObject(dbid: string, player_data: any, lastUpdate: Date) {
 	if (!player_data || !player_data.player || !player_data.player.character || player_data.player.dbid.toString() !== dbid) {
 		throw new Error('Invalid player_data!');
 	}
@@ -51,12 +50,20 @@ export async function uploadProfile(dbid: string, player_data: any, lastUpdate: 
 		stored_immortals: player_data.player.character.stored_immortals
 	};
 
+	return { dbid, buffConfig: calculateBuffConfig(player_data.player), shortCrewList, captainName, lastUpdate };
+}
+
+export async function uploadProfile(dbid: string, player_data: any, lastUpdate: Date = new Date()) {
+	// Validate player_data
+	
+	let profile = createProfileObject(dbid, player_data, lastUpdate);
+
 	let res = await Profile.findAll({ where: { dbid } });
 	if (res.length === 0) {
-		return await Profile.create({ dbid, buffConfig: calculateBuffConfig(player_data.player), shortCrewList, captainName, lastUpdate });
+		return await Profile.create({ ... profile });
 	} else {
 		await res[0].update(
-			{ dbid, buffConfig: calculateBuffConfig(player_data.player), shortCrewList, captainName, lastUpdate },
+			{ ...profile },
 			{ where: { dbid } }
 		);
 

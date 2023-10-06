@@ -8,6 +8,7 @@ import { TrackedCrew, TrackedVoyage } from "../mongoModels/voyageHistory";
 import { BossBattleDocument, IFBB_BossBattle_Document, SolveDocument, TrialDocument } from "../mongoModels/playerCollab";
 import * as seedrandom from 'seedrandom';
 import { Collaboration, CrewTrial, Solve } from "../datacore/boss";
+import { createProfileObject } from "./profiletools";
 export async function getProfile(dbid: number) {
     let res: PlayerProfile | null = null;
 
@@ -38,14 +39,18 @@ export async function postOrPutProfile(dbid: number, player_data: PlayerData, ti
         
         let fleet = player_data.player.fleet?.id ?? 0;
         let squadron = player_data.player.squad?.id ?? 0;
+        let profile = createProfileObject(dbid.toString(), player_data, timeStamp);
 
         if (!res) {
-            res = new PlayerProfile(dbid, player_data, timeStamp, fleet, squadron);
+            res = new PlayerProfile(dbid, player_data, timeStamp, profile.captainName, profile.buffConfig, profile.shortCrewList, fleet, squadron);
             let insres = await collections.profiles?.insertOne(res);            
             return !!(insres?.insertedId) ? 201 : 400;
         } else {            
             res.playerData = player_data;
             res.timeStamp = timeStamp;
+            res.captainName = profile.captainName;
+            res.buffConfig = profile.buffConfig;
+            res.shortCrewList = profile.shortCrewList;
             res.fleet = fleet;
             res.squadron = squadron;            
             let updres = await collections.profiles.updateOne(
