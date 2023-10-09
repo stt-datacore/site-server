@@ -49,7 +49,7 @@ async function getVoyageStats() {
 	const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 	const one80DaysAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
 	const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
-	const allTime = await VoyageRecord.findAll({ ...baseFilter });
+	// const allTime = await VoyageRecord.findAll({ ...baseFilter });
 	const allSinceNewTelemetry = await VoyageRecord.findAll({ ...baseFilter, where: { estimatedDuration: { [Op.ne]: null } } });
 	const lastSevenDays = await VoyageRecord.findAll({ ...baseFilter, where: { voyageDate: { [Op.gt]: sevenDaysAgo } } });
 	const lastThirtyDays = await VoyageRecord.findAll({ ...baseFilter, where: { voyageDate: { [Op.gt]: thirtyDaysAgo } } });
@@ -57,7 +57,7 @@ async function getVoyageStats() {
 	const lastYear = await VoyageRecord.findAll({ ...baseFilter, where: { voyageDate: { [Op.gt]: oneYearAgo } } });
 	
 	return {
-		allTime,
+		//allTime,
 		allSinceNewTelemetry,
 		lastYear,
 		lastSixMonths,
