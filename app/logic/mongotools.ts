@@ -9,6 +9,7 @@ import { BossBattleDocument, IFBB_BossBattle_Document, SolveDocument, TrialDocum
 import * as seedrandom from 'seedrandom';
 import { Collaboration, CrewTrial, Solve } from "../datacore/boss";
 import { createProfileObject } from "./profiletools";
+
 export async function getProfile(dbid: number) {
     let res: PlayerProfile | null = null;
 

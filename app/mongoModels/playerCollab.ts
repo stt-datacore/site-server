@@ -59,7 +59,6 @@ export class SolveDocument implements IFBB_Solve_Document {
 };
 
 export class TrialDocument implements IFBB_Trial_Document {
-
     constructor(
         public bossBattleId: number,
         public chainIndex: number,
