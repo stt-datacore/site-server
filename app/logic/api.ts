@@ -273,7 +273,7 @@ export class ApiClass {
 		let payload = verify(token, JWT_SECRET);
 		if (!payload) {
 			return {
-				Status: 404,
+				Status: 204,
 				Body: 'Aah, something went wrong!'
 			};
 		}
@@ -300,7 +300,7 @@ export class ApiClass {
 			}
 		} else {
 			return {
-				Status: 404,
+				Status: 204,
 				Body: JSON.stringify({ error: 'No DBID found for Discord user' }),
 			}
 		}
@@ -421,7 +421,7 @@ export class ApiClass {
 		}
 		else {
 			return {
-				Status: 404,
+				Status: 204,
 				Body: ''
 			};	
 		}
@@ -459,7 +459,7 @@ export class ApiClass {
 		}
 		else {
 			return {
-				Status: 404,
+				Status: 204,
 				Body: ''
 			};	
 		}
@@ -546,7 +546,7 @@ export class ApiClass {
 		}
 		else {
 			return {
-				Status: 404,
+				Status: 204,
 				Body: ''
 			};	
 		}
@@ -681,7 +681,7 @@ export class ApiClass {
 		}
 		else {
 			return {
-				Status: 404,
+				Status: 204,
 				Body: ''
 			};	
 		}
@@ -730,7 +730,7 @@ export class ApiClass {
 		}
 		else {
 			return {
-				Status: 404,
+				Status: 204,
 				Body: ''
 			};	
 		}
@@ -764,7 +764,7 @@ export class ApiClass {
 			let battle = await getCollaborationById(bossBattleId, roomCode);
 			if (!battle) {
 				return {
-					Status: 404,
+					Status: 204,
 					Body: ''
 				}
 			}
