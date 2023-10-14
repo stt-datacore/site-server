@@ -403,13 +403,13 @@ router.post('/postBossBattleTrials', async (req: Request, res: Response, next) =
 	try {		
 		let bossBattleId = req.body.bossBattleId as number;
 		let chainIndex = req.body.chainIndex as number;
-		let Trials = req.body.Trials as CrewTrial[];
+		let trials = req.body.trials as CrewTrial[];
 
-		if (!bossBattleId || !chainIndex || !Trials) {
+		if (!bossBattleId || !chainIndex || !trials) {
 			res.status(400).send("Bad data");
 		}
 
-		let apiResult = await DataCoreAPI.mongoPostTrials(bossBattleId, chainIndex, Trials);
+		let apiResult = await DataCoreAPI.mongoPostTrials(bossBattleId, chainIndex, trials);
 
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
