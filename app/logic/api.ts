@@ -518,7 +518,7 @@ export class ApiClass {
 		
 		if (!dbid && !trackerId) return {
 				Status: 400,
-				Body: 'No Input'
+				Body: { result: "bad input" }
 			} 
 
 		try {
@@ -653,7 +653,7 @@ export class ApiClass {
 		
 		if (!dbid && !trackerId) return {
 				Status: 400,
-				Body: 'No Input'
+				Body: { result: "bad input" }
 			} 
 
 		try {
@@ -698,7 +698,7 @@ export class ApiClass {
 		
 		if (!dbid && !trackerId) return {
 				Status: 400,
-				Body: 'No Input'
+				Body: { result: "bad input" }
 			} 
 
 		try {
