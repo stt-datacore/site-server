@@ -178,21 +178,21 @@ export async function postOrPutBossBattle(
     let result = true;
     
     if (collections.bossBattles) {            
-        let roomCode = seedrandom.default(battle.bossBattleId.toString())().toLocaleString();
-        let insres = await collections.profiles?.updateOne(
+        let roomCode = (seedrandom.default(battle.bossBattleId.toString())() * 1000000).toString();
+        let insres = await collections.bossBattles?.updateOne(
             { bossBattleId: battle.bossBattleId }, 
             { 
                 $set: { 
                     ... battle,
                     roomCode 
-                } as IFBB_BossBattle_Document
+                } as BossBattleDocument
             }, 
             { 
                 upsert: true 
             }
         );
 
-        result &&= !!insres && !!insres.upsertedId;
+        result &&= !!insres && (!!insres.upsertedId || !!insres.matchedCount || !!insres.modifiedCount);
         return result ? 201 : 400;
     }
 
@@ -259,8 +259,8 @@ export async function getCollaborationById(
     if (collections.bossBattles && collections.solves && collections.trials && (!!bossBattleId || !!roomCode)) {
         let bossBattleDoc: BossBattleDocument | null = null;
         
-        if (bossBattleDoc) {
-            bossBattleDoc = await collections.bossBattles.findOne<WithId<BossBattleDocument>>({ bossBattleId }) as BossBattleDocument;
+        if (bossBattleId) {
+            bossBattleDoc = await collections.bossBattles.findOne<BossBattleDocument>({ bossBattleId: bossBattleId }) as BossBattleDocument;
         }
         else if (roomCode) {
             bossBattleDoc = await collections.bossBattles.findOne<WithId<BossBattleDocument>>({ roomCode }) as BossBattleDocument;

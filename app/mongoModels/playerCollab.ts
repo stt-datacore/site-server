@@ -43,7 +43,7 @@ export class BossBattleDocument implements IFBB_BossBattle_Document {
         public chain: Chain,
         public description: string,
         public roomCode: string,
-        public timeStamp: Date,
+        public timeStamp: Date = new Date(),
         public id?: ObjectId) {
     }        
 }
@@ -53,7 +53,7 @@ export class SolveDocument implements IFBB_Solve_Document {
         public bossBattleId: number,
         public chainIndex: number,
         public solve: Solve,
-        public timeStamp: Date,
+        public timeStamp: Date = new Date(),
         public id?: ObjectId) {
     }
 };
@@ -63,7 +63,7 @@ export class TrialDocument implements IFBB_Trial_Document {
         public bossBattleId: number,
         public chainIndex: number,
         public trial: CrewTrial,
-        public timeStamp: Date,
+        public timeStamp: Date = new Date(),
         public id?: ObjectId | undefined) {
     }
 }
