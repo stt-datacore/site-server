@@ -422,7 +422,7 @@ export class ApiClass {
 		else {
 			return {
 				Status: 204,
-				Body: ''
+				Body: null
 			};	
 		}
 
@@ -460,7 +460,7 @@ export class ApiClass {
 		else {
 			return {
 				Status: 204,
-				Body: ''
+				Body: []
 			};	
 		}
 
@@ -547,7 +547,7 @@ export class ApiClass {
 		else {
 			return {
 				Status: 204,
-				Body: ''
+				Body: []
 			};	
 		}
 
@@ -682,7 +682,7 @@ export class ApiClass {
 		else {
 			return {
 				Status: 204,
-				Body: ''
+				Body: []
 			};	
 		}
 
@@ -731,7 +731,7 @@ export class ApiClass {
 		else {
 			return {
 				Status: 204,
-				Body: ''
+				Body: { voyages: [], assignments: [] }
 			};	
 		}
 
@@ -745,13 +745,13 @@ export class ApiClass {
 			let res = await postOrPutBossBattle(battle);
 			return {
 				Status: res,
-				Body: ''
+				Body: { result: "ok" }
 			}
 		}
 		catch {
 			return {
 				Status: 500,
-				Body: ''
+				Body: { result: "fail" }
 			}
 		}
 	}
@@ -765,7 +765,7 @@ export class ApiClass {
 			if (!battle) {
 				return {
 					Status: 204,
-					Body: ''
+					Body: []
 				}
 			}
 			return {
@@ -776,7 +776,7 @@ export class ApiClass {
 		catch {
 			return {
 				Status: 500,
-				Body: ''
+				Body: { result: "fail" }
 			}
 		}
 
@@ -790,13 +790,13 @@ export class ApiClass {
 			let res = await postOrPutSolves(bossBattleId, chainIndex, solves);
 			return {
 				Status: res,
-				Body: ''
+				Body: { result: "ok" }
 			}
 		}
 		catch {
 			return {
 				Status: 500,
-				Body: ''
+				Body: { result: "fail" }
 			}
 		}
 	}
@@ -809,13 +809,13 @@ export class ApiClass {
 			let res = await postOrPutTrials(bossBattleId, chainIndex, trials);
 			return {
 				Status: res,
-				Body: ''
+				Body: { result: "ok" }
 			}
 		}
 		catch {
 			return {
 				Status: 500,
-				Body: ''
+				Body: { result: "fail" }
 			}
 		}
 	}
