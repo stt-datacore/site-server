@@ -62,6 +62,7 @@ export async function postOrPutProfile(dbid: number, player_data: PlayerData, ti
             return !!(insres?.insertedId) ? dbidHash : 400;
         } else {            
             res.playerData = player_data;
+            res.dbidHash = dbidHash;
             res.timeStamp = timeStamp;
             res.captainName = profile.captainName;
             res.buffConfig = profile.buffConfig;
@@ -73,7 +74,7 @@ export async function postOrPutProfile(dbid: number, player_data: PlayerData, ti
                 { $set: res }
             );
             
-            return !!(updres?.modifiedCount) ? 200 : 400;
+            return !!(updres?.modifiedCount) ? dbidHash : 400;
         }    
     }
 
