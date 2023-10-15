@@ -9,6 +9,7 @@ import { BossBattleDocument, IFBB_BossBattle_Document, SolveDocument, TrialDocum
 import * as seedrandom from 'seedrandom';
 import { Collaboration, CrewTrial, Solve } from "../datacore/boss";
 import { createProfileObject } from "./profiletools";
+import { createHash } from 'node:crypto'
 
 export async function getProfile(dbid: number) {
     let res: PlayerProfile | null = null;
@@ -19,6 +20,18 @@ export async function getProfile(dbid: number) {
 
     return res;
 }
+
+export async function getProfileByHash(dbidHash: string) {
+    let res: PlayerProfile | null = null;
+
+    if (collections.profiles) {
+        res = (await collections.profiles.findOne<WithId<PlayerProfile>>({ dbidHash })) as PlayerProfile;    
+    }
+
+    return res;
+}
+
+
 export async function getProfiles(fleet?: number, squadron?: number) {
     let res: PlayerProfile[] | null = null;
 
@@ -41,11 +54,12 @@ export async function postOrPutProfile(dbid: number, player_data: PlayerData, ti
         let fleet = player_data.player.fleet?.id ?? 0;
         let squadron = player_data.player.squad?.id ?? 0;
         let profile = createProfileObject(dbid.toString(), player_data, timeStamp);
-
+        let dbidHash = createHash('sha3-256').update(dbid.toString()).digest('hex');
+        
         if (!res) {
-            res = new PlayerProfile(dbid, player_data, timeStamp, profile.captainName, profile.buffConfig, profile.shortCrewList, fleet, squadron);
+            res = new PlayerProfile(dbid, dbidHash, player_data, timeStamp, profile.captainName, profile.buffConfig, profile.shortCrewList, fleet, squadron);
             let insres = await collections.profiles?.insertOne(res);            
-            return !!(insres?.insertedId) ? 201 : 400;
+            return !!(insres?.insertedId) ? dbidHash : 400;
         } else {            
             res.playerData = player_data;
             res.timeStamp = timeStamp;

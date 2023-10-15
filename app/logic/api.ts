@@ -8,7 +8,7 @@ import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile } from './
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB } from './telemetry';
 import { getSTTToken } from './stttools';
-import { getAssignmentsByDbid, getAssignmentsByTrackerId, getCollaborationById, getProfile, getProfiles, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutAssignmentsMany, postOrPutBossBattle, postOrPutProfile, postOrPutSolves, postOrPutTrials, postOrPutVoyage } from './mongotools';
+import { getAssignmentsByDbid, getAssignmentsByTrackerId, getCollaborationById, getProfile, getProfileByHash, getProfiles, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutAssignmentsMany, postOrPutBossBattle, postOrPutProfile, postOrPutSolves, postOrPutTrials, postOrPutVoyage } from './mongotools';
 import { PlayerProfile } from '../mongoModels/playerProfile';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
@@ -349,11 +349,12 @@ export class ApiClass {
 		Logger.info('Post player data', { dbid, logData });
 		
 		const timeStamp = new Date();
-		let res = 0;
+		let res: string | number = 0;
 
 		try {
 			res = await postOrPutProfile(dbid, player_data, timeStamp);			
-			if (res >= 300) {
+			
+			if (typeof res === 'number' && res >= 300) {
 				return {
 					Status: res,
 					Body: {
@@ -381,23 +382,42 @@ export class ApiClass {
 		this._player_data[dbid] = new Date().toUTCString();
 		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
 
-		return {
-			Status: res,
-			Body: {
-				'dbid': dbid,
-				timeStamp: timeStamp.toISOString()
-			}
-		};
+		if (typeof res === 'string') {
+			return {
+				Status: 201,
+				Body: {
+					'dbid': dbid,
+					'dbidHash': res,
+					timeStamp: timeStamp.toISOString()
+				}
+			};
+
+		}
+		else {
+			return {
+				Status: res,
+				Body: {
+					'dbid': dbid,
+					timeStamp: timeStamp.toISOString()
+				}
+			};
+	
+		}
 	}
 
-	async mongoGetPlayerData(dbid: number): Promise<ApiResult> {
+	async mongoGetPlayerData(dbid?: number, hash?: string): Promise<ApiResult> {
 		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
 
 		Logger.info('Get player data', { dbid });
 		let player: PlayerProfile | null = null;
 
 		try {
-			player = await getProfile(dbid);
+			if (dbid) {
+				player = await getProfile(dbid);
+			}
+			else if (hash) {
+				player = await getProfileByHash(hash);
+			}			
 		} catch (err) {
 			if (typeof err === 'string') {
 				return {
@@ -421,7 +441,7 @@ export class ApiClass {
 		}
 		else {
 			return {
-				Status: 200, // 204
+				Status: 404, // 204
 				Body: null
 			};	
 		}

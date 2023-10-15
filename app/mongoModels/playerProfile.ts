@@ -3,6 +3,7 @@ import { PlayerData } from "../datacore/player";
 
 export class PlayerProfile {
     constructor(public dbid: number, 
+        public dbidHash: string,
         public playerData: PlayerData, 
         public timeStamp: Date, 
         public captainName: string,

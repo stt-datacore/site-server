@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { DataCoreAPI, LogData } from '../logic';
+import { ApiResult, DataCoreAPI, LogData } from '../logic';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
 import { IFBB_BossBattle_Document } from '../mongoModels/playerCollab';
@@ -224,14 +224,26 @@ router.post('/postProfile', async (req: Request, res: Response, next) => {
 });
 
 router.get('/getProfile', async (req: Request, res: Response, next) => {
-	if (!req.query || !req.query.dbid) {
+	if (!req.query || (!req.query.dbid && !req.query.dbidhash)) {
 		res.status(400).send('Whaat?');
 		return;
 	}
 
 	try {
-		let apiResult = await DataCoreAPI.mongoGetPlayerData(Number.parseInt(req.query.dbid.toString()));
-		res.status(apiResult.Status).send(apiResult.Body);
+		let apiResult: ApiResult | undefined = undefined;
+
+		if (req.query.dbid) {
+			apiResult = await DataCoreAPI.mongoGetPlayerData(Number.parseInt(req.query.dbid.toString()));
+		}
+		else if (req.query.dbidhash) {
+			apiResult = await DataCoreAPI.mongoGetPlayerData(undefined, req.query.dbidhash.toString());
+		}
+		if (apiResult) {
+			res.status(apiResult.Status).send(apiResult.Body);
+		}
+		else {
+			res.status(500).send();
+		}
 	} catch (e) {
 		next(e);
 	}
