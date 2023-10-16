@@ -68,7 +68,8 @@ export async function postOrPutProfile(dbid: number, player_data: PlayerData, ti
             res.buffConfig = profile.buffConfig;
             res.shortCrewList = profile.shortCrewList;
             res.fleet = fleet;
-            res.squadron = squadron;            
+            res.squadron = squadron;          
+            res.timeStamp = new Date();  
             let updres = await collections.profiles.updateOne(
                 { dbid },
                 { $set: res }
