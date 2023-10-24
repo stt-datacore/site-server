@@ -145,8 +145,8 @@ export async function postOrPutAssignment(
     crew: string,
     assignment: ITrackedAssignment,
     timeStamp: Date = new Date()) {
-    if (collections.profiles) {        
-        let insres = await collections.profiles?.insertOne({ 
+    if (collections.trackedAssignments) {        
+        let insres = await collections.trackedAssignments.insertOne({ 
                 dbid,                
                 crew,     
                 trackerId: assignment.tracker_id,
@@ -166,7 +166,7 @@ export async function postOrPutAssignmentsMany(
     assignments: ITrackedAssignment[],
     timeStamp: Date = new Date()) {
     let result = true;
-    if (collections.profiles) {    
+    if (collections.trackedAssignments) {    
         const newdata = [] as TrackedCrew[];
         let x = 0;
         for (let crewMember of crew) {
@@ -181,7 +181,7 @@ export async function postOrPutAssignmentsMany(
             } as TrackedCrew);
             
         }
-        let insres = await collections.profiles?.insertMany(newdata);
+        let insres = await collections.trackedAssignments.insertMany(newdata);
         result &&= !!insres && Object.keys(insres.insertedIds).length === newdata.length;
         return result ? 201 : 400;
     }
