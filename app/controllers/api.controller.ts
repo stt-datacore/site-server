@@ -321,7 +321,7 @@ router.post('/postAssignments', async (req: Request, res: Response, next) => {
 	
 	try {
 		let dbid = req.body.dbid;
-		let assign = req.body.assigments as { [key: string]: ITrackedAssignment[] };
+		let assign = req.body.assignments as { [key: string]: ITrackedAssignment[] };
 		let crew = Object.keys(assign);
 		let assignmap = Object.values(assign);
 		let assignments = [] as ITrackedAssignment[];
