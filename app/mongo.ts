@@ -7,6 +7,7 @@ export const collections: {
     solves?: mongoDB.Collection;
     trials?: mongoDB.Collection;
     bossBattles?: mongoDB.Collection;
+    users?: mongoDB.Collection;    
 } = {}
 // test gittower
 require('dotenv').config();
@@ -25,6 +26,12 @@ export async function connectToMongo() {
         const solves: mongoDB.Collection = db.collection(process.env.MONGO_FBB_SOLVES_COLLECTION as string);    
         const trials: mongoDB.Collection = db.collection(process.env.MONGO_FBB_TRIALS_COLLECTION as string);    
         const fbb: mongoDB.Collection = db.collection(process.env.MONGO_FBB_COLLECTION as string);    
+        const users: mongoDB.Collection = db.collection(process.env.MONGO_DISCORD_USERS_COLLECTION as string);    
+
+        collections.users = users;
+        collections.users.createIndex("discordUserName");
+        collections.users.createIndex("discordUserId");
+        collections.users.createIndex("discordUserDiscriminator");
 
         collections.profiles = profilesCollection;
         collections.profiles.createIndex("dbid");
