@@ -85,7 +85,7 @@ export class ApiClass {
 
 		try {
 			await uploadProfile(dbid, player_data, new Date());
-		} catch (err) {
+		} catch (err: any) {
 			return {
 				Status: 500,
 				Body: err.toString()
