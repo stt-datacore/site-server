@@ -4,6 +4,7 @@ export const collections: {
     profiles?: mongoDB.Collection;
     trackedVoyages?: mongoDB.Collection;
     trackedAssignments?: mongoDB.Collection;
+    telemetry?: mongoDB.Collection;
     solves?: mongoDB.Collection;
     trials?: mongoDB.Collection;
     bossBattles?: mongoDB.Collection;
@@ -23,6 +24,8 @@ export async function connectToMongo() {
         const profilesCollection: mongoDB.Collection = db.collection(process.env.MONGO_PROFILE_COLLECTION as string);
         const trackedVoyagesCollection: mongoDB.Collection = db.collection(process.env.MONGO_TRACKED_VOYAGES_COLLECTION as string);
         const trackedAssignmentsCollection: mongoDB.Collection = db.collection(process.env.MONGO_TRACKED_ASSIGNMENTS_COLLECTION as string);
+        const telemetry: mongoDB.Collection = db.collection(process.env.MONGO_TELEMETRY_VOYAGE_COLLECTION as string);
+        
         const solves: mongoDB.Collection = db.collection(process.env.MONGO_FBB_SOLVES_COLLECTION as string);    
         const trials: mongoDB.Collection = db.collection(process.env.MONGO_FBB_TRIALS_COLLECTION as string);    
         const fbb: mongoDB.Collection = db.collection(process.env.MONGO_FBB_COLLECTION as string);    
@@ -39,6 +42,10 @@ export async function connectToMongo() {
         collections.profiles.createIndex("fleet");
         collections.profiles.createIndex("squadron");
     
+        collections.telemetry = telemetry;
+        collections.telemetry.createIndex("crewSymbol");
+        collections.telemetry.createIndex("voyageDate");
+
         collections.trackedVoyages = trackedVoyagesCollection;    
         
         collections.trackedVoyages.createIndex("dbid");

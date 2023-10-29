@@ -5,6 +5,12 @@ import {
   IVoyageHistory,
 } from "../datacore/voyage";
 
+export interface ITelemetryVoyage {
+    crewSymbol: string;
+    estimatedDuration: number;
+    voyageDate: Date;
+}
+
 export interface ITrackedVoyageRecord {
     dbid: number;
     trackerId: number;
@@ -23,6 +29,15 @@ export interface ITrackedCrewRecord {
 export interface ITrackedDataRecord {
     voyages: ITrackedVoyageRecord[];
     crew: ITrackedCrewRecord[];
+}
+
+export class TelemetryVoyage implements ITelemetryVoyage {
+  constructor(
+    public crewSymbol: string,
+    public estimatedDuration: number,
+    public voyageDate: Date = new Date(),
+    public id?: ObjectId
+  ) {}
 }
 
 export class TrackedVoyage implements ITrackedVoyageRecord {

@@ -4,7 +4,7 @@ import { collections } from "../mongo";
 import { PlayerProfile } from "../mongoModels/playerProfile";
 import { PlayerData } from "../datacore/player";
 import { ITrackedAssignment, ITrackedVoyage, IVoyageHistory } from "../datacore/voyage";
-import { TrackedCrew, TrackedVoyage } from "../mongoModels/voyageHistory";
+import { ITelemetryVoyage, TelemetryVoyage, TrackedCrew, TrackedVoyage } from "../mongoModels/voyageHistory";
 import { BossBattleDocument, IFBB_BossBattle_Document, SolveDocument, TrialDocument } from "../mongoModels/playerCollab";
 import * as seedrandom from 'seedrandom';
 import { Collaboration, CrewTrial, Solve } from "../datacore/boss";
@@ -184,6 +184,47 @@ export async function postOrPutAssignmentsMany(
         let insres = await collections.trackedAssignments.insertMany(newdata);
         result &&= !!insres && Object.keys(insres.insertedIds).length === newdata.length;
         return result ? 201 : 400;
+    }
+
+    return 500;
+}
+
+export async function getTelemetry(a: Date | string, b?: Date) {
+    let res: TelemetryVoyage[] | null = null;
+    b ??= new Date();
+    if (collections.telemetry) {
+        if (typeof a !== 'string') {
+            let result = collections.telemetry.find<WithId<TelemetryVoyage>>({ 
+                voyageDate: {
+                    $gt: a,
+                    $lt: b
+                }
+            });
+            
+            res = await result?.toArray();
+        }
+        else {
+            let result = collections.telemetry.find<WithId<TelemetryVoyage>>({ 
+                crewSymbol: a
+            });
+            
+            res = await result?.toArray();
+        }
+    }
+
+    return res;
+}
+
+export async function postTelemetry(
+    voyage: ITelemetryVoyage,
+    timeStamp: Date = new Date()) {
+    if (collections.telemetry) {        
+        let insres = await collections.telemetry?.insertOne({                 
+                ... voyage,
+                voyageDate: timeStamp
+            } as TelemetryVoyage);
+        
+        return !!(insres?.insertedId) ? 201 : 400;
     }
 
     return 500;
