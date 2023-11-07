@@ -64,6 +64,7 @@ export interface ITrackedAssignmentsByCrew {
 	[key: string]: ITrackedAssignment[];	// key is crew.symbol
 };
 
+
 export interface ITrackedAssignment {
 	tracker_id: number;
 	slot: number;	// Slot index where crew is seated
