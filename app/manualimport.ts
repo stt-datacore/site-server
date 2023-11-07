@@ -43,7 +43,7 @@ require('dotenv').config();
     });
 
     // Now upload the profiles
-    profiles.forEach(async (csvProfile) => {
+    profiles.forEach(async (csvProfile: any) => {
         let profileDB = await uploadProfile(csvProfile.dbid, JSON.parse(fs.readFileSync(`${process.env.PROFILE_DATA_PATH}/${csvProfile.dbid}`, 'utf-8')), csvProfile.lastUpdate);
 
         if (!Number.isNaN(csvProfile.userId)) {
