@@ -1,6 +1,4 @@
 import { VoyageRecord } from '../models/VoyageRecord';
-import { Op } from 'sequelize';
-import { Sequelize } from 'sequelize-typescript';
 
 export async function recordTelemetryDB(type: string, data: any) {
 	switch (type) {

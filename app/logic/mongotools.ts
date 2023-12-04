@@ -3,13 +3,13 @@ import { WithId } from "mongodb";
 import { collections } from "../mongo";
 import { PlayerProfile } from "../mongoModels/playerProfile";
 import { PlayerData } from "../datacore/player";
-import { ITrackedAssignment, ITrackedVoyage, IVoyageHistory } from "../datacore/voyage";
+import { ITrackedAssignment, ITrackedVoyage } from "../datacore/voyage";
 import { ITelemetryVoyage, TelemetryVoyage, TrackedCrew, TrackedVoyage } from "../mongoModels/voyageHistory";
 import { BossBattleDocument, IFBB_BossBattle_Document, SolveDocument, TrialDocument } from "../mongoModels/playerCollab";
 import * as seedrandom from 'seedrandom';
 import { Collaboration, CrewTrial, Solve } from "../datacore/boss";
 import { createProfileObject } from "./profiletools";
-import { createHash } from 'node:crypto'
+import { createHash } from 'node:crypto';
 
 export async function getProfile(dbid: number) {
     let res: PlayerProfile | null = null;

@@ -273,7 +273,7 @@ router.post('/postVoyage', async (req: Request, res: Response, next) => {
 	try {
 		let dbid = req.body.dbid;
 		let voyage = req.body.voyage as ITrackedVoyage;		
-		let apiResult = await DataCoreAPI.mongoPostTrackedVoyage(dbid, voyage, getLogDataFromReq(req));
+		let apiResult = await DataCoreAPI.sqlitePostTrackedVoyage(dbid, voyage, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -289,7 +289,7 @@ router.get('/getVoyages', async (req: Request, res: Response, next) => {
 	try {		
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
-		let apiResult = await DataCoreAPI.mongoGetTrackedVoyages(dbid, trackerId);
+		let apiResult = await DataCoreAPI.sqliteGetTrackedVoyages(dbid, trackerId);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
@@ -303,10 +303,10 @@ router.post('/postAssignment', async (req: Request, res: Response, next) => {
 	}	
 	
 	try {
-		let dbid = req.body.dbid;
+		let dbid = Number.parseInt(req.body.dbid);
 		let crew = req.body.crew;		
 		let assignment = req.body.assignment as ITrackedAssignment;
-		let apiResult = await DataCoreAPI.mongoPostTrackedAssignment(dbid, crew, assignment, getLogDataFromReq(req));
+		let apiResult = await DataCoreAPI.sqlitePostTrackedAssignment(dbid, crew, assignment, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -320,7 +320,7 @@ router.post('/postAssignments', async (req: Request, res: Response, next) => {
 	}	
 	
 	try {
-		let dbid = req.body.dbid;
+		let dbid = Number.parseInt(req.body.dbid);
 		let assign = req.body.assignments as { [key: string]: ITrackedAssignment[] };
 		let crew = Object.keys(assign);
 		let assignmap = Object.values(assign);
@@ -337,7 +337,7 @@ router.post('/postAssignments', async (req: Request, res: Response, next) => {
 			x++;
 		}
 
-		let apiResult = await DataCoreAPI.mongoPostTrackedAssignmentsMany(dbid, finalcrew, assignments, getLogDataFromReq(req));
+		let apiResult = await DataCoreAPI.sqlitePostTrackedAssignmentsMany(dbid, finalcrew, assignments, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -353,7 +353,7 @@ router.get('/getAssignments', async (req: Request, res: Response, next) => {
 	try {
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
-		let apiResult = await DataCoreAPI.mongoGetTrackedVoyages(dbid, trackerId);
+		let apiResult = await DataCoreAPI.sqliteGetTrackedVoyages(dbid, trackerId);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
@@ -369,7 +369,7 @@ router.get('/getTrackedData', async (req: Request, res: Response, next) => {
 	try {
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
-		let apiResult = await DataCoreAPI.mongoGetTrackedData(dbid, trackerId);
+		let apiResult = await DataCoreAPI.sqliteGetTrackedData(dbid, trackerId);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);

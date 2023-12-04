@@ -8,12 +8,7 @@ import expressWinston from 'express-winston';
 import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
-import { collections, connectToMongo } from './mongo';
-import { VoyageRecord } from './models/VoyageRecord';
-import { Op, Sequelize } from 'sequelize';
-import { ITelemetryVoyage, TelemetryVoyage } from './mongoModels/voyageHistory';
-import fs from 'fs'
-import { CrewMember } from './datacore/crew';
+import { connectToMongo } from './mongo';
 require('dotenv').config();
 
 // Create a new express application instance
@@ -21,6 +16,8 @@ const app: express.Application = express();
 
 // When used with nginx reverse proxy, pick a rerouting port
 let port: number = 4420;
+
+// let port: number = 4421;
 
 if (process.argv.length > 2) {
 	port = parseInt(process.argv[2]);
@@ -92,77 +89,6 @@ const cycleInitMongo = async (force?: boolean) => {
 
 	setTimeout(async () => {
 		await cycleInitMongo();
-		// if (DataCoreAPI.mongoAvailable && collections.telemetry) {
-		// 	let response = collections.telemetry.aggregate([
-		// 		{$group : {_id: "$crewSymbol", count: { $sum: 1 } } }
-		// 	]);
-		// 	if (response) {
-		// 		let result = await response.toArray();
-		// 		console.log(`${result.length} records queried.`);
-		// 		console.log(result);
-		// 	}
-		// 	// let response = collections.telemetry.find({ crewSymbol: 'mariner_mirror_crew' });
-		// 	// if (response) {
-		// 	// 	console.log(await response.toArray());
-		// 	// }
-		// }
-
-		// if (DataCoreAPI.mongoAvailable) {
-		// 	console.log("Connection Established, Querying Old Telemetry Data...");
-		// 	const baseFilter = {
-		// 		group: ['crewSymbol'],
-		// 		attributes: ['crewSymbol', [Sequelize.fn('COUNT', Sequelize.col('crewSymbol')), 'crewCount'], [Sequelize.fn('AVG', Sequelize.col('estimatedDuration')), 'averageDuration']],
-		// 	} as any;
-		
-		// 	if (collections.telemetry){ 
-		// 		console.log("Wiping current MongoDB telemetry collection...");
-		// 		await collections.telemetry.deleteMany({});
-		// 		console.log("Done.");
-		// 	}
-
-		// 	const crews = JSON.parse(fs.readFileSync("../website/static/structured/crew.json", 'utf8')) as CrewMember[];
-			
-		// 	for (let crew of crews) {
-
-		// 		console.log(`Reading old data from '${crew.name}' ... `);
-				
-		// 		let data: VoyageRecord[] | null;
-				
-		// 		data = await VoyageRecord.findAll({ where: { crewSymbol: crew.symbol } });
-				
-		// 		if (!data?.length) {
-		// 			console.log("No data, skipping...");					
-		// 			continue;
-		// 		}
-
-		// 		console.log(`Old data from '${crew.name}': ${data.length} Records...`);								
-				
-		// 		if (collections.telemetry) {
-					
-		// 			let mapped = data.map(item => { return { 
-		// 				crewSymbol: item.crewSymbol,
-		// 				voyageDate: item.voyageDate,
-		// 				estimatedDuration: item.estimatedDuration ?? 0
-		// 			 } as ITelemetryVoyage });
-		// 			data.length = 0;
-		// 			data = null;
-
-		// 			console.log(`Inserting records from crew '${mapped[0].crewSymbol}' into Mongo ...`);
-		// 			collections.telemetry.insertMany(mapped);
-		// 			console.log("Done. Moving on to next set...");
-		// 		}
-		// 		else {
-		// 			data.length = 0;
-		// 			data = null;	
-
-		// 			console.log("Mongo is not found!");
-		// 			break;
-		// 		}
-		// 	}
-
-		// 	console.log("Populating MongoDB completed. You may quit.");
-
-		// }
 	})
 
 	// Serve the application at the given port

@@ -14,8 +14,9 @@ import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
 import { TrackedCrew, TrackedVoyage } from '../mongoModels/voyageHistory';
 import { connectToMongo } from '../mongo';
-import { IFBB_BossBattle_Document, IFBB_Solve_Document, IFBB_Trial_Document } from '../mongoModels/playerCollab';
+import { IFBB_BossBattle_Document } from '../mongoModels/playerCollab';
 import { CrewTrial, Solve } from '../datacore/boss';
+import { postOrPutVoyage_sqlite, getVoyagesByDbid_sqlite, getVoyagesByTrackerId_sqlite, postOrPutAssignmentsMany_sqlite, getAssignmentsByDbid_sqlite, getAssignmentsByTrackerId_sqlite, postOrPutAssignment_sqlite } from './voyagetracker';
 
 require('dotenv').config();
 
@@ -839,6 +840,313 @@ export class ApiClass {
 			}
 		}
 	}
+
+
+
+
+	async sqlitePostTrackedVoyage(dbid: number, voyage: ITrackedVoyage, logData: LogData): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
+		Logger.info('Tracked Voyage data', { dbid, voyage, logData });
+		
+		const timeStamp = new Date();
+
+		try {
+			let res = await postOrPutVoyage_sqlite(dbid, voyage, timeStamp);
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 201,
+			Body: {
+				'dbid': dbid,
+				'trackerId': voyage.tracker_id,
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+	async sqliteGetTrackedVoyages(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
+		Logger.info('Get voyage data', { dbid, trackerId });
+		let voyages: TrackedVoyage[] | null = null;
+		
+		if (!dbid && !trackerId) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+			
+		if (!dbid) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+
+		try {
+			if (trackerId) {
+				voyages = (trackerId ? await getVoyagesByTrackerId_sqlite(dbid, trackerId) : null);
+			}
+			else {
+				voyages = await getVoyagesByDbid_sqlite(dbid)
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (voyages) {
+			return {
+				Status: 200,
+				Body: voyages
+			};	
+		}
+		else {
+			return {
+				Status: 200, // 204
+				Body: []
+			};	
+		}
+
+	}
+
+	
+
+	async sqlitePostTrackedAssignment(dbid: number, crew: string, assignment: ITrackedAssignment, logData: LogData): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
+		Logger.info('Tracked Voyage data', { dbid, voyage: assignment, logData });
+		
+		const timeStamp = new Date();
+
+		try {
+			let res = await postOrPutAssignment_sqlite(dbid, crew, assignment, timeStamp);
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 201,
+			Body: {
+				'dbid': dbid,
+				'trackerId': assignment.tracker_id,
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+
+	async sqlitePostTrackedAssignmentsMany(dbid: number, crew: string[], assignments: ITrackedAssignment[], logData: LogData): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
+		Logger.info('Tracked Voyage data', { dbid, voyage: assignments, logData });
+		
+		const timeStamp = new Date();
+		
+		try {
+			let res = await postOrPutAssignmentsMany_sqlite(dbid, crew, assignments, timeStamp);
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 201,
+			Body: {
+				'dbid': dbid,
+				'trackerIds': assignments.map(a => a.tracker_id),
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+
+	async sqliteGetTrackedAssignments(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
+		Logger.info('Get voyage data', { dbid, trackerId });
+		let assignments: TrackedCrew[] | null = null;
+		
+		if (!dbid && !trackerId) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+
+		if (!dbid) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+	
+		try {
+			if (trackerId) {
+				assignments = (trackerId ? await getAssignmentsByTrackerId_sqlite(dbid, trackerId) : null);
+			}
+			else {
+				assignments = await getAssignmentsByDbid_sqlite(dbid);
+			}
+			
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (assignments) {
+			return {
+				Status: 200,
+				Body: assignments
+			};	
+		}
+		else {
+			return {
+				Status: 200, // 204
+				Body: []
+			};	
+		}
+
+	}
+
+
+	async sqliteGetTrackedData(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+
+		Logger.info('Get tracked data', { dbid, trackerId });
+		let voyages: TrackedVoyage[] | null = null;
+		let assignments: TrackedCrew[] | null = null;
+		
+		if (!dbid && !trackerId) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+
+		if (!dbid) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+
+		try {
+			if (trackerId) {
+				voyages = (trackerId ? await getVoyagesByTrackerId_sqlite(dbid, trackerId) : null);
+				assignments = (trackerId ? await getAssignmentsByTrackerId_sqlite(dbid, trackerId) : null);
+			}
+			else {
+				voyages = await getVoyagesByDbid_sqlite(dbid);
+				assignments = await getAssignmentsByDbid_sqlite(dbid);
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (voyages || assignments) {
+			return {
+				Status: 200,
+				Body: {
+					voyages,
+					assignments
+				}
+			};	
+		}
+		else {
+			return {
+				Status: 200, // 204
+				Body: { voyages: [], assignments: [] }
+			};	
+		}
+
+	}
+
 
 
 }
