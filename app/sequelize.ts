@@ -6,6 +6,7 @@ import { Comment } from './models/Comment';
 import { VoyageRecord } from './models/VoyageRecord';
 import fs from 'fs';
 import { TrackedVoyage, TrackedCrew } from './models/Tracked';
+import { BossBattleDocument, SolveDocument, TrialDocument } from './models/BossBattles';
 
 require('dotenv').config();
 
@@ -14,7 +15,7 @@ export const sequelize = new Sequelize(process.env.DB_CONNECTION_STRING!, {
 	logging: false
 });
 
-export async function makeSql(dbid: number) {
+export async function makeSql(idnumber: number, makeFleet?: boolean) {
 	var dpath = process.env.PROFILE_DATA_PATH;
 	if (!dpath) return null;
 	if (!fs.existsSync(dpath)) {
@@ -30,21 +31,40 @@ export async function makeSql(dbid: number) {
 		}
 		if (!fs.existsSync(dpath)) {
 			fs.mkdirSync(dpath);
-		}	
-		dpath += "/" + dbid.toString() + ".sqlite";
+		}
+		
+		if (makeFleet) {
+			dpath += "/fleet";
+			if (!fs.existsSync(dpath)) {
+				fs.mkdirSync(dpath);
+			}
+		}
+		
+		dpath += "/" + idnumber.toString() + ".sqlite";
 	}
 
 	dpath = "sqlite:" + dpath;
 
-	const newdb = new Sequelize(dpath, {
-		models: [TrackedVoyage, TrackedCrew],
-		logging: false
-	});
-
-	if (newdb) {
-		await TrackedVoyage.sync();
-		await TrackedCrew.sync();
+	if (makeFleet) {
+		const newdb = new Sequelize(dpath, {
+			models: [SolveDocument, TrialDocument, BossBattleDocument],
+			logging: false
+		});
+	
+		if (newdb) {
+			await newdb.sync();
+		}
+		return newdb;
 	}
-
-	return newdb;
+	else {
+		const newdb = new Sequelize(dpath, {
+			models: [TrackedVoyage, TrackedCrew],
+			logging: false
+		});
+	
+		if (newdb) {
+			await newdb.sync();
+		}
+		return newdb;
+	}
 }

@@ -1,11 +1,32 @@
-import { ObjectId } from "mongodb";
 import { Column, CreatedAt, DataType, Model, Table } from "sequelize-typescript";
 import { ITrackedVoyage, ITrackedAssignment } from "../datacore/voyage";
-import {
-    ITelemetryVoyage,
-    ITrackedVoyageRecord,
-    ITrackedCrewRecord,
-} from "../mongoModels/voyageHistory";
+
+export interface ITelemetryVoyage {
+    crewSymbol: string;
+    estimatedDuration: number;
+    voyageDate: Date;
+}
+
+export interface ITrackedVoyageRecord {
+    dbid: number;
+    trackerId: number;
+    voyage: ITrackedVoyage;
+    timeStamp: Date;
+}
+
+export interface ITrackedCrewRecord {
+    dbid: number;
+    crew: string;
+    trackerId: number;
+    assignment: ITrackedAssignment;
+    timeStamp: Date; 
+}
+
+export interface ITrackedDataRecord {
+    voyages: ITrackedVoyageRecord[];
+    crew: ITrackedCrewRecord[];
+}
+
 
 
 @Table

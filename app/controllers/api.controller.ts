@@ -2,7 +2,7 @@ import { Router, Request, Response } from 'express';
 import { ApiResult, DataCoreAPI, LogData } from '../logic';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
-import { IFBB_BossBattle_Document } from '../mongoModels/playerCollab';
+import { IFBB_BossBattle_Document } from '../models/BossBattles';
 import { CrewTrial, Solve } from '../datacore/boss';
 
 // Assign router to the express.Router() instance
@@ -216,7 +216,7 @@ router.post('/postProfile', async (req: Request, res: Response, next) => {
 	}	
 	try {
 		let playerData = req.body as PlayerData;
-		let apiResult = await DataCoreAPI.mongoPostPlayerData(playerData.player.dbid, playerData, getLogDataFromReq(req));
+		let apiResult = await DataCoreAPI.postPlayerData(playerData.player.dbid.toString(), playerData, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -233,10 +233,10 @@ router.get('/getProfile', async (req: Request, res: Response, next) => {
 		let apiResult: ApiResult | undefined = undefined;
 
 		if (req.query.dbid) {
-			apiResult = await DataCoreAPI.mongoGetPlayerData(Number.parseInt(req.query.dbid.toString()));
+			apiResult = await DataCoreAPI.sqliteGetPlayerData(Number.parseInt(req.query.dbid.toString()));
 		}
 		else if (req.query.dbidhash) {
-			apiResult = await DataCoreAPI.mongoGetPlayerData(undefined, req.query.dbidhash.toString());
+			apiResult = await DataCoreAPI.sqliteGetPlayerData(undefined, req.query.dbidhash.toString());
 		}
 		if (apiResult) {
 			res.status(apiResult.Status).send(apiResult.Body);
@@ -249,21 +249,6 @@ router.get('/getProfile', async (req: Request, res: Response, next) => {
 	}
 });
 
-router.get('/getProfiles', async (req: Request, res: Response, next) => {
-	if (!req.query || (!req.query.fleet && !req.query.squadron )) {
-		res.status(400).send('Whaat?');
-		return;
-	}
-
-	try {		
-		let fleet = req.query?.fleet ? Number.parseInt(req.query.fleet.toString()) : undefined;
-		let squadron = req.query?.squadron ? Number.parseInt(req.query.squadron.toString()) : undefined;
-		let apiResult = await DataCoreAPI.mongoGetManyPlayers(fleet, squadron);
-		res.status(apiResult.Status).send(apiResult.Body);
-	} catch (e) {
-		next(e);
-	}
-});
 
 router.post('/postVoyage', async (req: Request, res: Response, next) => {
 	if (!req.body) {
@@ -388,7 +373,7 @@ router.post('/postBossBattle', async (req: Request, res: Response, next) => {
 			delete req.body.id;
 		}
 		let battle = req.body as IFBB_BossBattle_Document;
-		let apiResult = await DataCoreAPI.mongoPostBossBattle(battle);
+		let apiResult = await DataCoreAPI.sqlitePostBossBattle(battle);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -403,15 +388,16 @@ router.post('/postBossBattleSolves', async (req: Request, res: Response, next) =
 	}	
 	
 	try {		
+		let fleetId = req.body.fleetId as number;
 		let bossBattleId = req.body.bossBattleId as number;
 		let chainIndex = req.body.chainIndex as number;
 		let solves = req.body.solves as Solve[];
 
-		if (!bossBattleId || !chainIndex || !solves) {
+		if (!fleetId || !bossBattleId || !chainIndex || !solves) {
 			res.status(400).send("Bad data");
 		}
 
-		let apiResult = await DataCoreAPI.mongoPostSolves(bossBattleId, chainIndex, solves);
+		let apiResult = await DataCoreAPI.sqlitePostSolves(fleetId, bossBattleId, chainIndex, solves);
 
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
@@ -426,15 +412,16 @@ router.post('/postBossBattleTrials', async (req: Request, res: Response, next) =
 	}	
 	
 	try {		
+		let fleetId = req.body.fleetId as number;
 		let bossBattleId = req.body.bossBattleId as number;
 		let chainIndex = req.body.chainIndex as number;
 		let trials = req.body.trials as CrewTrial[];
 
-		if (!bossBattleId || !chainIndex || !trials) {
+		if (!fleetId || !bossBattleId || !chainIndex || !trials) {
 			res.status(400).send("Bad data");
 		}
 
-		let apiResult = await DataCoreAPI.mongoPostTrials(bossBattleId, chainIndex, trials);
+		let apiResult = await DataCoreAPI.sqlitePostTrials(fleetId, bossBattleId, chainIndex, trials);
 
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
@@ -444,7 +431,7 @@ router.post('/postBossBattleTrials', async (req: Request, res: Response, next) =
 
 
 router.get('/getBossBattle', async (req: Request, res: Response, next) => {
-	if (!req.query || (!req.query.room && !req.query.id )) {
+	if (!req.query || !req.query.fleetId || (!req.query.room && !req.query.id)) {
 		res.status(400).send('Whaat?');
 		return;
 	}
@@ -452,6 +439,7 @@ router.get('/getBossBattle', async (req: Request, res: Response, next) => {
 	try {		
 		let room = undefined as string | undefined;		
 		let id = undefined as number | undefined;
+		let fleetId: number | undefined = undefined;
 
 		if (req.query.room) {
 			room = req.query.room as string;
@@ -459,8 +447,15 @@ router.get('/getBossBattle', async (req: Request, res: Response, next) => {
 		if (req.query.id) {
 			id = Number.parseInt(req.query.id as string);
 		}
+		if (req.query.fleetId) {
+			fleetId = Number.parseInt(req.query.fleetId as string);
+		}
+		else {
+			res.status(500).send({});
+			return;
+		}
 
-		let apiResult = await DataCoreAPI.mongoGetCollaboration(id, room);
+		let apiResult = await DataCoreAPI.sqliteGetCollaboration(fleetId, id, room);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);

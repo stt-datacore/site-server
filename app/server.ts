@@ -8,7 +8,7 @@ import expressWinston from 'express-winston';
 import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
-import { connectToMongo } from './mongo';
+
 require('dotenv').config();
 
 // Create a new express application instance
@@ -62,34 +62,11 @@ app.use(cors(corsOptions));
 // Mount the controllers' routes
 app.use('/api', nocache, expressLogger, ApiController);
 
-const cycleInitMongo = async (force?: boolean) => {
-	if (DataCoreAPI.mongoAvailable && !force) return;
-
-	try {		
-		DataCoreAPI.mongoAvailable = await connectToMongo();		
-	}
-	catch {
-		DataCoreAPI.mongoAvailable = false;
-	}
-
-	if (!DataCoreAPI.mongoAvailable) {
-		console.log("MongoDB is not available. Disabling affected routes. Will try again in 60 seconds.");
-		setTimeout(() => {
-			console.log("Re-attempting MongoDB connection...")
-			cycleInitMongo();
-		}, 60000);
-	}
-};
-
 (async () => {
 	await sequelize.sync();
 	
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
-
-	setTimeout(async () => {
-		await cycleInitMongo();
-	})
 
 	// Serve the application at the given port
 	app.listen(port, '0.0.0.0', () => {

@@ -4,19 +4,19 @@ import fetch, { Response } from 'node-fetch';
 import { sign, verify } from 'jsonwebtoken';
 
 import { Logger, LogData } from './logger';
-import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile } from './profiletools';
+import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile, getProfile, getProfileByHash } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB } from './telemetry';
 import { getSTTToken } from './stttools';
-import { getAssignmentsByDbid, getAssignmentsByTrackerId, getCollaborationById, getProfile, getProfileByHash, getProfiles, getVoyagesByDbid, getVoyagesByTrackerId, postOrPutAssignment, postOrPutAssignmentsMany, postOrPutBossBattle, postOrPutProfile, postOrPutSolves, postOrPutTrials, postOrPutVoyage } from './mongotools';
-import { PlayerProfile } from '../mongoModels/playerProfile';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
-import { TrackedCrew, TrackedVoyage } from '../mongoModels/voyageHistory';
-import { connectToMongo } from '../mongo';
-import { IFBB_BossBattle_Document } from '../mongoModels/playerCollab';
+
+import { IFBB_BossBattle_Document } from '../models/BossBattles';
 import { CrewTrial, Solve } from '../datacore/boss';
 import { postOrPutVoyage_sqlite, getVoyagesByDbid_sqlite, getVoyagesByTrackerId_sqlite, postOrPutAssignmentsMany_sqlite, getAssignmentsByDbid_sqlite, getAssignmentsByTrackerId_sqlite, postOrPutAssignment_sqlite } from './voyagetracker';
+import { Profile } from '../models/Profile';
+import { TrackedCrew, TrackedVoyage } from '../models/Tracked';
+import { getCollaborationById_sqlite, postOrPutBossBattle_sqlite, postOrPutSolves_sqlite, postOrPutTrials_sqlite } from './collab';
 
 require('dotenv').config();
 
@@ -96,17 +96,6 @@ export class ApiClass {
 
 		try {
 			await uploadProfile(dbid, player_data, new Date());
-			if (this.mongoAvailable) {
-				try {
-					console.log("Posting to Mongo, also ...");
-					await this.mongoPostPlayerData(Number.parseInt(dbid), player_data, logData);
-					console.log("Success!");
-				}
-				catch {
-					console.log("Failed!");
-				}
-			}
-
 		} catch (err) {
 			if (typeof err === 'string') {
 				return {
@@ -334,37 +323,17 @@ export class ApiClass {
 		}
 	}
 
-	/** MongoDB Methods */
-
-	async tryInitMongo() {
-		try {
-			return await connectToMongo();
-		}
-		catch {
-			return false;
-		}
-	}
-
-	async mongoPostPlayerData(dbid: number, player_data: PlayerData, logData: LogData): Promise<ApiResult> {
+	/* New SQLite Stuff! */
+	
+	async sqlitePostPlayerData(dbid: number, player_data: PlayerData, logData: LogData): Promise<ApiResult> {
 		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
 		Logger.info('Post player data', { dbid, logData });
 		
 		const timeStamp = new Date();
-		let res: string | number = 0;
+		let res: Profile;
 
 		try {
-			res = await postOrPutProfile(dbid, player_data, timeStamp);			
-			
-			if (typeof res === 'number' && res >= 300) {
-				return {
-					Status: res,
-					Body: {
-						'dbid': dbid,
-						'error': 'Unable to insert profile record.',
-						'timeStamp': timeStamp.toISOString()					
-					}
-				};
-			}
+			res = await uploadProfile(dbid.toString(), player_data, timeStamp);			
 		} catch (err) {
 			if (typeof err === 'string') {
 				return {
@@ -383,34 +352,22 @@ export class ApiClass {
 		this._player_data[dbid] = new Date().toUTCString();
 		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
 
-		if (typeof res === 'string') {
-			return {
-				Status: 201,
-				Body: {
-					'dbid': dbid,
-					'dbidHash': res,
-					timeStamp: timeStamp.toISOString()
-				}
-			};
+		return {
+			Status: 200,
+			Body: {
+				'dbid': dbid,
+				timeStamp: timeStamp.toISOString()
+			}
+		};
 
-		}
-		else {
-			return {
-				Status: res,
-				Body: {
-					'dbid': dbid,
-					timeStamp: timeStamp.toISOString()
-				}
-			};
-	
-		}
 	}
 
-	async mongoGetPlayerData(dbid?: number, hash?: string): Promise<ApiResult> {
+	async sqliteGetPlayerData(dbid?: number, hash?: string): Promise<ApiResult> {
 		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
 
 		Logger.info('Get player data', { dbid });
-		let player: PlayerProfile | null = null;
+		let player: Profile | null = null;
+		let playerData: PlayerData | null = null;
 
 		try {
 			if (dbid) {
@@ -419,6 +376,10 @@ export class ApiClass {
 			else if (hash) {
 				player = await getProfileByHash(hash);
 			}			
+			if (player) {
+				let path = `${process.env.PROFILE_DATA_PATH}/${player.dbid}`;
+				playerData = JSON.parse(fs.readFileSync(path, 'utf-8'));
+			}
 		} catch (err) {
 			if (typeof err === 'string') {
 				return {
@@ -434,10 +395,13 @@ export class ApiClass {
 			}
 		}
 
-		if (player?.playerData) {
+		if (playerData) {
 			return {
 				Status: 200,
-				Body: player
+				Body: {
+					...player,
+					playerData
+				}
 			};	
 		}
 		else {
@@ -448,402 +412,7 @@ export class ApiClass {
 		}
 
 	}
-
-	async mongoGetManyPlayers(fleet?: number, squadron?: number): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-
-		Logger.info('Get many players', { fleet, squadron });
-		let players: PlayerProfile[] | null = null;
-
-		try {
-			players = await getProfiles(fleet, squadron);
-		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
-		}
-
-		if (players?.length) {
-			return {
-				Status: 200,
-				Body: players
-			};	
-		}
-		else {
-			return {
-				Status: 200, // 204
-				Body: []
-			};	
-		}
-
-	}
-
-	async mongoPostTrackedVoyage(dbid: number, voyage: ITrackedVoyage, logData: LogData): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-
-		Logger.info('Tracked Voyage data', { dbid, voyage, logData });
-		
-		const timeStamp = new Date();
-
-		try {
-			let res = await postOrPutVoyage(dbid, voyage, timeStamp);
-			if (res >= 300) {
-				return {
-					Status: res,
-					Body: {
-						'dbid': dbid,
-						'error': 'Unable to insert record.',
-						'timeStamp': timeStamp.toISOString()					
-					}
-				};
-			}
-		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
-		}		
-
-		return {
-			Status: 201,
-			Body: {
-				'dbid': dbid,
-				'trackerId': voyage.tracker_id,
-				timeStamp: timeStamp.toISOString()
-			}
-		};
-	}
-
-	async mongoGetTrackedVoyages(dbid?: number, trackerId?: number): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-
-		Logger.info('Get voyage data', { dbid, trackerId });
-		let voyages: TrackedVoyage[] | null = null;
-		
-		if (!dbid && !trackerId) return {
-				Status: 400,
-				Body: { result: "bad input" }
-			} 
-
-		try {
-			voyages = dbid ? await getVoyagesByDbid(dbid) : (trackerId ? await getVoyagesByTrackerId(trackerId) : null);
-		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
-		}
-
-		if (voyages) {
-			return {
-				Status: 200,
-				Body: voyages
-			};	
-		}
-		else {
-			return {
-				Status: 200, // 204
-				Body: []
-			};	
-		}
-
-	}
-
 	
-
-	async mongoPostTrackedAssignment(dbid: number, crew: string, assignment: ITrackedAssignment, logData: LogData): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-
-		Logger.info('Tracked Voyage data', { dbid, voyage: assignment, logData });
-		
-		const timeStamp = new Date();
-
-		try {
-			let res = await postOrPutAssignment(dbid, crew, assignment, timeStamp);
-			if (res >= 300) {
-				return {
-					Status: res,
-					Body: {
-						'dbid': dbid,
-						'error': 'Unable to insert record.',
-						'timeStamp': timeStamp.toISOString()					
-					}
-				};
-			}
-		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
-		}		
-
-		return {
-			Status: 201,
-			Body: {
-				'dbid': dbid,
-				'trackerId': assignment.tracker_id,
-				timeStamp: timeStamp.toISOString()
-			}
-		};
-	}
-
-
-	async mongoPostTrackedAssignmentsMany(dbid: number, crew: string[], assignments: ITrackedAssignment[], logData: LogData): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-
-		Logger.info('Tracked Voyage data', { dbid, voyage: assignments, logData });
-		
-		const timeStamp = new Date();
-		
-		try {
-			let res = await postOrPutAssignmentsMany(dbid, crew, assignments, timeStamp);
-			if (res >= 300) {
-				return {
-					Status: res,
-					Body: {
-						'dbid': dbid,
-						'error': 'Unable to insert record.',
-						'timeStamp': timeStamp.toISOString()					
-					}
-				};
-			}
-		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
-		}		
-
-		return {
-			Status: 201,
-			Body: {
-				'dbid': dbid,
-				'trackerIds': assignments.map(a => a.tracker_id),
-				timeStamp: timeStamp.toISOString()
-			}
-		};
-	}
-
-
-	async mongoGetTrackedAssignments(dbid?: number, trackerId?: number): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-
-		Logger.info('Get voyage data', { dbid, trackerId });
-		let assignments: TrackedCrew[] | null = null;
-		
-		if (!dbid && !trackerId) return {
-				Status: 400,
-				Body: { result: "bad input" }
-			} 
-
-		try {
-			assignments = dbid ? await getAssignmentsByDbid(dbid) : (trackerId ? await getAssignmentsByTrackerId(trackerId) : null);
-		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
-		}
-
-		if (assignments) {
-			return {
-				Status: 200,
-				Body: assignments
-			};	
-		}
-		else {
-			return {
-				Status: 200, // 204
-				Body: []
-			};	
-		}
-
-	}
-
-
-	async mongoGetTrackedData(dbid?: number, trackerId?: number): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-
-		Logger.info('Get tracked data', { dbid, trackerId });
-		let voyages: TrackedVoyage[] | null = null;
-		let assignments: TrackedCrew[] | null = null;
-		
-		if (!dbid && !trackerId) return {
-				Status: 400,
-				Body: { result: "bad input" }
-			} 
-
-		try {
-			voyages = dbid ? await getVoyagesByDbid(dbid) : (trackerId ? await getVoyagesByTrackerId(trackerId) : null);
-			assignments = dbid ? await getAssignmentsByDbid(dbid) : (trackerId ? await getAssignmentsByTrackerId(trackerId) : null);
-		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
-		}
-
-		if (voyages || assignments) {
-			return {
-				Status: 200,
-				Body: {
-					voyages,
-					assignments
-				}
-			};	
-		}
-		else {
-			return {
-				Status: 200, // 204
-				Body: { voyages: [], assignments: [] }
-			};	
-		}
-
-	}
-
-	async mongoPostBossBattle(battle: IFBB_BossBattle_Document) {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-		Logger.info('Post boss battle', { battle });		
-
-		try {
-			let res = await postOrPutBossBattle(battle);
-			return {
-				Status: res,
-				Body: { result: "ok" }
-			}
-		}
-		catch {
-			return {
-				Status: 500,
-				Body: { result: "fail" }
-			}
-		}
-	}
-
-	async mongoGetCollaboration(bossBattleId?: number, roomCode?: string) {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-		Logger.info('Get boss battle', { bossBattleId });		
-
-		try {
-			let battle = await getCollaborationById(bossBattleId, roomCode);
-			if (!battle) {
-				return {
-					Status: 200, // 204
-					Body: []
-				}
-			}
-			return {
-				Status: 200,
-				Body: battle
-			}
-		}
-		catch {
-			return {
-				Status: 500,
-				Body: { result: "fail" }
-			}
-		}
-
-	}
-
-	async mongoPostSolves(bossBattleId: number, chainIndex: number, solves: Solve[]) {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-		Logger.info('Post trials', { solves });		
-
-		try {
-			let res = await postOrPutSolves(bossBattleId, chainIndex, solves);
-			return {
-				Status: res,
-				Body: { result: "ok" }
-			}
-		}
-		catch {
-			return {
-				Status: 500,
-				Body: { result: "fail" }
-			}
-		}
-	}
-
-	async mongoPostTrials(bossBattleId: number, chainIndex: number, trials: CrewTrial[]) {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
-		Logger.info('Post trials', { trials });		
-
-		try {
-			let res = await postOrPutTrials(bossBattleId, chainIndex, trials);
-			return {
-				Status: res,
-				Body: { result: "ok" }
-			}
-		}
-		catch {
-			return {
-				Status: 500,
-				Body: { result: "fail" }
-			}
-		}
-	}
-
-
-
-
 	async sqlitePostTrackedVoyage(dbid: number, voyage: ITrackedVoyage, logData: LogData): Promise<ApiResult> {
 		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
 
@@ -1148,7 +717,89 @@ export class ApiClass {
 	}
 
 
+	
+	async sqlitePostBossBattle(battle: IFBB_BossBattle_Document) {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		Logger.info('Post boss battle', { battle });		
 
+		try {
+			let res = await postOrPutBossBattle_sqlite(battle);
+			return {
+				Status: res,
+				Body: { result: "ok" }
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: { result: "fail" }
+			}
+		}
+	}
+
+	async sqliteGetCollaboration(fleetId: number, bossBattleId?: number, roomCode?: string) {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		Logger.info('Get boss battle', { bossBattleId });		
+
+		try {
+			let battle = await getCollaborationById_sqlite(fleetId, bossBattleId, roomCode);
+			if (!battle) {
+				return {
+					Status: 200, // 204
+					Body: []
+				}
+			}
+			return {
+				Status: 200,
+				Body: battle
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: { result: "fail" }
+			}
+		}
+
+	}
+
+	async sqlitePostSolves(fleetId: number, bossBattleId: number, chainIndex: number, solves: Solve[]) {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		Logger.info('Post trials', { solves });		
+
+		try {
+			let res = await postOrPutSolves_sqlite(fleetId, bossBattleId, chainIndex, solves);
+			return {
+				Status: res,
+				Body: { result: "ok" }
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: { result: "fail" }
+			}
+		}
+	}
+
+	async sqlitePostTrials(fleetId: number, bossBattleId: number, chainIndex: number, trials: CrewTrial[]) {
+		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		Logger.info('Post trials', { trials });		
+
+		try {
+			let res = await postOrPutTrials_sqlite(fleetId, bossBattleId, chainIndex, trials);
+			return {
+				Status: res,
+				Body: { result: "ok" }
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: { result: "fail" }
+			}
+		}
+	}
 }
 
 export let DataCoreAPI = new ApiClass();
