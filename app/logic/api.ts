@@ -403,11 +403,12 @@ export class ApiClass {
 			}
 		}
 
-		if (playerData) {
+		if (player && playerData) {
 			return {
 				Status: 200,
 				Body: {
-					...player,
+					timeStamp: player.updatedAt,
+					dbid: player.dbid,
 					playerData
 				}
 			};	
