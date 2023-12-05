@@ -63,7 +63,7 @@ app.use(cors(corsOptions));
 app.use('/api', nocache, expressLogger, ApiController);
 
 (async () => {
-	await sequelize.sync();
+	await sequelize.sync({ alter: true });
 	
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
