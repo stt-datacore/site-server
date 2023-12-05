@@ -16,8 +16,8 @@ export class Profile extends Model {
 	@Column
     hash!: string;
 
-	@Column(DataType.JSON)
-    metadata!: any;
+	@Column
+    metadata!: string;
 
 	@Column
 	lastUpdate!: Date;
