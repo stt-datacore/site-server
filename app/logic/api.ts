@@ -93,31 +93,41 @@ export class ApiClass {
 
 	async postPlayerData(dbid: string, player_data: any, logData: LogData): Promise<ApiResult> {
 		Logger.info('Post player data', { dbid, logData });
+		let res: Profile | undefined = undefined;
 
 		try {
-			await uploadProfile(dbid, player_data, new Date());
+			res = await uploadProfile(dbid, player_data, new Date());
+			
+			this._player_data[dbid] = new Date().toUTCString();
+			fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
+
 		} catch (err) {
 			if (typeof err === 'string') {
 				return {
 					Status: 500,
-					Body: err
+					Body: { error: err }
 				};
 			}
 			else if (err instanceof Error) {
 				return {
 					Status: 500,
-					Body: err.toString()
+					Body: {error: err.toString() }
 				};
 			}
 		}
 
-		this._player_data[dbid] = new Date().toUTCString();
-		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
-
-		return {
-			Status: 200,
-			Body: 'OK'
-		};
+		if (res) {
+			return {
+				Status: 200,
+				Body: res
+			};
+		}
+		else {
+			return {
+				Status: 500,
+				Body: { 'error': 'Unknown error' }
+			};
+		}
 	}
 
 	async loadGauntletStatus(logData: LogData): Promise<ApiResult> {
