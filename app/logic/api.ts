@@ -32,8 +32,6 @@ export class ApiClass {
 	private _player_data: any;
 	private _stt_token: any;
 
-	public mongoAvailable: boolean = false;
-
 	async initializeCache() {
 		this._player_data = await loadProfileCache();
 		this._stt_token = 'd6458837-34ba-4883-8588-4530f1a9cc53';
@@ -336,7 +334,7 @@ export class ApiClass {
 	/* New SQLite Stuff! */
 	
 	async sqlitePostPlayerData(dbid: number, player_data: PlayerData, logData: LogData): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 		Logger.info('Post player data', { dbid, logData });
 		
 		const timeStamp = new Date();
@@ -373,7 +371,7 @@ export class ApiClass {
 	}
 
 	async sqliteGetPlayerData(dbid?: number, hash?: string): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 
 		Logger.info('Get player data', { dbid });
 		let player: Profile | null = null;
@@ -424,7 +422,7 @@ export class ApiClass {
 	}
 	
 	async sqlitePostTrackedVoyage(dbid: number, voyage: ITrackedVoyage, logData: LogData): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 
 		Logger.info('Tracked Voyage data', { dbid, voyage, logData });
 		
@@ -468,7 +466,7 @@ export class ApiClass {
 	}
 
 	async sqliteGetTrackedVoyages(dbid?: number, trackerId?: number): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 
 		Logger.info('Get voyage data', { dbid, trackerId });
 		let voyages: TrackedVoyage[] | null = null;
@@ -523,7 +521,7 @@ export class ApiClass {
 	
 
 	async sqlitePostTrackedAssignment(dbid: number, crew: string, assignment: ITrackedAssignment, logData: LogData): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 
 		Logger.info('Tracked Voyage data', { dbid, voyage: assignment, logData });
 		
@@ -568,7 +566,7 @@ export class ApiClass {
 
 
 	async sqlitePostTrackedAssignmentsMany(dbid: number, crew: string[], assignments: ITrackedAssignment[], logData: LogData): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 
 		Logger.info('Tracked Voyage data', { dbid, voyage: assignments, logData });
 		
@@ -613,7 +611,7 @@ export class ApiClass {
 
 
 	async sqliteGetTrackedAssignments(dbid?: number, trackerId?: number): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 
 		Logger.info('Get voyage data', { dbid, trackerId });
 		let assignments: TrackedCrew[] | null = null;
@@ -668,7 +666,7 @@ export class ApiClass {
 
 
 	async sqliteGetTrackedData(dbid?: number, trackerId?: number): Promise<ApiResult> {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 
 		Logger.info('Get tracked data', { dbid, trackerId });
 		let voyages: TrackedVoyage[] | null = null;
@@ -729,7 +727,7 @@ export class ApiClass {
 
 	
 	async sqlitePostBossBattle(battle: IFBB_BossBattle_Document) {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 		Logger.info('Post boss battle', { battle });		
 
 		try {
@@ -748,7 +746,7 @@ export class ApiClass {
 	}
 
 	async sqliteGetCollaboration(fleetId: number, bossBattleId?: number, roomCode?: string) {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 		Logger.info('Get boss battle', { bossBattleId });		
 
 		try {
@@ -774,7 +772,7 @@ export class ApiClass {
 	}
 
 	async sqlitePostSolves(fleetId: number, bossBattleId: number, chainIndex: number, solves: Solve[]) {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 		Logger.info('Post trials', { solves });		
 
 		try {
@@ -793,7 +791,7 @@ export class ApiClass {
 	}
 
 	async sqlitePostTrials(fleetId: number, bossBattleId: number, chainIndex: number, trials: CrewTrial[]) {
-		if (!this.mongoAvailable) return { Status: 500, Body: 'Database is down' };
+		
 		Logger.info('Post trials', { trials });		
 
 		try {

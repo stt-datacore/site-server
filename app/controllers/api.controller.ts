@@ -195,13 +195,6 @@ router.get('/queryAlive', async (req: Request, res: Response, next) => {
 			}
 		}
 
-		if (req.query.what === 'mongodb') {
-			if (!DataCoreAPI.mongoAvailable) {				
-				apiResult.Status = 503;
-				apiResult.Body.result = "DOWN";	
-			}
-		}
-
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
