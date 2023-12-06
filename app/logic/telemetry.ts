@@ -94,10 +94,7 @@ export async function createStats(force?: boolean) {
 
 	if (fs.existsSync(dailyfile)) {
 		let rt = fs.statSync(dailyfile);
-		if (force || rt.mtime.getDay() !== (mynow.getDay())) {
-			fs.rmSync(dailyfile);
-		}
-		else {
+		if (!force && rt.mtime.getDay() === (mynow.getDay())) {
 			setTimeout(() => createStats(), 1000 * 60 * 30);
 			return;
 		}
@@ -106,6 +103,46 @@ export async function createStats(force?: boolean) {
 	let result = await getVoyageStats();
 	fs.writeFileSync(dailyfile, JSON.stringify(result));
 	setTimeout(() => createStats(), 1000 * 60 * 30);
+}
+
+export async function voyageRawByDays(days: number, crewMatch?: string[]) {
+	let endDate = new Date();
+	let startDate = new Date();
+	startDate.setDate(startDate.getDate() - days);
+
+	return voyageRawByRange(startDate, endDate, crewMatch);
+}
+
+export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMatch?: string[]) {
+	endDate ??= new Date();
+	if (!startDate) {
+		startDate = new Date(endDate.getTime());
+		startDate.setDate(startDate.getDate() - 7);
+	}
+	
+	const where = { 
+		voyageDate: [ 
+			{ [Op.gte]: startDate }, 
+			{ [Op.lte]: endDate }
+		],
+		crew: undefined as any
+	};
+	
+	if (crewMatch) {
+		where.crew = { [Op.or]: [] as any[] };
+		for (let crew of crewMatch) {
+			where.crew[Op.or].push({ [Op.like]: `%"${crew}"%`})
+		}
+	}
+	else {
+		delete where.crew;
+	}
+	
+	let results = await Voyage.findAll({ 
+		where
+	});
+
+	return results;
 }
 
 async function getVoyageStats() {	

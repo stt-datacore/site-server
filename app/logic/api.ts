@@ -6,7 +6,7 @@ import { sign, verify } from 'jsonwebtoken';
 import { Logger, LogData } from './logger';
 import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile, getProfile, getProfileByHash } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
-import { recordTelemetryDB, getTelemetryDB } from './telemetry';
+import { recordTelemetryDB, getTelemetryDB, voyageRawByDays } from './telemetry';
 import { getSTTToken } from './stttools';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
