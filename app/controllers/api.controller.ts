@@ -19,6 +19,7 @@ function getLogDataFromReq(req: Request): LogData {
 	return logData;
 }
 
+// This method will be deprecated in favor of /postProfile
 router.post('/post_profile', async (req: Request, res: Response, next) => {
 	if (!req.body || !req.body.dbid || !req.body.player_data) {
 		res.status(400).send('Whaat?');
@@ -178,7 +179,7 @@ router.post('/telemetry', async (req: Request, res: Response, next) => {
 });
 
 
-/** MongoDB-connected routes */
+/** Overhauled SQLite routes */
 
 router.get('/queryAlive', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.what) {
