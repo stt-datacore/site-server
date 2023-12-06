@@ -6,7 +6,7 @@ import bodyParser from 'body-parser';
 import expressWinston from 'express-winston';
 
 import { ApiController } from './controllers';
-import { Logger, DataCoreAPI } from './logic';
+import { Logger, DataCoreAPI, getVoyageStats } from './logic';
 import { sequelize } from './sequelize';
 
 require('dotenv').config();
@@ -65,7 +65,7 @@ app.use('/api', nocache, expressLogger, ApiController);
 
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
-
+	setTimeout(() => getVoyageStats())
 	// Serve the application at the given port
 	app.listen(port, '0.0.0.0', () => {
 		// Success callback
