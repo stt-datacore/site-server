@@ -70,126 +70,135 @@ async function recordVoyageCalc({
 export async function getVoyageStats(force?: boolean) {
 	const nowkey = (new Date()).toDateString();
 
-	if (currHoff[nowkey] && !force) {
+	if (currHoff[nowkey] && currHoff[nowkey] !== 'working' && !force) {
 		return currHoff[nowkey];
-	} else {
-		setTimeout(async () => {
-			const one80DaysAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
-			const seats = [
-				"command_skill",
-				"command_skill",
-				"diplomacy_skill",
-				"diplomacy_skill",
-				"security_skill",
-				"security_skill",
-				"engineering_skill",
-				"engineering_skill",
-				"science_skill",
-				"science_skill",
-				"medicine_skill",
-				"medicine_skill",
-			];
-
-			const records = await Voyage.findAll({
-				where: { voyageDate: { [Op.gte]: one80DaysAgo } },
-			});
-			const output = {} as any;
-
-			const dsets = [
-				{
-					date: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
-					file: "lastSixMonths",
-				},
-				{
-					date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-					file: "lastThirtyDays",
-				},
-				{
-					date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-					file: "lastSevenDays",
-				},
-			];
-
-			for (let dset of dsets) {
-				let { date: d, file: fn } = dset;
-				console.log(`From ${d} as '${fn}'...`);
-				let results = records.filter(
-					(r) => r.voyageDate.getTime() >= dset.date.getTime()
-				);
-
-				type CrewPeople = {
-					crewSymbol: string;
-					seats: {
-						seat_skill: string;
-						seat_index: number;
-						crewCount: number;
+	} else {		
+		if (currHoff[nowkey] !== 'working') {
+			currHoff[nowkey] = 'working';
+			setTimeout(async () => {
+				const one80DaysAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
+				const seats = [
+					"command_skill",
+					"command_skill",
+					"diplomacy_skill",
+					"diplomacy_skill",
+					"security_skill",
+					"security_skill",
+					"engineering_skill",
+					"engineering_skill",
+					"science_skill",
+					"science_skill",
+					"medicine_skill",
+					"medicine_skill",
+				];
+	
+				const records = await Voyage.findAll({
+					where: { voyageDate: { [Op.gte]: one80DaysAgo } },
+				});
+				const output = {} as any;
+	
+				const dsets = [
+					{
+						date: new Date(Date.now() - 180 * 24 * 60 * 60 * 1000),
+						file: "lastSixMonths",
+					},
+					{
+						date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+						file: "lastThirtyDays",
+					},
+					{
+						date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+						file: "lastSevenDays",
+					},
+				];
+	
+				for (let dset of dsets) {
+					let { date: d, file: fn } = dset;
+					console.log(`From ${d} as '${fn}'...`);
+					let results = records.filter(
+						(r) => r.voyageDate.getTime() >= dset.date.getTime()
+					);
+	
+					type CrewPeople = {
+						crewSymbol: string;
+						seats: {
+							seat_skill: string;
+							seat_index: number;
+							crewCount: number;
+							averageDuration: number;
+						}[];
 						averageDuration: number;
-					}[];
-					averageDuration: number;
-					startDate: Date;
-					endDate: Date;
-					crewCount: number;
-				};
-
-				const cp = {} as { [key: string]: CrewPeople };
-
-				for (let res of results) {
-					let seat = 0;
-					if (!res.estimatedDuration) continue;
-					for (let c of res.crew) {
-						cp[c] ??= {
-							crewSymbol: c,
-							seats: [],
-							averageDuration: 0,
-							startDate: res.voyageDate,
-							endDate: res.voyageDate,
-							crewCount: 0,
-						};
-						cp[c].crewCount++;
-						cp[c].endDate = res.voyageDate;
-						cp[c].averageDuration =
-							(cp[c].averageDuration * cp[c].seats.length +
-								res.estimatedDuration) /
-							(cp[c].seats.length + 1);
-						let currseat = cp[c].seats.find(
-							(s) => s.seat_skill === seats[seat]
-						);
-						if (currseat) {
-							currseat.averageDuration =
-								(currseat.averageDuration * currseat.crewCount +
+						startDate: Date;
+						endDate: Date;
+						crewCount: number;
+					};
+	
+					const cp = {} as { [key: string]: CrewPeople };
+	
+					for (let res of results) {
+						let seat = 0;
+						if (!res.estimatedDuration) continue;
+						for (let c of res.crew) {
+							cp[c] ??= {
+								crewSymbol: c,
+								seats: [],
+								averageDuration: 0,
+								startDate: res.voyageDate,
+								endDate: res.voyageDate,
+								crewCount: 0,
+							};
+							cp[c].crewCount++;
+							cp[c].endDate = res.voyageDate;
+							cp[c].averageDuration =
+								(cp[c].averageDuration * cp[c].seats.length +
 									res.estimatedDuration) /
-								(currseat.crewCount + 1);
-							currseat.crewCount++;
-						} else {
-							cp[c].seats.push({
-								seat_skill: seats[seat],
-								seat_index: seat,
-								crewCount: 1,
-								averageDuration: res.estimatedDuration,
-							});
+								(cp[c].seats.length + 1);
+							let currseat = cp[c].seats.find(
+								(s) => s.seat_skill === seats[seat]
+							);
+							if (currseat) {
+								currseat.averageDuration =
+									(currseat.averageDuration * currseat.crewCount +
+										res.estimatedDuration) /
+									(currseat.crewCount + 1);
+								currseat.crewCount++;
+							} else {
+								cp[c].seats.push({
+									seat_skill: seats[seat],
+									seat_index: seat,
+									crewCount: 1,
+									averageDuration: res.estimatedDuration,
+								});
+							}
+							seat++;
 						}
-						seat++;
 					}
+	
+					let finalOut = Object.values(cp);
+	
+					finalOut.sort((a, b) => b.crewCount - a.crewCount);
+					output[dset.file] = finalOut;
 				}
+	
+				let delkeys = Object.keys(currHoff) ?? [];
+				currHoff[nowkey] = output;
+	
+				try {
+					if (delkeys?.length) {
+						delkeys.forEach((key) => {
+							delete currHoff[key];
+						});
+					}
+				} catch { }
+			});
+		}
 
-				let finalOut = Object.values(cp);
-
-				finalOut.sort((a, b) => b.crewCount - a.crewCount);
-				output[dset.file] = finalOut;
-			}
-
-			let delkeys = Object.keys(currHoff) ?? [];
-			currHoff[nowkey] = output;
-
-			try {
-				if (delkeys?.length) {
-					delkeys.forEach((key) => {
-						delete currHoff[key];
-					});
-				}
-			} catch { }
-		});
-
-		return currHoff[nowkey] ?? {};
+		let ckeys = Object.keys(currHoff) ?? [];
+		if (!!ckeys?.length) {
+			return currHoff[ckeys[ckeys.length - 1]];
+		}
+		else {
+			return currHoff[nowkey] ?? {};
+		}		
 	}
 }
