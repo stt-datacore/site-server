@@ -8,7 +8,6 @@ import expressWinston from 'express-winston';
 import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
-import { utilityMethod } from './migration';
 
 require('dotenv').config();
 
@@ -17,8 +16,6 @@ const app: express.Application = express();
 
 // When used with nginx reverse proxy, pick a rerouting port
 let port: number = 4420;
-
-//let port: number = 4421;
 
 if (process.argv.length > 2) {
 	port = parseInt(process.argv[2]);
@@ -65,15 +62,9 @@ app.use('/api', nocache, expressLogger, ApiController);
 
 (async () => {
 	await sequelize.sync();
-	//await Voyage.sync({ force: true });
 	
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
-
-	// // Migration script!!!
-	// setTimeout(() => {
-	// 	utilityMethod();
-	// });
 
 	// Serve the application at the given port
 	app.listen(port, '0.0.0.0', () => {
