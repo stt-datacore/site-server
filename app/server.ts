@@ -8,6 +8,7 @@ import expressWinston from 'express-winston';
 import { ApiController } from './controllers';
 import { Logger, DataCoreAPI, createStats } from './logic';
 import { sequelize } from './sequelize';
+import { utilityMethod } from './migration';
 
 require('dotenv').config();
 
@@ -65,6 +66,7 @@ app.use('/api', nocache, expressLogger, ApiController);
 (async () => {
 	await sequelize.sync();
 	
+	setTimeout(() => utilityMethod());
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
 	// Serve the application at the given port

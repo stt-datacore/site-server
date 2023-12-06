@@ -127,7 +127,7 @@ export async function utilityMethod() {
 		for (let j = i; j < i + 500; j++) {
 			if (j >= voykeys.length) break;
 
-			let key = voykeys[i];
+			let key = voykeys[j];
 			let [dstr, ] = key.split("_");
 			const data = distinctVoyages[key];
 			const voyDate = new Date(dstr);
@@ -164,7 +164,7 @@ export async function utilityMethod() {
 		for (let j = i; j < i + 500; j++) {
 			if (j >= voykeys.length) break;
 
-			let key = voykeys[i];
+			let key = voykeys[j];
 			let [dstr, ] = key.split("_");
 			const data = distinctVoyages[key];
 			const voyDate = new Date(dstr);
