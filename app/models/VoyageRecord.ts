@@ -40,9 +40,10 @@ export class Voyage extends Model {
 
     @Column
     ship_trait?: string;
+
+    @Column(DataType.JSON)
+    extra_stats?: any
 }
-
-
 
 @Table
 export class Historical extends Model {
@@ -70,5 +71,8 @@ export class Historical extends Model {
 
     @Column
     ship_trait?: string;
+
+    @Column(DataType.JSON)
+    extra_stats?: any
 }
 

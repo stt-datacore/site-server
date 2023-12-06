@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { Voyage } from '../models/VoyageRecord';
 import fs from 'fs';
 
-type CrewPeople = {
+export interface Voyager {
 	crewSymbol: string,
 	seats: { seat_skill: string, seat_index: number, crewCount: number, averageDuration: number }[],
 	averageDuration: number,
@@ -41,7 +41,7 @@ async function recordVoyage(voyagers: string[]) {
 	return true;
 }
 
-async function recordVoyageCalc({ voyagers, estimatedDuration, primary_skill, secondary_skill, am_traits, ship_trait }: { voyagers: string[]; estimatedDuration: number; primary_skill?: string; secondary_skill?: string, am_traits?: string[], ship_trait?: string }) {
+async function recordVoyageCalc({ voyagers, estimatedDuration, primary_skill, secondary_skill, am_traits, ship_trait, extra_stats }: { voyagers: string[]; estimatedDuration: number; primary_skill?: string; secondary_skill?: string, am_traits?: string[], ship_trait?: string, extra_stats?: any }) {
 	// for (let i in voyagers) {
 	// 	const crewSymbol = voyagers[i];
 	// 	await VoyageRecord.create({ crewSymbol, estimatedDuration });
@@ -55,7 +55,8 @@ async function recordVoyageCalc({ voyagers, estimatedDuration, primary_skill, se
 		primary_skill,
 		secondary_skill,
 		am_traits,
-		ship_trait
+		ship_trait,
+		extra_stats
 	});
 
 	return true;
@@ -72,7 +73,7 @@ export async function loadStats() {
 	let dailyfile = `${path}/daily_stats.json`;
 
 	if (fs.existsSync(dailyfile)) {
-		return JSON.parse(fs.readFileSync(dailyfile, 'utf-8')) as { [key: string]: CrewPeople[] };
+		return JSON.parse(fs.readFileSync(dailyfile, 'utf-8')) as { [key: string]: Voyager[] };
 	}
 
 	return {};
@@ -80,6 +81,10 @@ export async function loadStats() {
 
 export async function createStats(force?: boolean) {
 	let mynow = new Date();
+	mynow.setMinutes(0);
+	mynow.setSeconds(0);
+	mynow.setMilliseconds(0);
+
 	let path = `${process.env.PROFILE_DATA_PATH}/stats`;
 	if (!fs.existsSync(path)) {
 		fs.mkdirSync(path);
@@ -93,14 +98,14 @@ export async function createStats(force?: boolean) {
 			fs.rmSync(dailyfile);
 		}
 		else {
-			setTimeout(() => createStats(), 1000 * 60 * 60);
+			setTimeout(() => createStats(), 1000 * 60 * 30);
 			return;
 		}
 	}
 
 	let result = await getVoyageStats();
 	fs.writeFileSync(dailyfile, JSON.stringify(result));
-	setTimeout(() => createStats(), 1000 * 60 * 60);
+	setTimeout(() => createStats(), 1000 * 60 * 30);
 }
 
 async function getVoyageStats() {	
@@ -122,7 +127,7 @@ async function getVoyageStats() {
 	];
 
 	const records = await Voyage.findAll({ where: { voyageDate: { [Op.gte]: one80DaysAgo }}});
-	const output = {} as { [key: string]: CrewPeople[] };
+	const output = {} as { [key: string]: Voyager[] };
 
 	const dsets = [{
 		date: new Date(Date.now() - (180 * 24 * 60 * 60 * 1000)),
@@ -142,7 +147,7 @@ async function getVoyageStats() {
 		console.log(`From ${d} as '${fn}'...`);
 		let results = records.filter(r => r.voyageDate.getTime() >= dset.date.getTime());
 
-		const cp = {} as { [key: string]: CrewPeople };
+		const cp = {} as { [key: string]: Voyager };
 	
 		for (let res of results) {
 			let seat = 0;
