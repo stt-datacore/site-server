@@ -52,7 +52,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 		});
 	
 		if (newdb) {
-			await newdb.sync({ alter: true });
+			await newdb.sync();
 		}
 		return newdb;
 	}
