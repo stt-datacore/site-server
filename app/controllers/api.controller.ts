@@ -178,6 +178,29 @@ router.post('/telemetry', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.get('/voyagesByCrew', async (req: Request, res: Response, next) => {
+	req.query.days ??= "31";
+	if (!req.query || !req.query.days || !req.query.crew) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {		
+		let cstr = req.query.crew.toString();
+		let dstr = req.query.days.toString();
+		if (!cstr?.length) {
+			res.status(400).send('Whaat?');
+			return;
+		}
+		let crew = cstr.split(",");
+		let days = Number.parseInt(dstr);
+
+		let apiResult = await DataCoreAPI.getVoyages(crew, days);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
 
 /** Overhauled SQLite routes */
 

@@ -331,6 +331,16 @@ export class ApiClass {
 		}
 	}
 
+	async getVoyages(crew: string[], days: number) {
+		if (days <= 0 || days > 31) days = 31;
+		Logger.info('Get voyages', { crew, days });
+		let result = await voyageRawByDays(days, crew)
+		return {
+			Status: 200,
+			Body: result
+		}
+	}
+	
 	/* New SQLite Stuff! */
 	
 	async sqlitePostPlayerData(dbid: number, player_data: PlayerData, logData: LogData): Promise<ApiResult> {
