@@ -113,41 +113,52 @@ export async function voyageRawByDays(days: number, crewMatch?: string[]) {
 	return voyageRawByRange(startDate, endDate, crewMatch);
 }
 
-export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMatch?: string[]) {
+export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMatch?: string[], crewOp?: string) {
 	endDate ??= new Date();
 	if (!startDate) {
 		startDate = new Date(endDate.getTime());
 		startDate.setDate(startDate.getDate() - 7);
 	}
-	
-	const where = { 
-		voyageDate: { 
-			[Op.and]: [ 
-				{ [Op.gte]: startDate }, 
-				{ [Op.lte]: endDate }
-			]
-		},
-		crew: undefined as any
-	};
-	
-	if (crewMatch) {
-		if (crewMatch.length > 1) {
-			where.crew = { [Op.or]: [] as any[] };
-			for (let crew of crewMatch) {
-				where.crew[Op.or].push({ [Op.like]: `%"${crew}"%`})
+	let results: Voyage[] | undefined = undefined; 	
+	if (crewMatch) {		
+		results = await Voyage.findAll({ 
+			where: {
+				[Op.and]: [
+					{
+						voyageDate: {
+							[Op.and]: [
+								{ [Op.gte]: startDate },
+								{ [Op.lte]: endDate }
+							]
+						}
+					},
+					{
+						crew: {
+							[crewOp === 'and' ? Op.and : Op.or]: [
+								... crewMatch.map(c => {
+									return {
+										[Op.substring]: `"${c}"`
+									}
+								})
+							]
+						}
+					}
+				]
 			}
-		}
-		else {
-			where.crew = { [Op.like]: `%"${crewMatch[0]}"%` };
-		}
+		});
 	}
 	else {
-		delete where.crew;
+		results = await Voyage.findAll({ 
+			where: {
+				voyageDate: {
+					[Op.and]: [
+						{ [Op.gte]: startDate },
+						{ [Op.lte]: endDate }
+					]
+				}
+			}
+		});
 	}
-	
-	let results = await Voyage.findAll({ 
-		where
-	});
 
 	return results;
 }

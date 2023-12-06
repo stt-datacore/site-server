@@ -17,6 +17,7 @@ const app: express.Application = express();
 
 // When used with nginx reverse proxy, pick a rerouting port
 let port: number = 4420;
+//let port: number = 4421;
 
 if (process.argv.length > 2) {
 	port = parseInt(process.argv[2]);
