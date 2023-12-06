@@ -6,7 +6,7 @@ import { sign, verify } from 'jsonwebtoken';
 import { Logger, LogData } from './logger';
 import { uploadProfile, loadProfileCache, loginUser, getDBIDbyDiscord } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
-import { recordTelemetryDB, getTelemetryDB } from './telemetry';
+import { recordTelemetryDB, getTelemetryDB, voyageRawByDays } from './telemetry';
 import { getSTTToken } from './stttools';
 
 require('dotenv').config();
@@ -298,6 +298,16 @@ export class ApiClass {
 		Logger.info('Get telemetry', { type });
 
 		let result = await getTelemetryDB(type);
+		return {
+			Status: 200,
+			Body: result
+		}
+	}
+
+	async getVoyages(crew: string[], days: number) {
+		if (days <= 0 || days > 31) days = 31;
+		Logger.info('Get voyages', { crew, days });
+		let result = await voyageRawByDays(days, crew)
 		return {
 			Status: 200,
 			Body: result
