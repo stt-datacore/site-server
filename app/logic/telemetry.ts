@@ -94,10 +94,7 @@ export async function createStats(force?: boolean) {
 
 	if (fs.existsSync(dailyfile)) {
 		let rt = fs.statSync(dailyfile);
-		if (force || rt.mtime.getDay() !== (mynow.getDay())) {
-			fs.rmSync(dailyfile);
-		}
-		else {
+		if (!force && rt.mtime.getDay() === (mynow.getDay())) {
 			setTimeout(() => createStats(), 1000 * 60 * 30);
 			return;
 		}
