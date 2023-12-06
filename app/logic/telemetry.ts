@@ -81,6 +81,10 @@ export async function loadStats() {
 
 export async function createStats(force?: boolean) {
 	let mynow = new Date();
+	mynow.setMinutes(0);
+	mynow.setSeconds(0);
+	mynow.setMilliseconds(0);
+	
 	let path = `${process.env.PROFILE_DATA_PATH}/stats`;
 	if (!fs.existsSync(path)) {
 		fs.mkdirSync(path);
