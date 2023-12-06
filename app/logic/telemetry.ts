@@ -41,7 +41,7 @@ async function recordVoyage(voyagers: string[]) {
 	return true;
 }
 
-async function recordVoyageCalc({ voyagers, estimatedDuration, primary_skill, secondary_skill, am_traits, ship_trait }: { voyagers: string[]; estimatedDuration: number; primary_skill?: string; secondary_skill?: string, am_traits?: string[], ship_trait?: string }) {
+async function recordVoyageCalc({ voyagers, estimatedDuration, primary_skill, secondary_skill, am_traits, ship_trait, extra_stats }: { voyagers: string[]; estimatedDuration: number; primary_skill?: string; secondary_skill?: string, am_traits?: string[], ship_trait?: string, extra_stats?: any }) {
 	// for (let i in voyagers) {
 	// 	const crewSymbol = voyagers[i];
 	// 	await VoyageRecord.create({ crewSymbol, estimatedDuration });
@@ -55,7 +55,8 @@ async function recordVoyageCalc({ voyagers, estimatedDuration, primary_skill, se
 		primary_skill,
 		secondary_skill,
 		am_traits,
-		ship_trait
+		ship_trait,
+		extra_stats
 	});
 
 	return true;

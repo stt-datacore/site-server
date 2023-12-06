@@ -8,6 +8,7 @@ import expressWinston from 'express-winston';
 import { ApiController } from './controllers';
 import { Logger, DataCoreAPI, createStats } from './logic';
 import { sequelize } from './sequelize';
+import { Voyage } from './models/VoyageRecord';
 
 require('dotenv').config();
 
