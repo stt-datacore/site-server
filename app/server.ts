@@ -21,8 +21,6 @@ if (process.argv.length > 2) {
 	port = parseInt(process.argv[2]);
 }
 
-setTimeout(() => createStats(true));
-
 let nocache = (req: Request, res: Response, next: any) => {
 	res.setHeader('Surrogate-Control', 'no-store');
 	res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -64,7 +62,8 @@ app.use('/api', nocache, expressLogger, ApiController);
 
 (async () => {
 	await sequelize.sync();
-	
+	setTimeout(() => createStats(true));
+
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
 	// Serve the application at the given port
