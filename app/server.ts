@@ -71,9 +71,9 @@ app.use('/api', nocache, expressLogger, ApiController);
 	await DataCoreAPI.initializeCache();
 
 	// // Migration script!!!
-	setTimeout(() => {
-		utilityMethod();
-	});
+	// setTimeout(() => {
+	// 	utilityMethod();
+	// });
 
 	// Serve the application at the given port
 	app.listen(port, '0.0.0.0', () => {
