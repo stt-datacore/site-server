@@ -1,4 +1,4 @@
-import { VoyageRecord } from '../models/VoyageRecord';
+import { Voyage, VoyageRecord } from '../models/VoyageRecord';
 import { Op } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 
@@ -25,18 +25,26 @@ export async function getTelemetryDB(type: string) {
 
 // Backwards-compatibility, remove once new version of site fully deployed/propagated
 async function recordVoyage(voyagers: string[]) {
-	for (let i in voyagers) {
-		const crewSymbol = voyagers[i];
-		await VoyageRecord.create({ crewSymbol });
-	}
+	// for (let i in voyagers) {
+	// 	const crewSymbol = voyagers[i];
+	// 	await VoyageRecord.create({ crewSymbol });
+	// }
 	return true;
 }
 
 async function recordVoyageCalc({ voyagers, estimatedDuration }: { voyagers: string[]; estimatedDuration: number;}) {
-	for (let i in voyagers) {
-		const crewSymbol = voyagers[i];
-		await VoyageRecord.create({ crewSymbol, estimatedDuration });
-	}
+	// for (let i in voyagers) {
+	// 	const crewSymbol = voyagers[i];
+	// 	await VoyageRecord.create({ crewSymbol, estimatedDuration });
+	// }
+	
+	// New Telemetry Database
+	await Voyage.create({
+		estimatedDuration,
+		voyageDate: new Date(),
+		crew: voyagers		
+	});
+
 	return true;
 }
 
