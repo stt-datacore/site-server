@@ -26,7 +26,7 @@ export async function recordTelemetryDB(type: string, data: any) {
 export async function getTelemetryDB(type: string) {
 	switch (type) {
 		case 'voyage':
-			return createStats();
+			return loadStats();
 		default:
 			throw new Error(`Unknown telemetry type: ${type}`);
 	}
@@ -61,7 +61,24 @@ async function recordVoyageCalc({ voyagers, estimatedDuration, primary_skill, se
 	return true;
 }
 
-export async function createStats() {
+
+export async function loadStats() {
+	let path = `${process.env.PROFILE_DATA_PATH}/stats`;
+
+	if (!fs.existsSync(path)) {
+		fs.mkdirSync(path);
+	}
+	
+	let dailyfile = `${path}/daily_stats.json`;
+
+	if (fs.existsSync(dailyfile)) {
+		return JSON.parse(fs.readFileSync(dailyfile, 'utf-8')) as { [key: string]: CrewPeople[] };
+	}
+
+	return {};
+}
+
+export async function createStats(force?: boolean) {
 	let mynow = new Date();
 	let path = `${process.env.PROFILE_DATA_PATH}/stats`;
 	if (!fs.existsSync(path)) {
@@ -72,18 +89,18 @@ export async function createStats() {
 
 	if (fs.existsSync(dailyfile)) {
 		let rt = fs.statSync(dailyfile);
-		if (rt.mtime.getDay() !== (mynow.getDay())) {
+		if (force || rt.mtime.getDay() !== (mynow.getDay())) {
 			fs.rmSync(dailyfile);
 		}
 		else {
-			return JSON.parse(fs.readFileSync(dailyfile, 'utf-8')) as { [key: string]: CrewPeople[] };
+			setTimeout(() => createStats(), 1000 * 60 * 60);
+			return;
 		}
 	}
 
 	let result = await getVoyageStats();
 	fs.writeFileSync(dailyfile, JSON.stringify(result));
-	
-	return result;
+	setTimeout(() => createStats(), 1000 * 60 * 60);
 }
 
 async function getVoyageStats() {	
