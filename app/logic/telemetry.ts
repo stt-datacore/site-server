@@ -78,7 +78,7 @@ export async function loadStats() {
 	return {};
 }
 
-export async function createStats() {
+export async function createStats(force?: boolean) {
 	let mynow = new Date();
 	let path = `${process.env.PROFILE_DATA_PATH}/stats`;
 	if (!fs.existsSync(path)) {
@@ -89,7 +89,7 @@ export async function createStats() {
 
 	if (fs.existsSync(dailyfile)) {
 		let rt = fs.statSync(dailyfile);
-		if (rt.mtime.getDay() !== (mynow.getDay())) {
+		if (force || rt.mtime.getDay() !== (mynow.getDay())) {
 			fs.rmSync(dailyfile);
 		}
 		else {
