@@ -84,7 +84,7 @@ export async function createStats(force?: boolean) {
 	mynow.setMinutes(0);
 	mynow.setSeconds(0);
 	mynow.setMilliseconds(0);
-	
+
 	let path = `${process.env.PROFILE_DATA_PATH}/stats`;
 	if (!fs.existsSync(path)) {
 		fs.mkdirSync(path);
@@ -98,14 +98,14 @@ export async function createStats(force?: boolean) {
 			fs.rmSync(dailyfile);
 		}
 		else {
-			setTimeout(() => createStats(), 1000 * 60 * 60);
+			setTimeout(() => createStats(), 1000 * 60 * 30);
 			return;
 		}
 	}
 
 	let result = await getVoyageStats();
 	fs.writeFileSync(dailyfile, JSON.stringify(result));
-	setTimeout(() => createStats(), 1000 * 60 * 60);
+	setTimeout(() => createStats(), 1000 * 60 * 30);
 }
 
 async function getVoyageStats() {	
