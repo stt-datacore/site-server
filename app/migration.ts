@@ -115,55 +115,73 @@ export async function utilityMethod() {
 	// // This section is for converting the file.
 	// await Voyage.sync({ alter: true });
 	
-	// const voykeys = Object.keys(distinctVoyages);
-	// let yago = (new Date(Date.now() - (365 * 24 * 60 * 60 * 1000))).getTime();
-	// let vid = 1;
+	const voykeys = Object.keys(distinctVoyages);
+	let yago = (new Date(Date.now() - (180 * 24 * 60 * 60 * 1000))).getTime();
+	let vid = 1;
 	
-	// for (let key of voykeys) {
-	// 	let [dstr, ] = key.split("_");
-	// 	const voyDate = new Date(dstr);
-	// 	if (voyDate.getTime() < yago) continue;
-	// 	const data = distinctVoyages[key];
-		
-	// 	console.log(`Creating Voyage ${voyDate}...`);
-		
-	// 	try {
-	// 		await Voyage.create({
-	// 			estimatedDuration: data.duration,
-	// 			crew: data.crew,
-	// 			voyageDate: voyDate
-	// 		});
-	// 	}
-	// 	catch (err: any) {
-	// 		console.log(err);
-	// 	}
-	// }
+
+
+	for (let i = 0; i < voykeys.length; i += 500) {
+		const newrecs = [] as any[];
+
+		for (let j = i; j < i + 500; j++) {
+			if (j >= voykeys.length) break;
+
+			let key = voykeys[i];
+			let [dstr, ] = key.split("_");
+			const data = distinctVoyages[key];
+			const voyDate = new Date(dstr);
+			if (voyDate.getTime() < yago) continue;
+			console.log(`Creating Voyage ${voyDate}...`);
+	
+			newrecs.push({
+				estimatedDuration: data.duration,
+				crew: data.crew,
+				voyageDate: voyDate
+			});
+		}
+
+		try {
+			if (!newrecs.length) continue;
+			console.log(`Writing ${newrecs.length} entries`)
+			await Voyage.bulkCreate(newrecs);
+		}
+		catch (err: any) {
+			console.log(err);
+		}
+	}
 
 
 	// This section is for historical data.
 	let sql = await getHistoricalDb();
 	if (!sql) exit(1);
 
-	await Historical.sync({ alter: true });
+	await sql.sync();
 	
-	const voykeys = Object.keys(distinctVoyages);
-	let yago = (new Date(Date.now() - (365 * 24 * 60 * 60 * 1000))).getTime();
-	let vid = 1;
+	for (let i = 0; i < voykeys.length; i += 500) {
+		const newrecs = [] as any[];
+
+		for (let j = i; j < i + 500; j++) {
+			if (j >= voykeys.length) break;
+
+			let key = voykeys[i];
+			let [dstr, ] = key.split("_");
+			const data = distinctVoyages[key];
+			const voyDate = new Date(dstr);
+			if (voyDate.getTime() >= yago) continue;
+			console.log(`Creating Voyage ${voyDate}...`);
 	
-	for (let key of voykeys) {
-		let [dstr, ] = key.split("_");
-		const voyDate = new Date(dstr);
-		if (voyDate.getTime() >= yago) continue;
-		const data = distinctVoyages[key];
-		
-		console.log(`Creating Voyage ${voyDate}...`);
-		
-		try {
-			await Historical.create({
+			newrecs.push({
 				estimatedDuration: data.duration,
 				crew: data.crew,
 				voyageDate: voyDate
 			});
+		}
+
+		try {
+			if (!newrecs.length) continue;
+			console.log(`Writing ${newrecs.length} entries`)
+			await Historical.bulkCreate(newrecs);
 		}
 		catch (err: any) {
 			console.log(err);
