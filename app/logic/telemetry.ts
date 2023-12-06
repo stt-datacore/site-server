@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { Voyage } from '../models/VoyageRecord';
 import fs from 'fs';
 
-type CrewPeople = {
+export interface Voyager {
 	crewSymbol: string,
 	seats: { seat_skill: string, seat_index: number, crewCount: number, averageDuration: number }[],
 	averageDuration: number,
@@ -72,7 +72,7 @@ export async function loadStats() {
 	let dailyfile = `${path}/daily_stats.json`;
 
 	if (fs.existsSync(dailyfile)) {
-		return JSON.parse(fs.readFileSync(dailyfile, 'utf-8')) as { [key: string]: CrewPeople[] };
+		return JSON.parse(fs.readFileSync(dailyfile, 'utf-8')) as { [key: string]: Voyager[] };
 	}
 
 	return {};
@@ -122,7 +122,7 @@ async function getVoyageStats() {
 	];
 
 	const records = await Voyage.findAll({ where: { voyageDate: { [Op.gte]: one80DaysAgo }}});
-	const output = {} as { [key: string]: CrewPeople[] };
+	const output = {} as { [key: string]: Voyager[] };
 
 	const dsets = [{
 		date: new Date(Date.now() - (180 * 24 * 60 * 60 * 1000)),
@@ -142,7 +142,7 @@ async function getVoyageStats() {
 		console.log(`From ${d} as '${fn}'...`);
 		let results = records.filter(r => r.voyageDate.getTime() >= dset.date.getTime());
 
-		const cp = {} as { [key: string]: CrewPeople };
+		const cp = {} as { [key: string]: Voyager };
 	
 		for (let res of results) {
 			let seat = 0;
