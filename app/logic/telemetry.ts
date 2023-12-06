@@ -65,7 +65,7 @@ async function getVoyageStats() {
 		'medicine_skill' 
 	];
 
-	const records = await Voyage.findAll({ where: { voyageTime: { [Op.gte]: one80DaysAgo }}});
+	const records = await Voyage.findAll({ where: { voyageDate: { [Op.gte]: one80DaysAgo }}});
 	const output = {} as any;
 
 	const dsets = [{
@@ -88,10 +88,10 @@ async function getVoyageStats() {
 
 		type CrewPeople = {
 			crewSymbol: string,
-			seats: { seat: string, count: number, avgTime: number }[],
+			seats: { seat_skill: string, seat_index: number, crewCount: number, averageDuration: number }[],
 			averageDuration: number,
-			firstVoyage: Date,
-			mostRecentVoyage: Date,
+			startDate: Date,
+			endDate: Date,
 			crewCount: number;
 		}
 	
@@ -105,23 +105,24 @@ async function getVoyageStats() {
 					crewSymbol: c,
 					seats: [],
 					averageDuration: 0,
-					firstVoyage: res.voyageDate,
-					mostRecentVoyage: res.voyageDate,
+					startDate: res.voyageDate,
+					endDate: res.voyageDate,
 					crewCount: 0
 				};
 				cp[c].crewCount++;
-				cp[c].mostRecentVoyage = res.voyageDate;
+				cp[c].endDate = res.voyageDate;
 				cp[c].averageDuration = ((cp[c].averageDuration * cp[c].seats.length) + res.estimatedDuration) / (cp[c].seats.length + 1);
-				let currseat = cp[c].seats.find(s => s.seat === seats[seat]);
+				let currseat = cp[c].seats.find(s => s.seat_skill === seats[seat]);
 				if (currseat) {
-					currseat.avgTime = ((currseat.avgTime * currseat.count) + res.estimatedDuration) / (currseat.count + 1);
-					currseat.count++;
+					currseat.averageDuration = ((currseat.averageDuration * currseat.crewCount) + res.estimatedDuration) / (currseat.crewCount + 1);
+					currseat.crewCount++;
 				}
 				else {
 					cp[c].seats.push({
-						seat: seats[seat],
-						count: 1,
-						avgTime: res.estimatedDuration
+						seat_skill: seats[seat],
+						seat_index: seat,
+						crewCount: 1,
+						averageDuration: res.estimatedDuration
 					})
 				}
 				seat++;
