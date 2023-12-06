@@ -304,10 +304,10 @@ export class ApiClass {
 		}
 	}
 
-	async getVoyages(crew: string[], days: number) {
+	async getVoyages(crew: string[], days: number, opAnd?: boolean) {
 		if (days <= 0 || days > 31) days = 31;
 		Logger.info('Get voyages', { crew, days });
-		let result = await voyageRawByDays(days, crew)
+		let result = await voyageRawByDays(days, crew, opAnd)
 		return {
 			Status: 200,
 			Body: result

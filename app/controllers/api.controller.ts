@@ -184,14 +184,17 @@ router.get('/voyagesByCrew', async (req: Request, res: Response, next) => {
 	try {		
 		let cstr = req.query.crew.toString();
 		let dstr = req.query.days.toString();
+		let opAnd = (req.query.opand === '1');
+		
 		if (!cstr?.length) {
 			res.status(400).send('Whaat?');
-			return;
+			return;		
 		}
+		
 		let crew = cstr.split(",");
 		let days = Number.parseInt(dstr);
 
-		let apiResult = await DataCoreAPI.getVoyages(crew, days);
+		let apiResult = await DataCoreAPI.getVoyages(crew, days, opAnd);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
