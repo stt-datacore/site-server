@@ -143,7 +143,12 @@ async function getVoyageStats() {
 		let results = records.filter(r => r.voyageDate.getTime() >= dset.date.getTime());
 
 		// fix bug from initial migration
-		results = results.filter((r, idx) => results.findIndex(f => f.voyageDate.getTime() === r.voyageDate.getTime()) === idx);
+		let dms = {} as { [key: string]: Voyage };
+		for (let v of results) {
+			dms[v.voyageDate.toString()] = v;
+		}
+
+		results = Object.values(dms);
 
 		const cp = {} as { [key: string]: CrewPeople };
 	
