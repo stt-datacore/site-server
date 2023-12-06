@@ -105,15 +105,15 @@ export async function createStats(force?: boolean) {
 	setTimeout(() => createStats(), 1000 * 60 * 30);
 }
 
-export async function voyageRawByDays(days: number, crewMatch?: string[]) {
+export async function voyageRawByDays(days: number, crewMatch?: string[], opAnd?: boolean) {
 	let endDate = new Date();
 	let startDate = new Date();
 	startDate.setDate(startDate.getDate() - days);
 
-	return voyageRawByRange(startDate, endDate, crewMatch);
+	return voyageRawByRange(startDate, endDate, crewMatch, opAnd);
 }
 
-export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMatch?: string[], crewOp?: string) {
+export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMatch?: string[], opAnd?: boolean) {
 	endDate ??= new Date();
 	if (!startDate) {
 		startDate = new Date(endDate.getTime());
@@ -134,7 +134,7 @@ export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMat
 					},
 					{
 						crew: {
-							[crewOp === 'and' ? Op.and : Op.or]: [
+							[opAnd ? Op.and : Op.or]: [
 								... crewMatch.map(c => {
 									return {
 										[Op.substring]: `"${c}"`
