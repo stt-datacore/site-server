@@ -121,17 +121,24 @@ export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMat
 	}
 	
 	const where = { 
-		voyageDate: [ 
-			{ [Op.gte]: startDate }, 
-			{ [Op.lte]: endDate }
-		],
+		voyageDate: { 
+			[Op.and]: [ 
+				{ [Op.gte]: startDate }, 
+				{ [Op.lte]: endDate }
+			]
+		},
 		crew: undefined as any
 	};
 	
 	if (crewMatch) {
-		where.crew = { [Op.or]: [] as any[] };
-		for (let crew of crewMatch) {
-			where.crew[Op.or].push({ [Op.like]: `%"${crew}"%`})
+		if (crewMatch.length > 1) {
+			where.crew = { [Op.or]: [] as any[] };
+			for (let crew of crewMatch) {
+				where.crew[Op.or].push({ [Op.like]: `%"${crew}"%`})
+			}
+		}
+		else {
+			where.crew = { [Op.like]: `%"${crewMatch[0]}"%` };
 		}
 	}
 	else {
