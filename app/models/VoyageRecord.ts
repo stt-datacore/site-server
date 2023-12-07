@@ -45,8 +45,8 @@ export class Voyage extends Model {
     extra_stats?: any
 }
 
-@Table
-export class Historical extends Model {
+@Table({ tableName: "Voyages", name: { singular: "Voyage", plural: "Voyages" } })
+export class Historical extends Model { 
 
     @Column
     estimatedDuration?: number;
