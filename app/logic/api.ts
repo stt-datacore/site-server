@@ -28,7 +28,7 @@ export class ApiClass {
 	beginStatsCycle() {
 		setTimeout(async () => {
 			await createStats(true);
-			this._cancelToken = setInterval(() => createStats(), 1000 * 60 * 30);
+			this._cancelToken = setInterval(async () => await createStats(), 1000 * 60 * 30);
 		}, 0);
 	}
 
