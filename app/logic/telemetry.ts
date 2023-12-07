@@ -177,7 +177,8 @@ async function getVoyageStats(sqlconn?: string, filename?: string) {
 		n = sqlconn.lastIndexOf("/");
 		sqlconn = sqlconn.slice(0, n);		
 		let histfile = sqlconn + "/" + filename;
-	
+		sqlfile = sqlfile.replace(/\/\//g, '/');
+		histfile = histfile.replace(/\/\//g, '/');
 		let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${histfile}`);
 		proc.on('exit', async (code, signal) => {
 	
