@@ -1,6 +1,8 @@
 import { Op } from 'sequelize';
-import { Voyage } from '../models/VoyageRecord';
+import { Historical, Voyage } from '../models/VoyageRecord';
 import fs from 'fs';
+import { exec } from 'child_process';
+import { Model, Sequelize } from 'sequelize-typescript';
 
 export interface Voyager {
 	crewSymbol: string,
@@ -163,9 +165,40 @@ export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMat
 	return results;
 }
 
-async function getVoyageStats() {	
-	const one80DaysAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
+async function getVoyageStats(sqlconn?: string, filename?: string) {
+	return new Promise<{ [key: string]: Voyager[] }>((resolve, reject) => {
+		filename ??= "snapshot.sqlite"
+		sqlconn ??= process.env.DB_CONNECTION_STRING as string;
+			
+		//let sqlconn = process.env.DB_CONNECTION_STRING as string;
+		let n = sqlconn.indexOf("/");
+		sqlconn = sqlconn.slice(n);
+		let sqlfile = sqlconn;
+		n = sqlconn.lastIndexOf("/");
+		sqlconn = sqlconn.slice(0, n);		
+		let histfile = sqlconn + "/" + filename;
 	
+		let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${histfile}`);
+		proc.on('exit', async (code, signal) => {
+	
+			let sql = new Sequelize(`sqlite:${histfile}`, {
+				models: [Historical],
+				logging: false
+			});
+		
+			if (sql) {
+				await sql.sync();
+			}
+	
+			let results = await internalgetVoyageStats(Historical);
+			await sql.close();
+			resolve(results);
+		});	
+	});
+}
+
+async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typeof Historical)) {	
+	const one80DaysAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
 	const seats = [
 		'command_skill', 
 		'command_skill', 
@@ -181,7 +214,7 @@ async function getVoyageStats() {
 		'medicine_skill' 
 	];
 
-	const records = await Voyage.findAll({ 
+	const records = await Table.findAll({ 
 		where: { 
 			voyageDate: { 
 				[Op.gte]: one80DaysAgo 
