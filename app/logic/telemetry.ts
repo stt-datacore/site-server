@@ -166,36 +166,36 @@ export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMat
 }
 
 async function getVoyageStats(sqlconn?: string, filename?: string) {
-	return new Promise<{ [key: string]: Voyager[] }>((resolve, reject) => {
-		filename ??= "snapshot.sqlite"
-		sqlconn ??= process.env.DB_CONNECTION_STRING as string;
+	return internalgetVoyageStats(Voyage);
+	// return new Promise<{ [key: string]: Voyager[] }>((resolve, reject) => {
+	// 	filename ??= "snapshot.sqlite"
+	// 	sqlconn ??= process.env.DB_CONNECTION_STRING as string;
 			
-		//let sqlconn = process.env.DB_CONNECTION_STRING as string;
-		let n = sqlconn.indexOf("/");
-		sqlconn = sqlconn.slice(n);
-		let sqlfile = sqlconn;
-		n = sqlconn.lastIndexOf("/");
-		sqlconn = sqlconn.slice(0, n);		
-		let histfile = sqlconn + "/" + filename;
-		sqlfile = sqlfile.replace(/\/\//g, '/');
-		histfile = histfile.replace(/\/\//g, '/');
-		let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${histfile}`);
-		proc.on('exit', async (code, signal) => {
+	// 	//let sqlconn = process.env.DB_CONNECTION_STRING as string;
+	// 	let n = sqlconn.indexOf("/");
+	// 	sqlconn = sqlconn.slice(n);
+	// 	let sqlfile = sqlconn;
+	// 	n = sqlconn.lastIndexOf("/");
+	// 	sqlconn = sqlconn.slice(0, n);		
+	// 	let histfile = sqlconn + "/" + filename;
+	// 	sqlfile = sqlfile.replace(/\/\//g, '/');
+	// 	histfile = histfile.replace(/\/\//g, '/');
+	// 	let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${histfile}`);
+	// 	proc.on('exit', async (code, signal) => {
 	
-			let sql = new Sequelize(`sqlite:${histfile}`, {
-				models: [Historical],
-				logging: false
-			});
+	// 		let sql = new Sequelize(`sqlite:${histfile}`, {
+	// 			models: [Historical],
+	// 			logging: false
+	// 		});
 		
-			if (sql) {
-				await sql.sync();
-			}
+	// 		if (sql) {
+	// 			await sql.sync();
+	// 		}
 	
-			let results = await internalgetVoyageStats(Historical);
-			await sql.close();
-			resolve(results);
-		});	
-	});
+	// 		let results = await internalgetVoyageStats(Historical);			
+	// 		resolve(results);
+	// 	});	
+	// });
 }
 
 async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typeof Historical)) {	
