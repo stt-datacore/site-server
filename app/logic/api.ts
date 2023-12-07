@@ -6,7 +6,7 @@ import { sign, verify } from 'jsonwebtoken';
 import { Logger, LogData } from './logger';
 import { uploadProfile, loadProfileCache, loginUser, getDBIDbyDiscord } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
-import { recordTelemetryDB, getTelemetryDB, voyageRawByDays } from './telemetry';
+import { recordTelemetryDB, getTelemetryDB, voyageRawByDays, createStats } from './telemetry';
 import { getSTTToken } from './stttools';
 
 require('dotenv').config();
@@ -22,6 +22,22 @@ export class ApiResult {
 export class ApiClass {
 	private _player_data: any;
 	private _stt_token: any;
+
+	private _cancelToken: NodeJS.Timeout | undefined = undefined;
+
+	beginStatsCycle() {
+		setTimeout(async () => {
+			await createStats(true);
+			this._cancelToken = setInterval(() => createStats(), 1000 * 60 * 30);
+		}, 0);
+	}
+
+	endStatsCycle() {
+		if (this._cancelToken) {
+			clearInterval(this._cancelToken);
+			this._cancelToken = undefined;
+		}
+	}
 
 	async initializeCache() {
 		this._player_data = await loadProfileCache();

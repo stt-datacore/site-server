@@ -95,14 +95,12 @@ export async function createStats(force?: boolean) {
 	if (fs.existsSync(dailyfile)) {
 		let rt = fs.statSync(dailyfile);
 		if (!force && rt.mtime.getDay() === (mynow.getDay())) {
-			setTimeout(() => createStats(), 1000 * 60 * 30);
 			return;
 		}
 	}
 
 	let result = await getVoyageStats();
 	fs.writeFileSync(dailyfile, JSON.stringify(result));
-	setTimeout(() => createStats(), 1000 * 60 * 30);
 }
 
 export async function voyageRawByDays(days: number, crewMatch?: string[], opAnd?: boolean) {
@@ -144,7 +142,8 @@ export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMat
 						}
 					}
 				]
-			}
+			},
+			lock: true
 		});
 	}
 	else {
@@ -156,7 +155,8 @@ export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMat
 						{ [Op.lte]: endDate }
 					]
 				}
-			}
+			},
+			lock: true
 		});
 	}
 
@@ -181,7 +181,14 @@ async function getVoyageStats() {
 		'medicine_skill' 
 	];
 
-	const records = await Voyage.findAll({ where: { voyageDate: { [Op.gte]: one80DaysAgo }}});
+	const records = await Voyage.findAll({ 
+		where: { 
+			voyageDate: { 
+				[Op.gte]: one80DaysAgo 
+			}
+		},
+		lock: true 
+	});
 	const output = {} as { [key: string]: Voyager[] };
 
 	const dsets = [{
