@@ -1,5 +1,5 @@
 import { Collaboration, CrewTrial, Solve } from "../datacore/boss";
-import { BossBattleDocument, IFBB_BossBattle_Document, IFBB_Solve_Document, SolveDocument, TrialDocument } from "../models/BossBattles";
+import { BossBattleDocument, IFBB_BossBattle_Document, SolveDocument, TrialDocument } from "../models/BossBattles";
 import { makeSql } from "../sequelize";
 import seedrandom from 'seedrandom';
 
@@ -11,16 +11,17 @@ export async function postOrPutBossBattle_sqlite(
     
     if (sql) {            
         
+        const repo = sql.getRepository(BossBattleDocument);
         let roomCode = (seedrandom(battle.bossBattleId.toString())() * 1000000).toString();
         battle.roomCode = roomCode;
 
-        const battleDoc = await BossBattleDocument.findOne({ where: { bossBattleId: battle.bossBattleId } });
+        const battleDoc = await repo.findOne({ where: { bossBattleId: battle.bossBattleId } });
 
         if (battleDoc) {
-            result = !!BossBattleDocument.update({ ... battle }, { where: { bossBattleId: battle.bossBattleId } });
+            result = !!repo.update({ ... battle }, { where: { bossBattleId: battle.bossBattleId } });
         }
         else {
-            result = !!BossBattleDocument.create({ ... battle });
+            result = !!repo.create({ ... battle });
         }
         
         return result ? 201 : 400;
@@ -39,6 +40,8 @@ export async function postOrPutSolves_sqlite(
     
     let result = true;
     if (sql) {
+        const repo = sql.getRepository(SolveDocument);
+
         const newdata = [] as any[];
         for (let solve of solves) {
             newdata.push({
@@ -49,7 +52,7 @@ export async function postOrPutSolves_sqlite(
             });
         }
 
-        let res = await SolveDocument.bulkCreate(newdata);
+        let res = await repo.bulkCreate(newdata);
         result &&= !!res && res.length === newdata.length;
         return result ? 201 : 400;        
     }
@@ -67,6 +70,7 @@ export async function postOrPutTrials_sqlite(
     let sql = await makeSql(fleetId, true);
     let result = true;
     if (sql) {
+        const repo = sql.getRepository(TrialDocument);
         const newdata = [] as any[];
 
         for (let trial of trials) {
@@ -78,7 +82,7 @@ export async function postOrPutTrials_sqlite(
             })
         }
 
-        let insres = await TrialDocument.bulkCreate(newdata);
+        let insres = await repo.bulkCreate(newdata);
         result &&= !!insres && insres.length === newdata.length;
         return result ? 201 : 400;        
     }
@@ -94,18 +98,23 @@ export async function getCollaborationById_sqlite(
         let sql = await makeSql(fleetId, true);
 
     if (sql && (!!bossBattleId || !!roomCode)) {
+
+        const bbrepo = sql.getRepository(BossBattleDocument);
+        const sorepo = sql.getRepository(SolveDocument);
+        const trrepo = sql.getRepository(TrialDocument);
+
         let bossBattleDoc: BossBattleDocument | null = null;
         
         if (bossBattleId) {
-            bossBattleDoc = await BossBattleDocument.findOne({ where: { bossBattleId } });
+            bossBattleDoc = await bbrepo.findOne({ where: { bossBattleId } });
         }
         else if (roomCode) {
-            bossBattleDoc = await BossBattleDocument.findOne({ where: { roomCode } });
+            bossBattleDoc = await bbrepo.findOne({ where: { roomCode } });
         }
         
         if (bossBattleDoc) {
-            let solves = await SolveDocument.findAll({ where: { bossBattleId, chainIndex: bossBattleDoc.chainIndex } });
-            let trials = await TrialDocument.findAll({ where: { bossBattleId, chainIndex: bossBattleDoc.chainIndex } });
+            let solves = await sorepo.findAll({ where: { bossBattleId, chainIndex: bossBattleDoc.chainIndex } });
+            let trials = await trrepo.findAll({ where: { bossBattleId, chainIndex: bossBattleDoc.chainIndex } });
     
             return [{
                 bossBattleId,

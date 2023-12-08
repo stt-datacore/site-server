@@ -48,7 +48,8 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 	if (makeFleet) {
 		const newdb = new Sequelize(dpath, {
 			models: [SolveDocument, TrialDocument, BossBattleDocument],
-			logging: false
+			logging: false,
+			repositoryMode: true
 		});
 	
 		if (newdb) {
@@ -59,7 +60,8 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 	else {
 		const newdb = new Sequelize(dpath, {
 			models: [TrackedVoyage, TrackedCrew],
-			logging: false
+			logging: false,
+			repositoryMode: true
 		});
 	
 		if (newdb) {

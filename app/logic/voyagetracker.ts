@@ -8,7 +8,8 @@ export async function getVoyagesByDbid_sqlite(dbid: number) {
 
     const sql = await makeSql(dbid);        
     if (sql) {
-        res = await TrackedVoyage.findAll({ where: { dbid }});
+        const repo = sql.getRepository(TrackedVoyage);
+        res = await repo.findAll({ where: { dbid }});
         // sql?.close();
     }
 
@@ -19,8 +20,9 @@ export async function getVoyagesByTrackerId_sqlite(dbid: number, trackerId: numb
     let res: TrackedVoyage[] | null = null;
 
     const sql = await makeSql(dbid);        
-    if (sql) {
-        res = await TrackedVoyage.findAll({ where: { trackerId }});
+    if (sql) {        
+        const repo = sql.getRepository(TrackedVoyage);
+        res = await repo.findAll({ where: { trackerId }});
         // sql?.close();
     }
 
@@ -35,8 +37,8 @@ export async function postOrPutVoyage_sqlite(
     const sql = await makeSql(dbid);
 
     if (sql) {
-
-        let result = await TrackedVoyage.create({ 
+        const repo = sql.getRepository(TrackedVoyage);
+        let result = await repo.create({ 
             dbid,
             trackerId: voyage.tracker_id,
             voyage,
@@ -56,8 +58,8 @@ export async function getAssignmentsByDbid_sqlite(dbid: number) {
     const sql = await makeSql(dbid);
     
     if (sql) {
-        res = await TrackedCrew.findAll({ where: { dbid }});
-        // sql?.close();
+        const repo = sql.getRepository(TrackedCrew);
+        res = await repo.findAll({ where: { dbid }});        
     }
 
     return res;
@@ -68,7 +70,8 @@ export async function getAssignmentsByTrackerId_sqlite(dbid: number, trackerId: 
 
     const sql = await makeSql(dbid);
     if (sql) {
-        res = await TrackedCrew.findAll({ where: { trackerId }});
+        const repo = sql.getRepository(TrackedCrew);
+        res = await repo.findAll({ where: { trackerId }});
         // sql?.close();
     }
 
@@ -83,7 +86,8 @@ export async function postOrPutAssignment_sqlite(
 
     const sql = await makeSql(dbid);
     if (sql) {
-        let result = await TrackedCrew.create({ 
+        const repo = sql.getRepository(TrackedCrew);
+        let result = await repo.create({ 
             dbid,                
             crew,     
             trackerId: assignment.tracker_id,
@@ -104,12 +108,13 @@ export async function postOrPutAssignmentsMany_sqlite(
     assignments: ITrackedAssignment[],
     timeStamp: Date = new Date()) {
     
-        let result = true;
+    let result = true;
     const newdata = [] as any[];
     let x = 0;
 
     const sql = await makeSql(dbid);
     if (sql) {
+        const repo = sql.getRepository(TrackedCrew);
         for (let crewMember of crew) {
             let assignment  = assignments[x++];
             newdata.push({ 
@@ -123,7 +128,7 @@ export async function postOrPutAssignmentsMany_sqlite(
         }
         
         try {
-            result = !!await TrackedCrew.bulkCreate(newdata);
+            result = !!await repo.bulkCreate(newdata);
         }
         catch (err: any) {
             console.log(err);
