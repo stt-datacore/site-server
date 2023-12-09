@@ -178,25 +178,14 @@ router.post('/telemetry', async (req: Request, res: Response, next) => {
 	}
 });
 
-router.get('/voyagesByCrew', async (req: Request, res: Response, next) => {
-	req.query.days ??= "31";
-	if (!req.query || !req.query.days || !req.query.crew) {
-		res.status(400).send('Whaat?');
-		return;
-	}
 
+router.get('/voyagesByCrew', async (req: Request, res: Response, next) => {	
 	try {		
-		let cstr = req.query.crew.toString();
-		let dstr = req.query.days.toString();
-		let opAnd = (req.query.opand === '1');
-		
-		if (!cstr?.length) {
-			res.status(400).send('Whaat?');
-			return;		
-		}
-		
-		let crew = cstr.split(",");
-		let days = Number.parseInt(dstr);
+		let cstr = req.query.crew?.toString();
+		let dstr = req.query.days?.toString();
+		let opAnd = (req.query.opand === '1');		
+		let crew = cstr?.split(",");
+		let days = dstr ? Number.parseInt(dstr) : undefined;
 
 		let apiResult = await DataCoreAPI.getVoyages(crew, days, opAnd);
 		res.status(apiResult.Status).send(apiResult.Body);
