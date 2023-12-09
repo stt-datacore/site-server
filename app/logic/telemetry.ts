@@ -170,29 +170,36 @@ async function getVoyageStats(sqlconn?: string, filename?: string) {
 		filename ??= "snapshot.sqlite"
 		sqlconn ??= process.env.DB_CONNECTION_STRING as string;
 			
-		//let sqlconn = process.env.DB_CONNECTION_STRING as string;
 		let n = sqlconn.indexOf("/");
 		sqlconn = sqlconn.slice(n);
 		let sqlfile = sqlconn;
+		
 		n = sqlconn.lastIndexOf("/");
 		sqlconn = sqlconn.slice(0, n);		
 		let histfile = sqlconn + "/" + filename;
+		
 		sqlfile = sqlfile.replace(/\/\//g, '/');
 		histfile = histfile.replace(/\/\//g, '/');
-		let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${histfile}`);
+		
+		let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${histfile}`);		
+
 		proc.on('exit', async (code, signal) => {
 	
 			let sql = new Sequelize(`sqlite:${histfile}`, {
 				models: [Historical],
-				logging: false
+				logging: false,
+				repositoryMode: true
 			});
 		
 			if (sql) {
 				await sql.sync();
+				const repo = sql.getRepository(Historical);
+				let results = await internalgetVoyageStats(repo);			
+				resolve(results);
 			}
-	
-			let results = await internalgetVoyageStats(Historical);			
-			resolve(results);
+			else {
+				reject(new Error("Could not connect to database"));
+			}
 		});	
 	});
 }
@@ -225,8 +232,16 @@ async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typ
 	const output = {} as { [key: string]: Voyager[] };
 
 	const dsets = [{
+		date: new Date(Date.now() - (365 * 24 * 60 * 60 * 1000)),
+		file: "oneYear"
+	},
+	{
 		date: new Date(Date.now() - (180 * 24 * 60 * 60 * 1000)),
 		file: "lastSixMonths"
+	},
+	{
+		date: new Date(Date.now() - (90 * 24 * 60 * 60 * 1000)),
+		file: "lastNinetyDays"
 	},
 	{
 		date: new Date(Date.now() - (30 * 24 * 60 * 60 * 1000)),
@@ -281,7 +296,10 @@ async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typ
 		finalOut.sort((a, b) => b.crewCount - a.crewCount);
 		output[dset.file] = finalOut;
 	}
-
+	// Backward compatibility
+	if ("oneYear" in output) {
+		output["allTime"] = output["oneYear"];
+	}
 	return output;
 }
 
