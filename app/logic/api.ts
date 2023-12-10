@@ -38,7 +38,7 @@ export class ApiClass {
 			this._cancelToken = undefined;
 		}
 	}
-
+	
 	async initializeCache() {
 		this._player_data = await loadProfileCache();
 		this._stt_token = 'd6458837-34ba-4883-8588-4530f1a9cc53';
