@@ -8,6 +8,7 @@ import expressWinston from 'express-winston';
 import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
+import { exit } from 'process';
 
 require('dotenv').config();
 
@@ -19,7 +20,9 @@ let port: number = 4420;
 //let port: number = 4421;
 
 if (process.argv.length > 2) {
-	port = parseInt(process.argv[2]);
+	if (process.argv[2] !== 'stats') {
+		port = parseInt(process.argv[2]);
+	}	
 }
 
 let nocache = (req: Request, res: Response, next: any) => {
@@ -66,15 +69,18 @@ app.use('/api', nocache, expressLogger, ApiController);
 
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
-
+	console.log(JSON.stringify(process.argv));
 	// Begin Voyage Stats generation cycle
 	DataCoreAPI.beginStatsCycle();
 	
-	// Serve the application at the given port
-	app.listen(port, '0.0.0.0', () => {
-		// Success callback
-		console.log(`Listening at http://0.0.0.0:${port}/`);
-	});
+	if (!process.argv.includes("stats")) {
+		// Serve the application at the given port
+		app.listen(port, '0.0.0.0', () => {
+			// Success callback
+			console.log(`Listening at http://0.0.0.0:${port}/`);
+		});
+
+	}
 })();
 
 process.on('SIGINT', () => {

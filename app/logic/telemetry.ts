@@ -3,6 +3,7 @@ import { Historical, Voyage } from '../models/VoyageRecord';
 import fs from 'fs';
 import { exec } from 'child_process';
 import { Model, Sequelize } from 'sequelize-typescript';
+import { exit } from 'process';
 
 export interface Voyager {
 	crewSymbol: string,
@@ -103,6 +104,7 @@ export async function createStats(force?: boolean) {
 
 	let result = await getVoyageStats();
 	fs.writeFileSync(dailyfile, JSON.stringify(result));
+	if (process.argv.includes("stats")) exit(0);
 }
 
 export async function voyageRawByDays(days: number, crewMatch?: string[], opAnd?: boolean) {
@@ -205,7 +207,7 @@ async function getVoyageStats(sqlconn?: string, filename?: string) {
 }
 
 async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typeof Historical)) {	
-	const one80DaysAgo = new Date(Date.now() - 180 * 24 * 60 * 60 * 1000);
+	const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
 	const seats = [
 		'command_skill', 
 		'command_skill', 
@@ -224,7 +226,7 @@ async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typ
 	const records = await Table.findAll({ 
 		where: { 
 			voyageDate: { 
-				[Op.gte]: one80DaysAgo 
+				[Op.gte]: oneYearAgo 
 			}
 		},
 		lock: true 
