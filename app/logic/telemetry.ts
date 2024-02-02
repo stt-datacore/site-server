@@ -163,15 +163,6 @@ export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMat
 			lock: true
 		});
 	}
-	
-	// ignore early attempts.
-	results?.forEach((result) => {
-		if (result.extra_stats?.quipment?.length) {
-			if (!Array.isArray(result.extra_stats.quipment[0]) || typeof result.extra_stats.quipment[0][0] !== 'number') {
-				delete result.extra_stats.quipment;
-			}
-		}
-	});
 
 	return results;
 }
