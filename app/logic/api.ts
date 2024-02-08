@@ -4,10 +4,19 @@ import fetch, { Response } from 'node-fetch';
 import { sign, verify } from 'jsonwebtoken';
 
 import { Logger, LogData } from './logger';
-import { uploadProfile, loadProfileCache, loginUser, getDBIDbyDiscord } from './profiletools';
+import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile, getProfile, getProfileByHash } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB, voyageRawByDays, createStats } from './telemetry';
 import { getSTTToken } from './stttools';
+import { PlayerData } from '../datacore/player';
+import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
+
+import { IFBB_BossBattle_Document } from '../models/BossBattles';
+import { CrewTrial, Solve } from '../datacore/boss';
+import { postOrPutVoyage_sqlite, getVoyagesByDbid_sqlite, getVoyagesByTrackerId_sqlite, postOrPutAssignmentsMany_sqlite, getAssignmentsByDbid_sqlite, getAssignmentsByTrackerId_sqlite, postOrPutAssignment_sqlite } from './voyagetracker';
+import { Profile } from '../models/Profile';
+import { TrackedCrew, TrackedVoyage } from '../models/Tracked';
+import { getCollaborationById_sqlite, postOrPutBossBattle_sqlite, postOrPutSolves_sqlite, postOrPutTrials_sqlite } from './collab';
 
 require('dotenv').config();
 
@@ -98,23 +107,41 @@ export class ApiClass {
 
 	async postPlayerData(dbid: string, player_data: any, logData: LogData): Promise<ApiResult> {
 		Logger.info('Post player data', { dbid, logData });
+		let res: Profile | undefined = undefined;
 
 		try {
-			await uploadProfile(dbid, player_data, new Date());
-		} catch (err: any) {
-			return {
-				Status: 500,
-				Body: err.toString()
-			};
+			res = await uploadProfile(dbid, player_data, new Date());
+			
+			this._player_data[dbid] = new Date().toUTCString();
+			fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
+
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: { error: err }
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: {error: err.toString() }
+				};
+			}
 		}
 
-		this._player_data[dbid] = new Date().toUTCString();
-		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
-
-		return {
-			Status: 200,
-			Body: 'OK'
-		};
+		if (res) {
+			return {
+				Status: 200,
+				Body: res
+			};
+		}
+		else {
+			return {
+				Status: 500,
+				Body: { 'error': 'Unknown error' }
+			};
+		}
 	}
 
 	async loadGauntletStatus(logData: LogData): Promise<ApiResult> {
@@ -260,7 +287,7 @@ export class ApiClass {
 		let payload = verify(token, JWT_SECRET);
 		if (!payload) {
 			return {
-				Status: 404,
+				Status: 200, // 204
 				Body: 'Aah, something went wrong!'
 			};
 		}
@@ -287,7 +314,7 @@ export class ApiClass {
 			}
 		} else {
 			return {
-				Status: 404,
+				Status: 200, // 204
 				Body: JSON.stringify({ error: 'No DBID found for Discord user' }),
 			}
 		}
@@ -332,6 +359,485 @@ export class ApiClass {
 		return {
 			Status: 200,
 			Body: result
+		}
+	}
+	
+	/* New SQLite Stuff! */
+	
+	async sqlitePostPlayerData(dbid: number, player_data: PlayerData, logData: LogData): Promise<ApiResult> {
+		
+		Logger.info('Post player data', { dbid, logData });
+		
+		const timeStamp = new Date();
+		let res: Profile;
+
+		try {
+			res = await uploadProfile(dbid.toString(), player_data, timeStamp);			
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		this._player_data[dbid] = new Date().toUTCString();
+		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
+
+		return {
+			Status: 200,
+			Body: {
+				'dbid': dbid,
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+
+	}
+
+	async sqliteGetPlayerData(dbid?: number, hash?: string): Promise<ApiResult> {
+		
+
+		Logger.info('Get player data', { dbid });
+		let player: Profile | null = null;
+		let playerData: PlayerData | null = null;
+
+		try {
+			if (dbid) {
+				player = await getProfile(dbid);
+			}
+			else if (hash) {
+				player = await getProfileByHash(hash);
+			}			
+			if (player) {
+				let path = `${process.env.PROFILE_DATA_PATH}/${player.dbid}`;
+				playerData = JSON.parse(fs.readFileSync(path, 'utf-8'));
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (player && playerData) {
+			return {
+				Status: 200,
+				Body: {
+					timeStamp: player.updatedAt,
+					dbid: player.dbid,
+					playerData
+				}
+			};	
+		}
+		else {
+			return {
+				Status: 404, // 204
+				Body: null
+			};	
+		}
+
+	}
+	
+	async sqlitePostTrackedVoyage(dbid: number, voyage: ITrackedVoyage, logData: LogData): Promise<ApiResult> {
+		
+
+		Logger.info('Tracked Voyage data', { dbid, voyage, logData });
+		
+		const timeStamp = new Date();
+
+		try {
+			let res = await postOrPutVoyage_sqlite(dbid, voyage, timeStamp);
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 201,
+			Body: {
+				'dbid': dbid,
+				'trackerId': voyage.tracker_id,
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+	async sqliteGetTrackedVoyages(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		
+
+		Logger.info('Get voyage data', { dbid, trackerId });
+		let voyages: TrackedVoyage[] | null = null;
+		
+		if (!dbid && !trackerId) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+			
+		if (!dbid) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+
+		try {
+			if (trackerId) {
+				voyages = (trackerId ? await getVoyagesByTrackerId_sqlite(dbid, trackerId) : null);
+			}
+			else {
+				voyages = await getVoyagesByDbid_sqlite(dbid)
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (voyages) {
+			return {
+				Status: 200,
+				Body: voyages
+			};	
+		}
+		else {
+			return {
+				Status: 200, // 204
+				Body: []
+			};	
+		}
+
+	}
+
+	
+
+	async sqlitePostTrackedAssignment(dbid: number, crew: string, assignment: ITrackedAssignment, logData: LogData): Promise<ApiResult> {
+		
+
+		Logger.info('Tracked Voyage data', { dbid, voyage: assignment, logData });
+		
+		const timeStamp = new Date();
+
+		try {
+			let res = await postOrPutAssignment_sqlite(dbid, crew, assignment, timeStamp);
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 201,
+			Body: {
+				'dbid': dbid,
+				'trackerId': assignment.tracker_id,
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+
+	async sqlitePostTrackedAssignmentsMany(dbid: number, crew: string[], assignments: ITrackedAssignment[], logData: LogData): Promise<ApiResult> {
+		
+
+		Logger.info('Tracked Voyage data', { dbid, voyage: assignments, logData });
+		
+		const timeStamp = new Date();
+		
+		try {
+			let res = await postOrPutAssignmentsMany_sqlite(dbid, crew, assignments, timeStamp);
+			if (res >= 300) {
+				return {
+					Status: res,
+					Body: {
+						'dbid': dbid,
+						'error': 'Unable to insert record.',
+						'timeStamp': timeStamp.toISOString()					
+					}
+				};
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}		
+
+		return {
+			Status: 201,
+			Body: {
+				'dbid': dbid,
+				'trackerIds': assignments.map(a => a.tracker_id),
+				timeStamp: timeStamp.toISOString()
+			}
+		};
+	}
+
+
+	async sqliteGetTrackedAssignments(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		
+
+		Logger.info('Get voyage data', { dbid, trackerId });
+		let assignments: TrackedCrew[] | null = null;
+		
+		if (!dbid && !trackerId) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+
+		if (!dbid) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+	
+		try {
+			if (trackerId) {
+				assignments = (trackerId ? await getAssignmentsByTrackerId_sqlite(dbid, trackerId) : null);
+			}
+			else {
+				assignments = await getAssignmentsByDbid_sqlite(dbid);
+			}
+			
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (assignments) {
+			return {
+				Status: 200,
+				Body: assignments
+			};	
+		}
+		else {
+			return {
+				Status: 200, // 204
+				Body: []
+			};	
+		}
+
+	}
+
+
+	async sqliteGetTrackedData(dbid?: number, trackerId?: number): Promise<ApiResult> {
+		
+
+		Logger.info('Get tracked data', { dbid, trackerId });
+		let voyages: TrackedVoyage[] | null = null;
+		let assignments: TrackedCrew[] | null = null;
+		
+		if (!dbid && !trackerId) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+
+		if (!dbid) return {
+			Status: 400,
+			Body: { result: "bad input" }
+		} 
+
+		try {
+			if (trackerId) {
+				voyages = (trackerId ? await getVoyagesByTrackerId_sqlite(dbid, trackerId) : null);
+				assignments = (trackerId ? await getAssignmentsByTrackerId_sqlite(dbid, trackerId) : null);
+			}
+			else {
+				voyages = await getVoyagesByDbid_sqlite(dbid);
+				assignments = await getAssignmentsByDbid_sqlite(dbid);
+			}
+		} catch (err) {
+			if (typeof err === 'string') {
+				return {
+					Status: 500,
+					Body: err
+				};
+			}
+			else if (err instanceof Error) {
+				return {
+					Status: 500,
+					Body: err.toString()
+				};
+			}
+		}
+
+		if (voyages || assignments) {
+			return {
+				Status: 200,
+				Body: {
+					voyages,
+					assignments
+				}
+			};	
+		}
+		else {
+			return {
+				Status: 200, // 204
+				Body: { voyages: [], assignments: [] }
+			};	
+		}
+
+	}
+
+
+	
+	async sqlitePostBossBattle(battle: IFBB_BossBattle_Document) {
+		
+		Logger.info('Post boss battle', { battle });		
+
+		try {
+			let res = await postOrPutBossBattle_sqlite(battle);
+			return {
+				Status: res,
+				Body: { result: "ok" }
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: { result: "fail" }
+			}
+		}
+	}
+
+	async sqliteGetCollaboration(fleetId: number, bossBattleId?: number, roomCode?: string) {
+		
+		Logger.info('Get boss battle', { bossBattleId });		
+
+		try {
+			let battle = await getCollaborationById_sqlite(fleetId, bossBattleId, roomCode);
+			if (!battle) {
+				return {
+					Status: 200, // 204
+					Body: []
+				}
+			}
+			return {
+				Status: 200,
+				Body: battle
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: { result: "fail" }
+			}
+		}
+
+	}
+
+	async sqlitePostSolves(fleetId: number, bossBattleId: number, chainIndex: number, solves: Solve[]) {
+		
+		Logger.info('Post trials', { solves });		
+
+		try {
+			let res = await postOrPutSolves_sqlite(fleetId, bossBattleId, chainIndex, solves);
+			return {
+				Status: res,
+				Body: { result: "ok" }
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: { result: "fail" }
+			}
+		}
+	}
+
+	async sqlitePostTrials(fleetId: number, bossBattleId: number, chainIndex: number, trials: CrewTrial[]) {
+		
+		Logger.info('Post trials', { trials });		
+
+		try {
+			let res = await postOrPutTrials_sqlite(fleetId, bossBattleId, chainIndex, trials);
+			return {
+				Status: res,
+				Body: { result: "ok" }
+			}
+		}
+		catch {
+			return {
+				Status: 500,
+				Body: { result: "fail" }
+			}
 		}
 	}
 }

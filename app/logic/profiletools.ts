@@ -1,3 +1,4 @@
+import { createHash } from 'node:crypto';
 import { Profile } from '../models/Profile';
 import { User } from '../models/User';
 import { generate, verify } from 'password-hash';
@@ -37,13 +38,13 @@ function calculateBuffConfig(playerData: any): { [index: string]: IBuffStat } {
 	return buffConfig;
 }
 
-export async function uploadProfile(dbid: string, player_data: any, lastUpdate: Date = new Date()) {
-	// Validate player_data
+export function createProfileObject(dbid: string, player_data: any, lastUpdate: Date) {
 	if (!player_data || !player_data.player || !player_data.player.character || player_data.player.dbid.toString() !== dbid) {
 		throw new Error('Invalid player_data!');
 	}
 
 	let captainName = player_data.player.character.display_name;
+	let dbidHash = createHash('sha3-256').update(dbid.toString()).digest('hex');
 
 	let shortCrewList = {
 		crew: player_data.player.character.crew.map((crew: any) => ({ id: crew.archetype_id, rarity: crew.rarity })),
@@ -51,12 +52,33 @@ export async function uploadProfile(dbid: string, player_data: any, lastUpdate: 
 		stored_immortals: player_data.player.character.stored_immortals
 	};
 
+	return { dbid, buffConfig: calculateBuffConfig(player_data.player), shortCrewList, captainName, lastUpdate, hash: dbidHash };
+}
+
+
+export async function getProfile(dbid: number) {
+	let res = await Profile.findAll({ where: { dbid } });
+	if (res.length === 0) return null;
+	return res[0];
+}
+
+export async function getProfileByHash(dbidHash: string) {
+    let res = await Profile.findAll({ where: { hash: dbidHash } });
+	if (res.length === 0) return null;
+	return res[0];
+}
+
+export async function uploadProfile(dbid: string, player_data: any, lastUpdate: Date = new Date()) {
+	// Validate player_data
+	
+	let profile = createProfileObject(dbid, player_data, lastUpdate);
+        
 	let res = await Profile.findAll({ where: { dbid } });
 	if (res.length === 0) {
-		return await Profile.create({ dbid, buffConfig: calculateBuffConfig(player_data.player), shortCrewList, captainName, lastUpdate });
+		return await Profile.create({ ... profile });
 	} else {
 		await res[0].update(
-			{ dbid, buffConfig: calculateBuffConfig(player_data.player), shortCrewList, captainName, lastUpdate },
+			{ ...profile },
 			{ where: { dbid } }
 		);
 
