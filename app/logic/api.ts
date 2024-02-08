@@ -350,7 +350,7 @@ export class ApiClass {
 	async getVoyages(crew?: string[], days?: number, opAnd?: boolean) {
 		days ??= 7;
 		if (days <= 0) days = 1;
-		if (days > 31) days = 31;
+		if (days > 60) days = 60;
 		if (!crew?.length && days > 3) days = 3;
 
 		Logger.info('Get voyages', { crew, days });
