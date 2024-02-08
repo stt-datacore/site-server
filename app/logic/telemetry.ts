@@ -257,10 +257,17 @@ async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typ
 	for (let dset of dsets) {
 		let { date: d, file: fn } = dset;
 		console.log(`From ${d} as '${fn}'...`);
-		let results = records.filter(r => r.voyageDate.getTime() >= dset.date.getTime());
+
+		let rangeraw = records.filter(r => r.voyageDate.getTime() >= dset.date.getTime());
+		let dmap = {} as { [key: string]: Historical };
+		for (let item of rangeraw) {
+			dmap[item.voyageDate.toISOString()] = item;
+		}
+		
+		let results = Object.values(dmap);
 
 		const cp = {} as { [key: string]: Voyager };
-	
+		
 		for (let res of results) {
 			let seat = 0;
 			if (!res.estimatedDuration) continue;
