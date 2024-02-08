@@ -261,7 +261,7 @@ async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typ
 		let rangeraw = records.filter(r => r.voyageDate.getTime() >= dset.date.getTime());
 		let dmap = {} as { [key: string]: Historical };
 		for (let item of rangeraw) {
-			dmap[item.voyageDate.toISOString()] = item;
+			dmap[item.voyageDate.getTime().toString()] = item;
 		}
 		
 		let results = Object.values(dmap);
