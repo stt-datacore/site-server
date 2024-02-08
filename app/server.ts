@@ -71,9 +71,9 @@ app.use('/api', nocache, expressLogger, ApiController);
 	await DataCoreAPI.initializeCache();
 	console.log(JSON.stringify(process.argv));
 	// Begin Voyage Stats generation cycle
-	if (process.argv.includes("stats")) {
+	//if (process.argv.includes("stats")) {
 		DataCoreAPI.beginStatsCycle();
-	}
+	//}
 	
 	if (!process.argv.includes("stats")) {
 		// Serve the application at the given port
