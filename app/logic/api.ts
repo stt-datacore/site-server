@@ -304,6 +304,7 @@ export class ApiClass {
 			let squadInfo = complete_member_info.squads.find((s: any) => s.id.toString() === squad.id.toString());
 			if (squadInfo) {
 				squad.event_rank = squadInfo.event_rank;
+				squad.leader = Number(squadInfo.nleader_player_dbid);
 			}
 		}
 
