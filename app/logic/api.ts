@@ -21,7 +21,7 @@ import { getCollaborationById_sqlite, postOrPutBossBattle_sqlite, postOrPutSolve
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'not_very_secret';
-const CLIENT_API = 15;
+const CLIENT_API = 22;
 
 export class ApiResult {
 	Status: number = 200;
