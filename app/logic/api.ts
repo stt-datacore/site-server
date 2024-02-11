@@ -294,7 +294,10 @@ export class ApiClass {
 
 		return {
 			Status: 200,
-			Body: fleet
+			Body: {
+				access_token,
+				fleet
+			}
 		};
 
 		
