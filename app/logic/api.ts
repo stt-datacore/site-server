@@ -12,7 +12,7 @@ import { getSTTToken } from './stttools';
 require('dotenv').config();
 
 const JWT_SECRET = process.env.JWT_SECRET || 'not_very_secret';
-const CLIENT_API = 15;
+const CLIENT_API = 22;
 
 export class ApiResult {
 	Status: number = 200;
@@ -41,7 +41,13 @@ export class ApiClass {
 	
 	async initializeCache() {
 		this._player_data = await loadProfileCache();
-		this._stt_token = 'd6458837-34ba-4883-8588-4530f1a9cc53';
+		
+		getSTTToken().then((token) => {
+			this._stt_token = token;
+		})
+		.catch((e) => {
+			this._stt_token = 'd6458837-34ba-4883-8588-4530f1a9cc53';
+		});
 
 		Logger.info('Initializing API', { player_data: Object.keys(this._player_data).length });
 	}
