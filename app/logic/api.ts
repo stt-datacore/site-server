@@ -300,14 +300,21 @@ export class ApiClass {
 			{ fleet_rank: fleet_leader3.fleet_rank, index: fleet_leader3.index, event_name: fleet_leader3.event_name }
 		];
 
+		for(let squad of fleet.squads) {
+			let squadInfo = complete_member_info.squads.find((s: any) => s.id.toString() === squad.id.toString());
+			if (squadInfo) {
+				squad.event_rank = squadInfo.event_rank;
+			}
+		}
+
 		// add more details for members
 		for(let member of fleet.members) {
 			let memberInfo = complete_member_info.members.find((m: any) => m.pid === member.pid);
 			if (memberInfo) {
 				member.squad = '';
 				if (memberInfo.squad_id) {
-					member.squad_id = memberInfo.squad_id;
-					let squadInfo = complete_member_info.squads.find((s: any) => s.id === memberInfo.squad_id);
+					member.squad_id = Number(memberInfo.squad_id);
+					let squadInfo = fleet.squads.find((s: any) => s.id.toString() === memberInfo.squad_id.toString());
 					if (squadInfo) {
 						member.squad = squadInfo.name;
 					}
