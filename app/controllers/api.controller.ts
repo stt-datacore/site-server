@@ -95,14 +95,16 @@ router.post('/savecomment', async (req: Request, res: Response, next) => {
 	}
 });
 
-router.get('/fleet_info', async (req: Request, res: Response, next) => {
-	if (!req.query || !req.query.fleetid) {
+router.post('/fleet_info', async (req: Request, res: Response, next) => {
+	if (!req.query || !req.query.fleetid || !req.body) {
 		res.status(400).send('Whaat?');
 		return;
 	}
 
+	const cred = req.body;
+
 	try {
-		let apiResult = await DataCoreAPI.loadFleetInfo(req.query.fleetid.toString(), getLogDataFromReq(req));
+		let apiResult = await DataCoreAPI.loadFleetInfo(req.query.fleetid.toString(), getLogDataFromReq(req), cred.username, cred.password, cred.access_token);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
