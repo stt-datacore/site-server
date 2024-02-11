@@ -3,7 +3,8 @@ import fetch from 'node-fetch';
 import { Logger } from './logger';
 
 // Facebook STT client ID
-const CLIENT_ID = '1425f8c5-b07f-45ba-b490-3dfd4561d5cf';
+// const CLIENT_ID = '1425f8c5-b07f-45ba-b490-3dfd4561d5cf';
+const CLIENT_ID = '322613001274224';
 
 export async function getSTTToken(username?: string, password?: string) {
   Logger.info('Fetching new STT API token');
