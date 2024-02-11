@@ -306,7 +306,8 @@ export class ApiClass {
 			if (memberInfo) {
 				member.squad = '';
 				if (memberInfo.squad_id) {
-					let squadInfo = complete_member_info.squads.find((s: any) => s.id === memberInfo.squadInfo);
+					member.squad_id = memberInfo.squad_id;
+					let squadInfo = complete_member_info.squads.find((s: any) => s.id === memberInfo.squad_id);
 					if (squadInfo) {
 						member.squad = squadInfo.name;
 					}
