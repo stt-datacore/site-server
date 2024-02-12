@@ -312,9 +312,6 @@ export class ApiClass {
 		for(let member of fleet.members) {
 			let memberInfo = complete_member_info.members.find((m: any) => m.pid === member.pid);
 			if (memberInfo) {
-				if (memberInfo.display_name === '[IPA] ironyWrit') {
-					console.log("Break here");
-				}
 				member.squad = '';
 				if (memberInfo.squad_id) {
 					member.squad_id = Number(memberInfo.squad_id);
@@ -327,6 +324,7 @@ export class ApiClass {
 				member.level = memberInfo.level;
 				member.last_active = memberInfo.last_active;
 				member.daily_activity = memberInfo.daily_activity;
+				member.daily_meta_progress = memberInfo.daily_meta_progress;
 				member.event_rank = memberInfo.event_rank;
 				member.starbase_activity = memberInfo.starbase_activity;
 			}
