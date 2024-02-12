@@ -298,6 +298,8 @@ export class ApiClass {
 				member.last_active = memberInfo.last_active;
 				member.daily_activity = memberInfo.daily_activity;
 				member.event_rank = memberInfo.event_rank;
+				member.daily_meta_progress = memberInfo.daily_meta_progress;
+				member.starbase_activity = memberInfo.starbase_activity;
 			}
 		}
 
