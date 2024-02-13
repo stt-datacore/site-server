@@ -148,168 +148,174 @@ export class ApiClass {
 	}
 
 	async loadFleetInfo(fleetId: string, logData: LogData, username?: string, password?: string, access_token?: string): Promise<ApiResult> {
-		Logger.info('Load fleet info', { fleetId, logData });
-
-		if (username && password) {
-			try {
-				let req = await getSTTToken(username, password);
-				if (req) {
-					access_token = req;
-				}
-				else {
-					return {
-						Status: 500,
-						Body: "Sign-in Error"
-					};
-				}
-			}
-			catch (e: any) {
-				return {
-					Status: 500,
-					Body: e.toString()
-				};
-			}
-		}
-		
-		if (!access_token) {
-			return {
-				Status: 400,
-				Body: 'Missing required credentials'
-			};
-		}
-		
-
-		let fleet = await fetch(
-			`https://app.startrektimelines.com/fleet/${fleetId}?access_token=${access_token}&client_api=${CLIENT_API}`
-		).then(this.checkSTTResponse.bind(this)).then(res => res.json())
-		.catch((e) => {
-			return {
-				"error": e.toString()
-			}
-		});
-
-		let fleet_members_with_rank = await fetch(
-			`https://app.startrektimelines.com/fleet/members_with_rank/${fleetId}?s=0&m=10&access_token=${access_token}&client_api=${CLIENT_API}`
-		).then(this.checkSTTResponse.bind(this)).then(res => res.json())
-		.catch((e) => {
-			return {
-				"error": e.toString()
-			}
-		});
-
-		let fleet_squads = await fetch(
-			`https://app.startrektimelines.com/fleet/getsquads?gid=${fleetId}&s=0&m=10&access_token=${access_token}&client_api=${CLIENT_API}`
-		).then(this.checkSTTResponse.bind(this)).then(res => res.json())
-		.catch((e) => {
-			return {
-				"error": e.toString()
-			}
-		});
-
-		const params = new URLSearchParams();
-		params.append('access_token', access_token);
-		params.append('guild_id', fleetId);
-		params.append('event_index', '0');
-
-		let complete_member_info = await fetch(`https://app.startrektimelines.com/fleet/complete_member_info`, {
-			method: 'POST',
-			body: params
-		}).then(this.checkSTTResponse.bind(this)).then(res => res.json())
-		.catch((e) => {
-			return {
-				"error": e.toString()
-			}
-		});
-
-		let fleet_leader1 = await fetch(`https://app.startrektimelines.com/fleet/leaderboard`, {
-			method: 'POST',
-			body: params
-		}).then(this.checkSTTResponse.bind(this)).then(res => res.json())
-		.catch((e) => {
-			return {
-				"error": e.toString()
-			}
-		});
-
-		params.set('event_index', '1');
-		let fleet_leader2 = await fetch(`https://app.startrektimelines.com/fleet/leaderboard`, {
-			method: 'POST',
-			body: params
-		}).then(this.checkSTTResponse.bind(this)).then(res => res.json())
-		.catch((e) => {
-			return {
-				"error": e.toString()
-			}
-		});
-
-		params.set('event_index', '2');
-		let fleet_leader3 = await fetch(`https://app.startrektimelines.com/fleet/leaderboard`, {
-			method: 'POST',
-			body: params
-		}).then(this.checkSTTResponse.bind(this)).then(res => res.json())
-		.catch((e) => {
-			return {
-				"error": e.toString()
-			}
-		});
-
-		fleet = fleet.fleet;
-		delete fleet.chatchannels;
-		delete fleet.motd;
-		fleet.members = fleet_members_with_rank.fleet.members.map((member: any) => ({
-			dbid: member.dbid,
-			display_name: member.display_name,
-			pid: member.pid,
-			rank: member.rank,
-			last_update: this._player_data[member.dbid.toString()],
-			crew_avatar: member.crew_avatar ? member.crew_avatar.portrait.file.substr(1).replace('/', '_') + '.png' : ''
-		}));
-
-		fleet.squads = fleet_squads.squads.map((squad: any) => ({ id: squad.id, name: squad.name, cursize: squad.cursize }));
-
-		fleet.leaderboard = [
-			{ fleet_rank: fleet_leader1.fleet_rank, index: fleet_leader1.index, event_name: fleet_leader1.event_name },
-			{ fleet_rank: fleet_leader2.fleet_rank, index: fleet_leader2.index, event_name: fleet_leader2.event_name },
-			{ fleet_rank: fleet_leader3.fleet_rank, index: fleet_leader3.index, event_name: fleet_leader3.event_name }
-		];
-
-		for(let squad of fleet.squads) {
-			let squadInfo = complete_member_info.squads.find((s: any) => s.id.toString() === squad.id.toString());
-			if (squadInfo) {
-				squad.event_rank = squadInfo.event_rank;
-				squad.leader = Number(squadInfo.nleader_player_dbid);
-			}
-		}
-
-		// add more details for members
-		for(let member of fleet.members) {
-			let memberInfo = complete_member_info.members.find((m: any) => m.pid === member.pid);
-			if (memberInfo) {
-				member.squad = '';
-				if (memberInfo.squad_id) {
-					member.squad_id = Number(memberInfo.squad_id);
-					let squadInfo = fleet.squads.find((s: any) => s.id.toString() === memberInfo.squad_id.toString());
-					if (squadInfo) {
-						member.squad = squadInfo.name;
-					}
-				}
-
-				member.level = memberInfo.level;
-				member.last_active = memberInfo.last_active;
-				member.daily_activity = memberInfo.daily_activity;
-				member.event_rank = memberInfo.event_rank;
-				member.daily_meta_progress = memberInfo.daily_meta_progress;
-				member.starbase_activity = memberInfo.starbase_activity;
-			}
-		}
 
 		return {
-			Status: 200,
-			Body: {
-				access_token,
-				fleet
-			}
+			Status: 403,
+			Body: "No"
 		};
+
+		// Logger.info('Load fleet info', { fleetId, logData });
+
+		// if (username && password) {
+		// 	try {
+		// 		let req = await getSTTToken(username, password);
+		// 		if (req) {
+		// 			access_token = req;
+		// 		}
+		// 		else {
+		// 			return {
+		// 				Status: 500,
+		// 				Body: "Sign-in Error"
+		// 			};
+		// 		}
+		// 	}
+		// 	catch (e: any) {
+		// 		return {
+		// 			Status: 500,
+		// 			Body: e.toString()
+		// 		};
+		// 	}
+		// }
+		
+		// if (!access_token) {
+		// 	return {
+		// 		Status: 400,
+		// 		Body: 'Missing required credentials'
+		// 	};
+		// }
+		
+
+		// let fleet = await fetch(
+		// 	`https://app.startrektimelines.com/fleet/${fleetId}?access_token=${access_token}&client_api=${CLIENT_API}`
+		// ).then(this.checkSTTResponse.bind(this)).then(res => res.json())
+		// .catch((e) => {
+		// 	return {
+		// 		"error": e.toString()
+		// 	}
+		// });
+
+		// let fleet_members_with_rank = await fetch(
+		// 	`https://app.startrektimelines.com/fleet/members_with_rank/${fleetId}?s=0&m=10&access_token=${access_token}&client_api=${CLIENT_API}`
+		// ).then(this.checkSTTResponse.bind(this)).then(res => res.json())
+		// .catch((e) => {
+		// 	return {
+		// 		"error": e.toString()
+		// 	}
+		// });
+
+		// let fleet_squads = await fetch(
+		// 	`https://app.startrektimelines.com/fleet/getsquads?gid=${fleetId}&s=0&m=10&access_token=${access_token}&client_api=${CLIENT_API}`
+		// ).then(this.checkSTTResponse.bind(this)).then(res => res.json())
+		// .catch((e) => {
+		// 	return {
+		// 		"error": e.toString()
+		// 	}
+		// });
+
+		// const params = new URLSearchParams();
+		// params.append('access_token', access_token);
+		// params.append('guild_id', fleetId);
+		// params.append('event_index', '0');
+
+		// let complete_member_info = await fetch(`https://app.startrektimelines.com/fleet/complete_member_info`, {
+		// 	method: 'POST',
+		// 	body: params
+		// }).then(this.checkSTTResponse.bind(this)).then(res => res.json())
+		// .catch((e) => {
+		// 	return {
+		// 		"error": e.toString()
+		// 	}
+		// });
+
+		// let fleet_leader1 = await fetch(`https://app.startrektimelines.com/fleet/leaderboard`, {
+		// 	method: 'POST',
+		// 	body: params
+		// }).then(this.checkSTTResponse.bind(this)).then(res => res.json())
+		// .catch((e) => {
+		// 	return {
+		// 		"error": e.toString()
+		// 	}
+		// });
+
+		// params.set('event_index', '1');
+		// let fleet_leader2 = await fetch(`https://app.startrektimelines.com/fleet/leaderboard`, {
+		// 	method: 'POST',
+		// 	body: params
+		// }).then(this.checkSTTResponse.bind(this)).then(res => res.json())
+		// .catch((e) => {
+		// 	return {
+		// 		"error": e.toString()
+		// 	}
+		// });
+
+		// params.set('event_index', '2');
+		// let fleet_leader3 = await fetch(`https://app.startrektimelines.com/fleet/leaderboard`, {
+		// 	method: 'POST',
+		// 	body: params
+		// }).then(this.checkSTTResponse.bind(this)).then(res => res.json())
+		// .catch((e) => {
+		// 	return {
+		// 		"error": e.toString()
+		// 	}
+		// });
+
+		// fleet = fleet.fleet;
+		// delete fleet.chatchannels;
+		// delete fleet.motd;
+		// fleet.members = fleet_members_with_rank.fleet.members.map((member: any) => ({
+		// 	dbid: member.dbid,
+		// 	display_name: member.display_name,
+		// 	pid: member.pid,
+		// 	rank: member.rank,
+		// 	last_update: this._player_data[member.dbid.toString()],
+		// 	crew_avatar: member.crew_avatar ? member.crew_avatar.portrait.file.substr(1).replace('/', '_') + '.png' : ''
+		// }));
+
+		// fleet.squads = fleet_squads.squads.map((squad: any) => ({ id: squad.id, name: squad.name, cursize: squad.cursize }));
+
+		// fleet.leaderboard = [
+		// 	{ fleet_rank: fleet_leader1.fleet_rank, index: fleet_leader1.index, event_name: fleet_leader1.event_name },
+		// 	{ fleet_rank: fleet_leader2.fleet_rank, index: fleet_leader2.index, event_name: fleet_leader2.event_name },
+		// 	{ fleet_rank: fleet_leader3.fleet_rank, index: fleet_leader3.index, event_name: fleet_leader3.event_name }
+		// ];
+
+		// for(let squad of fleet.squads) {
+		// 	let squadInfo = complete_member_info.squads.find((s: any) => s.id.toString() === squad.id.toString());
+		// 	if (squadInfo) {
+		// 		squad.event_rank = squadInfo.event_rank;
+		// 		squad.leader = Number(squadInfo.nleader_player_dbid);
+		// 	}
+		// }
+
+		// // add more details for members
+		// for(let member of fleet.members) {
+		// 	let memberInfo = complete_member_info.members.find((m: any) => m.pid === member.pid);
+		// 	if (memberInfo) {
+		// 		member.squad = '';
+		// 		if (memberInfo.squad_id) {
+		// 			member.squad_id = Number(memberInfo.squad_id);
+		// 			let squadInfo = fleet.squads.find((s: any) => s.id.toString() === memberInfo.squad_id.toString());
+		// 			if (squadInfo) {
+		// 				member.squad = squadInfo.name;
+		// 			}
+		// 		}
+
+		// 		member.level = memberInfo.level;
+		// 		member.last_active = memberInfo.last_active;
+		// 		member.daily_activity = memberInfo.daily_activity;
+		// 		member.event_rank = memberInfo.event_rank;
+		// 		member.daily_meta_progress = memberInfo.daily_meta_progress;
+		// 		member.starbase_activity = memberInfo.starbase_activity;
+		// 	}
+		// }
+
+		// return {
+		// 	Status: 200,
+		// 	Body: {
+		// 		access_token,
+		// 		fleet
+		// 	}
+		// };
 
 		
 
