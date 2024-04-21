@@ -2,7 +2,7 @@ import { Op } from 'sequelize';
 import { Historical, Voyage } from '../models/VoyageRecord';
 import fs from 'fs';
 import { exec } from 'child_process';
-import { Model, Sequelize } from 'sequelize-typescript';
+import { Model, Repository, Sequelize } from 'sequelize-typescript';
 import { exit } from 'process';
 
 export interface Voyager {
@@ -12,6 +12,7 @@ export interface Voyager {
 	startDate: Date,
 	endDate: Date,
 	crewCount: number;
+	quipmentCounts: { [key: string]: number };
 }
 
 export async function recordTelemetryDB(type: string, data: any) {
@@ -206,7 +207,37 @@ async function getVoyageStats(sqlconn?: string, filename?: string) {
 	});
 }
 
-async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typeof Historical)) {	
+function parseQuipment(data: (number[] | 0)[]) {
+	
+	const quipment = [] as number[][];
+
+	for (let q of data) {
+		if (q === 0) {
+			quipment.push([0, 0, 0, 0]);
+			continue;
+		}
+		else {
+			quipment.push([ ... q]);
+		}
+	}
+
+	return quipment;
+}
+
+function addQuipment(quipment: number[], current?: { [key: string]: number }) {
+	const init = !current;
+	current ??= {};
+	for (let q of quipment) {
+		if (q === 0) continue;
+		current[q] ??= 0;
+		if (init) continue;
+		current[q]++;
+	}
+
+	return current;
+}
+
+async function internalgetVoyageStats(Table: Repository<Historical>) {	
 	const oneYearAgo = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000);
 	const seats = [
 		'command_skill', 
@@ -270,15 +301,31 @@ async function internalgetVoyageStats(Table: typeof Model & (typeof Voyage | typ
 		for (let res of results) {
 			let seat = 0;
 			if (!res.estimatedDuration) continue;
+			let quipment = [] as number[][]
+			
+			if (res.extra_stats && 
+				res.extra_stats.quipment) {
+				quipment = parseQuipment(res.extra_stats.quipment);
+			}
+			else {
+				for (let i = 0; i < 12; i++) {
+					quipment.push([0, 0, 0, 0]);
+				}
+			}
+
 			for (let c of res.crew) {
+				let currQuip = quipment[seat];
+
 				cp[c] ??= {
 					crewSymbol: c,
 					seats: [],
 					averageDuration: 0,
 					startDate: res.voyageDate,
 					endDate: res.voyageDate,
-					crewCount: 0
+					crewCount: 0,
+					quipmentCounts: addQuipment(currQuip)
 				};
+				cp[c].quipmentCounts = addQuipment(currQuip, cp[c].quipmentCounts);
 				cp[c].crewCount++;
 				cp[c].endDate = res.voyageDate;
 				cp[c].averageDuration = ((cp[c].averageDuration * cp[c].seats.length) + res.estimatedDuration) / (cp[c].seats.length + 1);
