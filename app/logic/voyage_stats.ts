@@ -64,7 +64,7 @@ export async function voyageRawByRange(startDate?: Date, endDate?: Date, crewMat
 	return results;
 }
 
-async function getVoyageStats(sqlconn?: string, filename?: string) {
+export async function getVoyageStats(sqlconn?: string, filename?: string) {
 	return new Promise<{ [key: string]: Voyager[] }>((resolve, reject) => {
 		filename ??= "snapshot.sqlite"
 		sqlconn ??= process.env.DB_CONNECTION_STRING as string;
