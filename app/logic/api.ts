@@ -6,7 +6,7 @@ import { sign, verify } from 'jsonwebtoken';
 import { Logger, LogData } from './logger';
 import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile, getProfile, getProfileByHash } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
-import { recordTelemetryDB, getTelemetryDB, voyageRawByDays, createStats } from './telemetry';
+import { recordTelemetryDB, getTelemetryDB, createStats } from './telemetry';
 import { getSTTToken } from './stttools';
 import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
@@ -17,6 +17,7 @@ import { postOrPutVoyage_sqlite, getVoyagesByDbid_sqlite, getVoyagesByTrackerId_
 import { Profile } from '../models/Profile';
 import { TrackedCrew, TrackedVoyage } from '../models/Tracked';
 import { getCollaborationById_sqlite, postOrPutBossBattle_sqlite, postOrPutSolves_sqlite, postOrPutTrials_sqlite } from './collab';
+import { voyageRawByDays } from './voyage_stats';
 
 require('dotenv').config();
 
