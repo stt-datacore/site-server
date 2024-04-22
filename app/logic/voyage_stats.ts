@@ -2,7 +2,17 @@ import { exec } from "child_process";
 import { Op } from "sequelize";
 import { Repository, Sequelize } from "sequelize-typescript";
 import { Voyage, Historical } from "../models/VoyageRecord";
-import { Voyager } from "./telemetry";
+
+export interface Voyager {
+	crewSymbol: string,
+	seats: { seat_skill: string, seat_index: number, crewCount: number, averageDuration: number }[],
+	averageDuration: number,
+	startDate: Date,
+	endDate: Date,
+	crewCount: number;
+	quipmentCounts: { [key: string]: number };
+	voyageTypes: { [key: string]: number };
+}
 
 export async function voyageRawByDays(days: number, crewMatch?: string[], opAnd?: boolean) {
 	let endDate = new Date();
@@ -149,6 +159,14 @@ async function internalgetVoyageStats(Table: Repository<Historical>) {
 		'medicine_skill',
 		'medicine_skill' 
 	];
+	const shortNames = {
+		'command_skill': 'CMD', 
+		'diplomacy_skill': 'DIP', 
+		'security_skill': 'SEC', 
+		'engineering_skill': 'ENG', 
+		'science_skill': 'SCI', 
+		'medicine_skill': 'MED',
+	} as { [key: string]: string };
 
 	const records = await Table.findAll({ 
 		where: { 
@@ -193,10 +211,20 @@ async function internalgetVoyageStats(Table: Repository<Historical>) {
 		
 		let results = Object.values(dmap);
 		const cp = {} as { [key: string]: Voyager };
-	
+		
 		for (let res of results) {
 			let seat = 0;
+			
+			let pri = res.primary_skill;
+			let sec = res.secondary_skill;
+			let prisec = '/';
+
+			if (pri?.length && sec?.length) {
+				prisec = `${shortNames[pri]}/${shortNames[sec]}`;
+			}
+
 			if (!res.estimatedDuration) continue;
+
 			let quipment = [] as number[][]
 			
 			if (res.extra_stats && 
@@ -219,8 +247,13 @@ async function internalgetVoyageStats(Table: Repository<Historical>) {
 					startDate: res.voyageDate,
 					endDate: res.voyageDate,
 					crewCount: 0,
-					quipmentCounts: addQuipment(currQuip)
+					quipmentCounts: addQuipment(currQuip),
+					voyageTypes: {}			
 				};
+				if (prisec !== '/') {
+					cp[c].voyageTypes[prisec] ??= 0;
+					cp[c].voyageTypes[prisec]++;
+				}
 				cp[c].quipmentCounts = addQuipment(currQuip, cp[c].quipmentCounts);
 				cp[c].crewCount++;
 				cp[c].endDate = res.voyageDate;
