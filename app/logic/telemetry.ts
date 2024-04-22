@@ -1,6 +1,7 @@
 import { Voyage } from '../models/VoyageRecord';
 import fs from 'fs';
 import { exit } from 'process';
+import { getVoyageStats } from './voyage_stats';
 
 export interface Voyager {
 	crewSymbol: string,
@@ -104,8 +105,3 @@ export async function createStats(force?: boolean) {
 	fs.writeFileSync(dailyfile, JSON.stringify(result));
 	if (process.argv.includes("stats")) exit(0);
 }
-
-function getVoyageStats() {
-	throw new Error('Function not implemented.');
-}
-
