@@ -6,8 +6,9 @@ import { sign, verify } from 'jsonwebtoken';
 import { Logger, LogData } from './logger';
 import { uploadProfile, loadProfileCache, loginUser, getDBIDbyDiscord } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
-import { recordTelemetryDB, getTelemetryDB, voyageRawByDays, createStats } from './telemetry';
+import { recordTelemetryDB, getTelemetryDB, createStats } from './telemetry';
 import { getSTTToken } from './stttools';
+import { voyageRawByDays } from './voyage_stats';
 
 require('dotenv').config();
 
