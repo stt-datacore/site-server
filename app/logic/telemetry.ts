@@ -1,17 +1,7 @@
 import { Voyage } from '../models/VoyageRecord';
 import fs from 'fs';
 import { exit } from 'process';
-import { getVoyageStats } from './voyage_stats';
-
-export interface Voyager {
-	crewSymbol: string,
-	seats: { seat_skill: string, seat_index: number, crewCount: number, averageDuration: number }[],
-	averageDuration: number,
-	startDate: Date,
-	endDate: Date,
-	crewCount: number;
-	quipmentCounts: { [key: string]: number };
-}
+import { Voyager, getVoyageStats } from './voyage_stats';
 
 export async function recordTelemetryDB(type: string, data: any) {
 	switch (type) {
