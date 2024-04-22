@@ -4,6 +4,8 @@ import { PlayerData } from '../datacore/player';
 import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
 import { IFBB_BossBattle_Document } from '../models/BossBattles';
 import { CrewTrial, Solve } from '../datacore/boss';
+import { VoyageTrackerAPI } from '../logic/voyagetracker';
+import { CollaborationAPI } from '../logic/collab';
 
 // Assign router to the express.Router() instance
 const router: Router = Router();
@@ -269,7 +271,7 @@ router.post('/postVoyage', async (req: Request, res: Response, next) => {
 	try {
 		let dbid = req.body.dbid;
 		let voyage = req.body.voyage as ITrackedVoyage;		
-		let apiResult = await DataCoreAPI.sqlitePostTrackedVoyage(dbid, voyage, getLogDataFromReq(req));
+		let apiResult = await VoyageTrackerAPI.postTrackedVoyage(dbid, voyage, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -285,7 +287,7 @@ router.get('/getVoyages', async (req: Request, res: Response, next) => {
 	try {		
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
-		let apiResult = await DataCoreAPI.sqliteGetTrackedVoyages(dbid, trackerId);
+		let apiResult = await VoyageTrackerAPI.getTrackedVoyages(dbid, trackerId);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
@@ -302,7 +304,7 @@ router.post('/postAssignment', async (req: Request, res: Response, next) => {
 		let dbid = Number.parseInt(req.body.dbid);
 		let crew = req.body.crew;		
 		let assignment = req.body.assignment as ITrackedAssignment;
-		let apiResult = await DataCoreAPI.sqlitePostTrackedAssignment(dbid, crew, assignment, getLogDataFromReq(req));
+		let apiResult = await VoyageTrackerAPI.postTrackedAssignment(dbid, crew, assignment, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -333,7 +335,7 @@ router.post('/postAssignments', async (req: Request, res: Response, next) => {
 			x++;
 		}
 
-		let apiResult = await DataCoreAPI.sqlitePostTrackedAssignmentsMany(dbid, finalcrew, assignments, getLogDataFromReq(req));
+		let apiResult = await VoyageTrackerAPI.postTrackedAssignmentsMany(dbid, finalcrew, assignments, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -349,7 +351,7 @@ router.get('/getAssignments', async (req: Request, res: Response, next) => {
 	try {
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
-		let apiResult = await DataCoreAPI.sqliteGetTrackedVoyages(dbid, trackerId);
+		let apiResult = await VoyageTrackerAPI.getTrackedVoyages(dbid, trackerId);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
@@ -365,7 +367,7 @@ router.get('/getTrackedData', async (req: Request, res: Response, next) => {
 	try {
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
-		let apiResult = await DataCoreAPI.sqliteGetTrackedData(dbid, trackerId);
+		let apiResult = await VoyageTrackerAPI.getTrackedData(dbid, trackerId);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
@@ -384,7 +386,7 @@ router.post('/postBossBattle', async (req: Request, res: Response, next) => {
 			delete req.body.id;
 		}
 		let battle = req.body as IFBB_BossBattle_Document;
-		let apiResult = await DataCoreAPI.sqlitePostBossBattle(battle);
+		let apiResult = await CollaborationAPI.postBossBattle(battle);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
 		next(e);
@@ -408,7 +410,7 @@ router.post('/postBossBattleSolves', async (req: Request, res: Response, next) =
 			res.status(400).send("Bad data");
 		}
 
-		let apiResult = await DataCoreAPI.sqlitePostSolves(fleetId, bossBattleId, chainIndex, solves);
+		let apiResult = await CollaborationAPI.postSolves(fleetId, bossBattleId, chainIndex, solves);
 
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
@@ -432,7 +434,7 @@ router.post('/postBossBattleTrials', async (req: Request, res: Response, next) =
 			res.status(400).send("Bad data");
 		}
 
-		let apiResult = await DataCoreAPI.sqlitePostTrials(fleetId, bossBattleId, chainIndex, trials);
+		let apiResult = await CollaborationAPI.postTrials(fleetId, bossBattleId, chainIndex, trials);
 
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {		
@@ -466,7 +468,7 @@ router.get('/getBossBattle', async (req: Request, res: Response, next) => {
 			return;
 		}
 
-		let apiResult = await DataCoreAPI.sqliteGetCollaboration(fleetId, id, room);
+		let apiResult = await CollaborationAPI.getCollaboration(fleetId, id, room);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
