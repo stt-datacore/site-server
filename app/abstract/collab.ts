@@ -1,9 +1,6 @@
 import { Collaboration, CrewTrial, Solve } from "../datacore/boss";
-import { BossBattleDocument, IFBB_BossBattle_Document, SolveDocument, TrialDocument } from "../models/BossBattles";
-import { Logger, LogData } from '../logic/logger';
-
-import { makeSql } from "../sequelize";
-import seedrandom from 'seedrandom';
+import { IFBB_BossBattle_Document } from "../models/BossBattles";
+import { Logger } from '../logic/logger';
 
 export abstract class CollaboratorBase {
     
