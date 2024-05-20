@@ -257,7 +257,8 @@ async function internalgetVoyageStats(Table: Repository<Historical>) {
 				cp[c].quipmentCounts = addQuipment(currQuip, cp[c].quipmentCounts);
 				cp[c].crewCount++;
 				cp[c].endDate = res.voyageDate;
-				cp[c].averageDuration = ((cp[c].averageDuration * cp[c].seats.length) + res.estimatedDuration) / (cp[c].seats.length + 1);
+				let cseatcount = cp[c].seats.reduce((p, n) => p ? p + n.crewCount : n.crewCount, 0);
+				cp[c].averageDuration = ((cp[c].averageDuration * cseatcount) + res.estimatedDuration) / (cseatcount + 1);
 				let currseat = cp[c].seats.find(s => s.seat_skill === seats[seat]);
 				if (currseat) {
 					currseat.averageDuration = ((currseat.averageDuration * currseat.crewCount) + res.estimatedDuration) / (currseat.crewCount + 1);
