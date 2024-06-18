@@ -77,6 +77,11 @@ export async function loadProfileCache() {
 	return player_data;
 }
 
+export async function loadProfile(dbid: string) {
+	let res = await Profile.findOne({ where: { dbid }});
+	return res;
+}
+
 export async function loginUser(loginUserName: string, password: string) {
 	let res = await User.findOne({ where: { loginUserName } });
 
