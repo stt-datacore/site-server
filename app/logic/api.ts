@@ -3,7 +3,7 @@ import fetch, { Response } from 'node-fetch';
 import { sign, verify } from 'jsonwebtoken';
 
 import { Logger, LogData } from './logger';
-import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile, getProfile, getProfileByHash } from './profiletools';
+import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile, getProfile, getProfileByHash, loadProfile } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { recordTelemetryDB, getTelemetryDB, createStats } from './telemetry';
 import { getSTTToken } from './stttools';
@@ -147,6 +147,39 @@ export class ApiClass {
 				Status: 500,
 				Body: { 'error': 'Unknown error' }
 			};
+		}
+	}
+
+	async getProfile(dbid: string, short_crew?: boolean) {
+		let profile = await loadProfile(dbid);
+		if (profile) {
+			if (short_crew) {
+				return {
+					Status: 200,
+					Body: {
+						lastUpdate: profile.lastUpdate,
+						shortCrewList: profile.shortCrewList
+					}
+				}
+			}
+			else if (fs.existsSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`)) {
+				return {
+					Status: 200,
+					Body: JSON.parse(fs.readFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, 'utf-8'))
+				}
+			}
+			else {
+				return {
+					Status: 404,
+					Body: 'Profile file not found'
+				}
+			}
+		}
+		else {
+			return {
+				Status: 404,
+				Body: 'Profile record not found'
+			}
 		}
 	}
 

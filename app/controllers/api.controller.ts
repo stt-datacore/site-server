@@ -36,6 +36,24 @@ router.post('/post_profile', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.get('/profile', async (req: Request, res: Response, next) => {
+	if (!req.query || !req.query.dbid) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	const short_crew = !!req.query.short_crew && req.query.short_crew === '1'
+
+	try {
+		let apiResult = await DataCoreAPI.getProfile(req.query.dbid.toString(), short_crew);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+
+
 router.post('/login', async (req: Request, res: Response, next) => {
 	if (!req.body || !req.body.user || !req.body.password) {
 		res.status(400).send('Whaat?');
