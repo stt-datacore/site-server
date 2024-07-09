@@ -6,7 +6,7 @@ import { sign, verify } from 'jsonwebtoken';
 import { Logger, LogData } from './logger';
 import { uploadProfile, loadProfileCache, loginUser, getDBIDbyDiscord, loadProfile } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
-import { recordTelemetryDB, getTelemetryDB, createStats } from './telemetry';
+import { DEBUG, recordTelemetryDB, getTelemetryDB, createStats } from './telemetry';
 import { getSTTToken } from './stttools';
 import { voyageRawByDays } from './voyage_stats';
 
@@ -438,11 +438,13 @@ export class ApiClass {
 
 		let result = await recordTelemetryDB(type, data);
 		if (result) {
+			if (DEBUG) console.log("Telemetry success.")
 			return {
 				Status: 200,
 				Body: JSON.stringify({ success: true }),
 			}
 		} else {
+			if (DEBUG) console.log("Telemetry fail.")
 			return {
 				Status: 500,
 				Body: JSON.stringify({ success: false }),
