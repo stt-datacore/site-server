@@ -3,6 +3,8 @@ import fs from 'fs';
 import { exit } from 'process';
 import { Voyager, getVoyageStats } from './voyage_stats';
 
+export const DEBUG = true;
+
 export async function recordTelemetryDB(type: string, data: any) {
 	switch (type) {
 		// Backwards-compatibility, remove once new version of site fully deployed/propagated
@@ -38,7 +40,7 @@ async function recordVoyageCalc({ voyagers, estimatedDuration, primary_skill, se
 	// 	const crewSymbol = voyagers[i];
 	// 	await VoyageRecord.create({ crewSymbol, estimatedDuration });
 	// }
-	
+	if (DEBUG) console.log("DEBUG: Voyage Create");	
 	// New Telemetry Database
 	await Voyage.create({
 		estimatedDuration,
@@ -50,7 +52,7 @@ async function recordVoyageCalc({ voyagers, estimatedDuration, primary_skill, se
 		ship_trait,
 		extra_stats
 	});
-
+	if (DEBUG) console.log("DEBUG: End Voyage Create");
 	return true;
 }
 
