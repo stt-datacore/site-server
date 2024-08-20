@@ -5,7 +5,7 @@ import { sign, verify } from 'jsonwebtoken';
 import { Logger, LogData } from './logger';
 import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile, getProfile, getProfileByHash, loadProfile } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
-import { recordTelemetryDB, getTelemetryDB, createStats } from './telemetry';
+import { DEBUG, recordTelemetryDB, getTelemetryDB, createStats } from './telemetry';
 import { getSTTToken } from './stttools';
 import { PlayerData } from '../datacore/player';
 
@@ -15,7 +15,7 @@ import { voyageRawByDays } from './voyage_stats';
 require('dotenv').config();
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'not_very_secret';
-export const CLIENT_API = 22;
+export const CLIENT_API = 24;
 
 export class ApiResult {
 	Status: number = 200;
@@ -458,11 +458,13 @@ export class ApiClass {
 
 		let result = await recordTelemetryDB(type, data);
 		if (result) {
+			if (DEBUG) console.log("Telemetry success.")
 			return {
 				Status: 200,
 				Body: JSON.stringify({ success: true }),
 			}
 		} else {
+			if (DEBUG) console.log("Telemetry fail.")
 			return {
 				Status: 500,
 				Body: JSON.stringify({ success: false }),
