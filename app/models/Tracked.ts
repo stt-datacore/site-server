@@ -1,4 +1,4 @@
-import { Column, CreatedAt, DataType, Model, Table } from "sequelize-typescript";
+import { Column, CreatedAt, DataType, Model, Table, UpdatedAt } from "sequelize-typescript";
 import { ITrackedVoyage, ITrackedAssignment } from "../datacore/voyage";
 
 export interface ITelemetryVoyage {
@@ -19,7 +19,7 @@ export interface ITrackedCrewRecord {
     crew: string;
     trackerId: number;
     assignment: ITrackedAssignment;
-    timeStamp: Date; 
+    timeStamp: Date;
 }
 
 export interface ITrackedDataRecord {
@@ -42,6 +42,12 @@ export class TrackedVoyage extends Model implements ITrackedVoyageRecord {
 
     @CreatedAt
     timeStamp!: Date;
+
+    @Column
+    voyageId?: number;
+
+    @UpdatedAt
+    updatedAt?: Date;
 }
 
 @Table

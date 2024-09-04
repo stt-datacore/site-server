@@ -5,6 +5,12 @@ import { Logger, LogData } from "../logic/logger";
 
 import { ApiResult } from "../logic/api";
 
+export interface TrackerPostResult {
+    status: number;
+    inputId?: any;
+    outputId?: any;
+}
+
 export abstract class VoyageTrackerBase {
 
     async postTrackedVoyage(
@@ -15,12 +21,13 @@ export abstract class VoyageTrackerBase {
         Logger.info("Tracked Voyage data", { dbid, voyage, logData });
 
         const timeStamp = new Date();
+        let res: TrackerPostResult | null = null;
 
         try {
-            let res = await this.postOrPutVoyage(dbid, voyage, timeStamp);
-            if (res >= 300) {
+            res = await this.postOrPutVoyage(dbid, voyage, timeStamp);
+            if (!res || res.status >= 300) {
                 return {
-                    Status: res,
+                    Status: res?.status ?? 500,
                     Body: {
                         dbid: dbid,
                         error: "Unable to insert record.",
@@ -46,10 +53,12 @@ export abstract class VoyageTrackerBase {
             Status: 201,
             Body: {
                 dbid: dbid,
-                trackerId: voyage.tracker_id,
+                trackerId: res!.outputId,
+                inputId: res!.inputId,
                 timeStamp: timeStamp.toISOString(),
             },
         };
+
     }
 
     async getTrackedVoyages(
@@ -332,7 +341,7 @@ export abstract class VoyageTrackerBase {
         dbid: number,
         voyage: ITrackedVoyage,
         timeStamp?: Date
-    ): Promise<number>;
+    ): Promise<TrackerPostResult>;
 
     protected abstract getAssignmentsByDbid(dbid: number): Promise<TrackedCrew[] | null>;
 

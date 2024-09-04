@@ -1,7 +1,7 @@
 import { ITrackedAssignment, ITrackedVoyage } from "../datacore/voyage";
 import { TrackedCrew, TrackedVoyage } from "../models/Tracked";
 import { makeSql } from "../sequelize";
-import { VoyageTrackerBase } from "../abstract/voyagetracker";
+import { TrackerPostResult, VoyageTrackerBase } from "../abstract/voyagetracker";
 
 export class VoyageTracker extends VoyageTrackerBase {
 
@@ -35,32 +35,48 @@ export class VoyageTracker extends VoyageTrackerBase {
         dbid: number,
         voyage: ITrackedVoyage,
         timeStamp: Date = new Date()
-    ) {
+    ): Promise<TrackerPostResult> {
         const sql = await makeSql(dbid);
 
         if (sql) {
             const repo = sql.getRepository(TrackedVoyage);
             let result: TrackedVoyage;
 
-            let current = await repo.findOne({ where: { dbid, trackerId: voyage.tracker_id }});
+            let current = await repo.findOne({ where: { trackerId: voyage.tracker_id } });
             if (current) {
+                if (current.voyageId !== voyage.voyage_id) {
+                    if (current.voyageId) {
+                        return { status: 400 };
+                    }
+                    else if (!current.voyageId && voyage.voyage_id) {
+                        current.voyageId = voyage.voyage_id;
+                    }
+                }
                 current.voyage = voyage;
-                current.timeStamp = timeStamp;
+                current.updatedAt = timeStamp;
                 result = await current.save();
             }
             else {
                 result = await repo.create({
                     dbid,
                     trackerId: voyage.tracker_id,
+                    voyageId: voyage.voyage_id,
                     voyage,
                     timeStamp,
+                    updatedAt: timeStamp
                 });
+
+                if (result && result.id !== result.trackerId) {
+                    result.trackerId = result.id;
+                    await result.save();
+                }
             }
+
             // sql?.close();
-            return !!result?.id ? 201 : 400;
+            return !!result?.id ? { status: 201, inputId: voyage.tracker_id, outputId: result.id } : { status: 400 };
         }
 
-        return 500;
+        return { status: 500 };
     }
 
     protected async getAssignmentsByDbid(dbid: number) {
