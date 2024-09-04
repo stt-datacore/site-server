@@ -73,7 +73,7 @@ export class VoyageTracker extends VoyageTrackerBase {
             }
 
             // sql?.close();
-            return !!result?.id ? { status: 201, inputId: voyage.tracker_id, outputId: result.id } : { status: 400 };
+            return !!result?.id ? { status: 201, inputId: voyage.tracker_id, trackerId: result.id } : { status: 400 };
         }
 
         return { status: 500 };

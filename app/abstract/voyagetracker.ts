@@ -8,7 +8,7 @@ import { ApiResult } from "../logic/api";
 export interface TrackerPostResult {
     status: number;
     inputId?: any;
-    outputId?: any;
+    trackerId?: any;
 }
 
 export abstract class VoyageTrackerBase {
@@ -53,7 +53,7 @@ export abstract class VoyageTrackerBase {
             Status: 201,
             Body: {
                 dbid: dbid,
-                trackerId: res!.outputId,
+                trackerId: res!.trackerId,
                 inputId: res!.inputId,
                 timeStamp: timeStamp.toISOString(),
             },
