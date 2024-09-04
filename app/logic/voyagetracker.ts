@@ -40,20 +40,29 @@ export class VoyageTracker extends VoyageTrackerBase {
 
         if (sql) {
             const repo = sql.getRepository(TrackedVoyage);
-            let result = await repo.create({
-                dbid,
-                trackerId: voyage.tracker_id,
-                voyage,
-                timeStamp,
-            });
-            // sql?.close();
+            let result: TrackedVoyage;
 
+            let current = await repo.findOne({ where: { dbid, trackerId: voyage.tracker_id }});
+            if (current) {
+                current.voyage = voyage;
+                current.timeStamp = timeStamp;
+                result = await current.save();
+            }
+            else {
+                result = await repo.create({
+                    dbid,
+                    trackerId: voyage.tracker_id,
+                    voyage,
+                    timeStamp,
+                });
+            }
+            // sql?.close();
             return !!result?.id ? 201 : 400;
         }
 
         return 500;
     }
-    
+
     protected async getAssignmentsByDbid(dbid: number) {
         let res: TrackedCrew[] | null = null;
 
