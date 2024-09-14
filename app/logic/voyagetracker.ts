@@ -20,13 +20,13 @@ export class VoyageTracker extends VoyageTrackerBase {
     }
 
 
-    protected async getVoyagesByDbid(dbid: number) {
+    protected async getVoyagesByDbid(dbid: number, limit = 100) {
         let res: TrackedVoyage[] | null = null;
 
         const sql = await makeSql(dbid);
         if (sql) {
             const repo = sql.getRepository(TrackedVoyage);
-            res = await repo.findAll({ where: { dbid } });
+            res = await repo.findAll({ where: { dbid }, order: [['updatedAt', 'DESC']], limit });
             // sql?.close();
         }
 
@@ -122,14 +122,14 @@ export class VoyageTracker extends VoyageTrackerBase {
         return { status: 500 };
     }
 
-    protected async getAssignmentsByDbid(dbid: number) {
+    protected async getAssignmentsByDbid(dbid: number, limit = 100) {
         let res: TrackedCrew[] | null = null;
 
         const sql = await makeSql(dbid);
 
         if (sql) {
             const repo = sql.getRepository(TrackedCrew);
-            res = await repo.findAll({ where: { dbid } });
+            res = await repo.findAll({ where: { dbid }, order: [['timeStamp', 'DESC']], limit });
         }
 
         return res;

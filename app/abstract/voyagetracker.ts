@@ -147,7 +147,8 @@ export abstract class VoyageTrackerBase {
 
     async getTrackedVoyages(
         dbid?: number,
-        trackerId?: number
+        trackerId?: number,
+        limit?: number
     ): Promise<ApiResult> {
         Logger.info("Get voyage data", { dbid, trackerId });
         let voyages: TrackedVoyage[] | null = null;
@@ -351,17 +352,12 @@ export abstract class VoyageTrackerBase {
 
     async getTrackedData(
         dbid?: number,
-        trackerId?: number
+        trackerId?: number,
+        limit?: number
     ): Promise<ApiResult> {
         Logger.info("Get tracked data", { dbid, trackerId });
         let voyages: TrackedVoyage[] | null = null;
         let assignments: TrackedCrew[] | null = null;
-
-        if (!dbid && !trackerId)
-            return {
-                Status: 400,
-                Body: { result: "bad input" },
-            };
 
         if (!dbid)
             return {
@@ -378,8 +374,8 @@ export abstract class VoyageTrackerBase {
                     ? await this.getAssignmentsByTrackerId(dbid, trackerId)
                     : null;
             } else {
-                voyages = await this.getVoyagesByDbid(dbid);
-                assignments = await this.getAssignmentsByDbid(dbid);
+                voyages = await this.getVoyagesByDbid(dbid, limit);
+                assignments = await this.getAssignmentsByDbid(dbid, limit);
             }
         } catch (err) {
             if (typeof err === "string") {
@@ -413,7 +409,7 @@ export abstract class VoyageTrackerBase {
 
     protected abstract deleteVoyageByTrackerId(dbid: number, trackerId: number): Promise<boolean>;
 
-    protected abstract getVoyagesByDbid(dbid: number): Promise<TrackedVoyage[] | null>;
+    protected abstract getVoyagesByDbid(dbid: number, limit?: number): Promise<TrackedVoyage[] | null>;
 
     protected abstract getVoyagesByTrackerId(dbid: number, trackerId: number): Promise<TrackedVoyage[] | null>;
 
@@ -423,7 +419,7 @@ export abstract class VoyageTrackerBase {
         timeStamp?: Date
     ): Promise<TrackerPostResult>;
 
-    protected abstract getAssignmentsByDbid(dbid: number): Promise<TrackedCrew[] | null>;
+    protected abstract getAssignmentsByDbid(dbid: number, limit?: number): Promise<TrackedCrew[] | null>;
 
     protected abstract getAssignmentsByTrackerId(dbid: number, trackerId: number): Promise<TrackedCrew[] | null>;
 
