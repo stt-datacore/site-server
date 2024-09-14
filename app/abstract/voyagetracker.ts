@@ -13,6 +13,56 @@ export interface TrackerPostResult {
 
 export abstract class VoyageTrackerBase {
 
+    async deleteTrackedVoyage(
+        dbid?: number,
+        trackerId?: number
+    ): Promise<ApiResult> {
+        Logger.info("Tracked Voyage data", { dbid, trackerId });
+
+        if (!dbid || !trackerId)
+            return {
+                Status: 400,
+                Body: { result: "bad input" },
+            };
+
+        const timeStamp = new Date();
+        let res: boolean;
+
+        try {
+            res = await this.deleteVoyageByTrackerId(dbid, trackerId);
+            if (!res) {
+                return {
+                    Status: 400,
+                    Body: {
+                        dbid: dbid,
+                        error: "Unable to delete record."
+                    },
+                };
+            }
+        } catch (err) {
+            if (typeof err === "string") {
+                return {
+                    Status: 500,
+                    Body: err,
+                };
+            } else if (err instanceof Error) {
+                return {
+                    Status: 500,
+                    Body: err.toString(),
+                };
+            }
+        }
+
+        return {
+            Status: 200,
+            Body: {
+                dbid: dbid,
+                trackerId: trackerId
+            },
+        };
+
+    }
+
     async postTrackedVoyage(
         dbid: number,
         voyage: ITrackedVoyage,
@@ -224,13 +274,7 @@ export abstract class VoyageTrackerBase {
         Logger.info("Get voyage data", { dbid, trackerId });
         let assignments: TrackedCrew[] | null = null;
 
-        if (!dbid && !trackerId)
-            return {
-                Status: 400,
-                Body: { result: "bad input" },
-            };
-
-        if (!dbid)
+        if (!dbid || !trackerId)
             return {
                 Status: 400,
                 Body: { result: "bad input" },
@@ -332,6 +376,8 @@ export abstract class VoyageTrackerBase {
             };
         }
     }
+
+    protected abstract deleteVoyageByTrackerId(dbid: number, trackerId: number): Promise<boolean>;
 
     protected abstract getVoyagesByDbid(dbid: number): Promise<TrackedVoyage[] | null>;
 

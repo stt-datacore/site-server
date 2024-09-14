@@ -201,11 +201,11 @@ router.post('/telemetry', async (req: Request, res: Response, next) => {
 });
 
 
-router.get('/voyagesByCrew', async (req: Request, res: Response, next) => {	
-	try {		
+router.get('/voyagesByCrew', async (req: Request, res: Response, next) => {
+	try {
 		let cstr = req.query.crew?.toString();
 		let dstr = req.query.days?.toString();
-		let opAnd = (req.query.opand === '1');		
+		let opAnd = (req.query.opand === '1');
 		let crew = cstr?.split(",");
 		let days = dstr ? Number.parseInt(dstr) : undefined;
 
@@ -227,7 +227,7 @@ router.get('/queryAlive', async (req: Request, res: Response, next) => {
 	try {
 		let apiResult = {
 			Status: 200,
-			Body: { 
+			Body: {
 				service: req.query.what,
 				result: "UP"
 			}
@@ -244,12 +244,12 @@ router.post('/postProfile', async (req: Request, res: Response, next) => {
 	if (!req.body) {
 		res.status(400).send('Whaat?');
 		return;
-	}	
+	}
 	try {
 		let playerData = req.body as PlayerData;
 		let apiResult = await DataCoreAPI.postPlayerData(playerData.player.dbid.toString(), playerData, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
-	} catch (e) {		
+	} catch (e) {
 		next(e);
 	}
 });
@@ -285,13 +285,13 @@ router.post('/postVoyage', async (req: Request, res: Response, next) => {
 	if (!req.body) {
 		res.status(400).send('Whaat?');
 		return;
-	}	
+	}
 	try {
 		let dbid = req.body.dbid;
-		let voyage = req.body.voyage as ITrackedVoyage;		
+		let voyage = req.body.voyage as ITrackedVoyage;
 		let apiResult = await VoyageTrackerAPI.postTrackedVoyage(dbid, voyage, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
-	} catch (e) {		
+	} catch (e) {
 		next(e);
 	}
 });
@@ -302,7 +302,7 @@ router.get('/getVoyages', async (req: Request, res: Response, next) => {
 		return;
 	}
 
-	try {		
+	try {
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
 		let apiResult = await VoyageTrackerAPI.getTrackedVoyages(dbid, trackerId);
@@ -316,15 +316,15 @@ router.post('/postAssignment', async (req: Request, res: Response, next) => {
 	if (!req.body) {
 		res.status(400).send('Whaat?');
 		return;
-	}	
-	
+	}
+
 	try {
 		let dbid = Number.parseInt(req.body.dbid);
-		let crew = req.body.crew;		
+		let crew = req.body.crew;
 		let assignment = req.body.assignment as ITrackedAssignment;
 		let apiResult = await VoyageTrackerAPI.postTrackedAssignment(dbid, crew, assignment, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
-	} catch (e) {		
+	} catch (e) {
 		next(e);
 	}
 });
@@ -333,8 +333,8 @@ router.post('/postAssignments', async (req: Request, res: Response, next) => {
 	if (!req.body) {
 		res.status(400).send('Whaat?');
 		return;
-	}	
-	
+	}
+
 	try {
 		let dbid = Number.parseInt(req.body.dbid);
 		let assign = req.body.assignments as { [key: string]: ITrackedAssignment[] };
@@ -349,13 +349,13 @@ router.post('/postAssignments', async (req: Request, res: Response, next) => {
 			for (let a2 of a1) {
 				assignments.push(a2);
 				finalcrew.push(symbol);
-			}	
+			}
 			x++;
 		}
 
 		let apiResult = await VoyageTrackerAPI.postTrackedAssignmentsMany(dbid, finalcrew, assignments, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
-	} catch (e) {		
+	} catch (e) {
 		next(e);
 	}
 });
@@ -392,13 +392,31 @@ router.get('/getTrackedData', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.delete('/deleteTrackedData', async (req: Request, res: Response, next) => {
+	if (!req.query || (!req.query.dbid && !req.query.trackerId )) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
+		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
+		let apiResult = await VoyageTrackerAPI.deleteTrackedVoyage(dbid, trackerId);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+
+
 router.post('/postBossBattle', async (req: Request, res: Response, next) => {
 	if (!req.body) {
 		res.status(400).send('Whaat?');
 		return;
-	}	
-	
-	try {		
+	}
+
+	try {
 		if ("id" in req.body) {
 			req.body.bossBattleId = req.body.id;
 			delete req.body.id;
@@ -406,7 +424,7 @@ router.post('/postBossBattle', async (req: Request, res: Response, next) => {
 		let battle = req.body as IFBB_BossBattle_Document;
 		let apiResult = await CollaborationAPI.postBossBattle(battle);
 		res.status(apiResult.Status).send(apiResult.Body);
-	} catch (e) {		
+	} catch (e) {
 		next(e);
 	}
 });
@@ -416,9 +434,9 @@ router.post('/postBossBattleSolves', async (req: Request, res: Response, next) =
 	if (!req.body) {
 		res.status(400).send('Whaat?');
 		return;
-	}	
-	
-	try {		
+	}
+
+	try {
 		let fleetId = req.body.fleetId as number;
 		let bossBattleId = req.body.bossBattleId as number;
 		let chainIndex = req.body.chainIndex as number;
@@ -431,7 +449,7 @@ router.post('/postBossBattleSolves', async (req: Request, res: Response, next) =
 		let apiResult = await CollaborationAPI.postSolves(fleetId, bossBattleId, chainIndex, solves);
 
 		res.status(apiResult.Status).send(apiResult.Body);
-	} catch (e) {		
+	} catch (e) {
 		next(e);
 	}
 });
@@ -440,9 +458,9 @@ router.post('/postBossBattleTrials', async (req: Request, res: Response, next) =
 	if (!req.body) {
 		res.status(400).send('Whaat?');
 		return;
-	}	
-	
-	try {		
+	}
+
+	try {
 		let fleetId = req.body.fleetId as number;
 		let bossBattleId = req.body.bossBattleId as number;
 		let chainIndex = req.body.chainIndex as number;
@@ -455,7 +473,7 @@ router.post('/postBossBattleTrials', async (req: Request, res: Response, next) =
 		let apiResult = await CollaborationAPI.postTrials(fleetId, bossBattleId, chainIndex, trials);
 
 		res.status(apiResult.Status).send(apiResult.Body);
-	} catch (e) {		
+	} catch (e) {
 		next(e);
 	}
 });
@@ -467,8 +485,8 @@ router.get('/getBossBattle', async (req: Request, res: Response, next) => {
 		return;
 	}
 
-	try {		
-		let room = undefined as string | undefined;		
+	try {
+		let room = undefined as string | undefined;
 		let id = undefined as number | undefined;
 		let fleetId: number | undefined = undefined;
 

@@ -18,6 +18,34 @@ export class VoyageTracker extends VoyageTrackerBase {
         return res;
     }
 
+    protected async deleteVoyageByTrackerId(dbid: number, trackerId: number): Promise<boolean> {
+        let res: TrackedVoyage[] | null = null;
+        let result = false;
+
+        const sql = await makeSql(dbid);
+        if (sql) {
+            const repo = sql.getRepository(TrackedVoyage);
+            res = await repo.findAll({ where: { trackerId } });
+            if (res) {
+                for (let rec of res) {
+                    rec.destroy();
+                }
+                result = true;
+            }
+
+            const crewrepo = sql.getRepository(TrackedCrew);
+            let crewres = await crewrepo.findAll({ where: { trackerId } });
+            if (crewres) {
+                for (let rec of crewres) {
+                    rec.destroy();
+                }
+                result = true;
+            }
+        }
+
+        return result;
+    }
+
     protected async getVoyagesByTrackerId(dbid: number, trackerId: number) {
         let res: TrackedVoyage[] | null = null;
 
