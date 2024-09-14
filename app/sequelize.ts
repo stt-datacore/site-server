@@ -32,14 +32,14 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 		if (!fs.existsSync(dpath)) {
 			fs.mkdirSync(dpath);
 		}
-		
+
 		if (makeFleet) {
 			dpath += "/fleet";
 			if (!fs.existsSync(dpath)) {
 				fs.mkdirSync(dpath);
 			}
 		}
-		
+
 		dpath += "/" + idnumber.toString() + ".sqlite";
 	}
 
@@ -51,9 +51,9 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 			logging: false,
 			repositoryMode: true
 		});
-	
+
 		if (newdb) {
-			await newdb.sync();
+			await newdb.sync({ alter: true });
 		}
 		return newdb;
 	}
@@ -63,9 +63,9 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 			logging: false,
 			repositoryMode: true
 		});
-	
+
 		if (newdb) {
-			await newdb.sync();
+			await newdb.sync({ alter: true });
 		}
 		return newdb;
 	}
@@ -88,7 +88,7 @@ export async function getHistoricalDb() {
 		if (!fs.existsSync(dpath)) {
 			fs.mkdirSync(dpath);
 		}
-		
+
 		dpath += "/historical.sqlite";
 	}
 
