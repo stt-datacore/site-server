@@ -376,6 +376,22 @@ router.get('/getAssignments', async (req: Request, res: Response, next) => {
 	}
 });
 
+
+router.get('/getLastTrackedId', async (req: Request, res: Response, next) => {
+	if (!req.query || (!req.query.dbid)) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
+		let apiResult = await VoyageTrackerAPI.getLastTrackedId(dbid);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
 router.get('/getTrackedData', async (req: Request, res: Response, next) => {
 	if (!req.query || (!req.query.dbid && !req.query.trackerId )) {
 		res.status(400).send('Whaat?');
@@ -407,8 +423,6 @@ router.delete('/deleteTrackedData', async (req: Request, res: Response, next) =>
 		next(e);
 	}
 });
-
-
 
 router.post('/postBossBattle', async (req: Request, res: Response, next) => {
 	if (!req.body) {

@@ -13,11 +13,45 @@ export interface TrackerPostResult {
 
 export abstract class VoyageTrackerBase {
 
+    async getLastTrackedId(dbid?: number) {
+        Logger.info("Last Tracked Id", { dbid });
+        let trackerId = 0;
+        if (!dbid)
+            return {
+                Status: 400,
+                Body: { result: "bad input" },
+            };
+
+            try {
+                trackerId = await this.getLastInsertId(dbid);
+            } catch (err) {
+                if (typeof err === "string") {
+                    return {
+                        Status: 500,
+                        Body: err,
+                    };
+                } else if (err instanceof Error) {
+                    return {
+                        Status: 500,
+                        Body: err.toString(),
+                    };
+                }
+            }
+
+            return {
+                Status: 200,
+                Body: {
+                    dbid: dbid,
+                    lastId: trackerId
+                },
+            };
+    }
+
     async deleteTrackedVoyage(
         dbid?: number,
         trackerId?: number
     ): Promise<ApiResult> {
-        Logger.info("Tracked Voyage data", { dbid, trackerId });
+        Logger.info("Tracked Voyage Delete", { dbid, trackerId });
 
         if (!dbid || !trackerId)
             return {
@@ -406,6 +440,8 @@ export abstract class VoyageTrackerBase {
         assignments: ITrackedAssignment[],
         timeStamp?: Date
     ): Promise<number>;
+
+    protected abstract getLastInsertId(dbid: number): Promise<number>;
 
 }
 

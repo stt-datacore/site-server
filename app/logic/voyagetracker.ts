@@ -5,6 +5,21 @@ import { TrackerPostResult, VoyageTrackerBase } from "../abstract/voyagetracker"
 
 export class VoyageTracker extends VoyageTrackerBase {
 
+    protected async getLastInsertId(dbid: number): Promise<number> {
+        let res: TrackedVoyage[] | null = null;
+
+        const sql = await makeSql(dbid);
+        if (sql) {
+            const repo = sql.getRepository(TrackedVoyage);
+            let result = await repo.max('id');
+            return result as number || 0;
+            // sql?.close();
+        }
+
+        return 0;
+    }
+
+
     protected async getVoyagesByDbid(dbid: number) {
         let res: TrackedVoyage[] | null = null;
 
