@@ -296,6 +296,24 @@ router.post('/postVoyage', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.post('/postTrackedData', async (req: Request, res: Response, next) => {
+	if (!req.body || !req.body.dbid || !req.body.voyage || !req.body.assigments) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+	try {
+		let dbid = req.body.dbid;
+		let voyage = req.body.voyage as ITrackedVoyage;
+		let assignments = req.body.assignments as ITrackedAssignment[];
+		let apiResult = await VoyageTrackerAPI.postTrackedData(dbid, voyage, assignments, getLogDataFromReq(req));
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+
+
 router.get('/getVoyages', async (req: Request, res: Response, next) => {
 	if (!req.query || (!req.query.dbid && !req.query.trackerId )) {
 		res.status(400).send('Whaat?');

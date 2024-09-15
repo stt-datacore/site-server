@@ -122,6 +122,84 @@ export class VoyageTracker extends VoyageTrackerBase {
         return { status: 500 };
     }
 
+
+    protected async postOrPutTrackedData(
+        dbid: number,
+        voyage: ITrackedVoyage,
+        assignments: ITrackedAssignment[],
+        timeStamp: Date = new Date()
+    ): Promise<TrackerPostResult> {
+        const sql = await makeSql(dbid);
+
+        if (sql) {
+            const repo = sql.getRepository(TrackedVoyage);
+            let result: TrackedVoyage;
+
+            let current = await repo.findOne({ where: { trackerId: voyage.tracker_id } });
+            if (current) {
+                if (current.voyageId !== voyage.voyage_id) {
+                    if (current.voyageId) {
+                        return { status: 400 };
+                    }
+                    else if (!current.voyageId && voyage.voyage_id) {
+                        current.voyageId = voyage.voyage_id;
+                    }
+                }
+                current.voyage = voyage;
+                current.updatedAt = timeStamp;
+                result = await current.save();
+            }
+            else {
+                result = await repo.create({
+                    dbid,
+                    trackerId: voyage.tracker_id,
+                    voyageId: voyage.voyage_id,
+                    voyage,
+                    timeStamp,
+                    updatedAt: timeStamp
+                });
+
+                if (result && result.id !== result.trackerId) {
+                    result.trackerId = result.id;
+                    await result.save();
+                }
+            }
+
+            // sql?.close();
+            const retval = !!result?.id ? { status: 201, inputId: voyage.tracker_id, trackerId: result.id } : { status: 400 };
+            if (retval.status === 201 && retval.trackerId) {
+                const crewrepo = sql.getRepository(TrackedCrew);
+                if (crewrepo) {
+                    let current = await crewrepo.findAll({ where: { trackerId: retval.trackerId! as number } });
+                    if (current?.length) {
+                        for (let rec of current) {
+                            rec.destroy();
+                        }
+                    }
+
+                    for (let assignment of assignments) {
+                        assignment.tracker_id = retval.trackerId;
+                        let result = await crewrepo.create({
+                            dbid,
+                            crew: assignment.crew,
+                            trackerId: assignment.tracker_id,
+                            assignment,
+                            timeStamp,
+                        });
+                        if (!result?.id) {
+                            retval.status = 500;
+                            break;
+                        }
+                    }
+                }
+
+                return retval;
+            }
+        }
+
+        return { status: 500 };
+    }
+
     protected async getAssignmentsByDbid(dbid: number, limit = 100) {
         let res: TrackedCrew[] | null = null;
 

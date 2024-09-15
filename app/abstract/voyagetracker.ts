@@ -145,6 +145,55 @@ export abstract class VoyageTrackerBase {
 
     }
 
+    async postTrackedData(
+        dbid: number,
+        voyage: ITrackedVoyage,
+        assignments: ITrackedAssignment[],
+        logData: LogData
+    ): Promise<ApiResult> {
+        Logger.info("Tracked Voyage data", { dbid, voyage, logData });
+
+        const timeStamp = new Date();
+        let res: TrackerPostResult | null = null;
+
+        try {
+            res = await this.postOrPutTrackedData(dbid, voyage, assignments, timeStamp);
+            if (!res || res.status >= 300) {
+                return {
+                    Status: res?.status ?? 500,
+                    Body: {
+                        dbid: dbid,
+                        error: "Unable to insert record.",
+                        timeStamp: timeStamp.toISOString(),
+                    },
+                };
+            }
+        } catch (err) {
+            if (typeof err === "string") {
+                return {
+                    Status: 500,
+                    Body: err,
+                };
+            } else if (err instanceof Error) {
+                return {
+                    Status: 500,
+                    Body: err.toString(),
+                };
+            }
+        }
+
+        return {
+            Status: 201,
+            Body: {
+                dbid: dbid,
+                trackerId: res!.trackerId,
+                inputId: res!.inputId,
+                timeStamp: timeStamp.toISOString(),
+            },
+        };
+
+    }
+
     async getTrackedVoyages(
         dbid?: number,
         trackerId?: number,
@@ -412,6 +461,13 @@ export abstract class VoyageTrackerBase {
     protected abstract getVoyagesByDbid(dbid: number, limit?: number): Promise<TrackedVoyage[] | null>;
 
     protected abstract getVoyagesByTrackerId(dbid: number, trackerId: number): Promise<TrackedVoyage[] | null>;
+
+    protected abstract postOrPutTrackedData(
+        dbid: number,
+        voyage: ITrackedVoyage,
+        assigments: ITrackedAssignment[],
+        timeStamp?: Date
+    ): Promise<TrackerPostResult>;
 
     protected abstract postOrPutVoyage(
         dbid: number,
