@@ -64,13 +64,22 @@ export interface ITrackedAssignmentsByCrew {
 	[key: string]: ITrackedAssignment[];	// key is crew.symbol
 };
 
-
 export interface ITrackedAssignment {
 	tracker_id: number;
 	slot: number;	// Slot index where crew is seated
 	trait: string;	// Matched trait or empty string if no match
-	crew?: string;
 };
+
+export interface IFullPayloadAssignment extends ITrackedAssignment {
+	crew: string;
+	kwipment?: number[] | number[][];
+}
+
+export interface ITrackedPayload {
+	dbid: number;
+	voyage: ITrackedVoyage;
+	assignments: IFullPayloadAssignment[];
+}
 
 export interface ITrackedAssignmentsBySkill {
 	[key: string]: {

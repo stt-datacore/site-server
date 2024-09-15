@@ -1,5 +1,5 @@
 import { Column, CreatedAt, DataType, Model, Table, UpdatedAt } from "sequelize-typescript";
-import { ITrackedVoyage, ITrackedAssignment } from "../datacore/voyage";
+import { ITrackedVoyage, ITrackedAssignment, IFullPayloadAssignment } from "../datacore/voyage";
 
 export interface ITelemetryVoyage {
     crewSymbol: string;
@@ -62,7 +62,7 @@ export class TrackedCrew extends Model implements ITrackedCrewRecord {
     trackerId!: number;
 
     @Column(DataType.JSON)
-    assignment!: ITrackedAssignment;
+    assignment!: ITrackedAssignment | IFullPayloadAssignment;
 
     @CreatedAt
     timeStamp!: Date;

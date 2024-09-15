@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { ApiResult, DataCoreAPI, LogData } from '../logic';
 import { PlayerData } from '../datacore/player';
-import { ITrackedAssignment, ITrackedVoyage } from '../datacore/voyage';
+import { IFullPayloadAssignment, ITrackedAssignment, ITrackedPayload, ITrackedVoyage } from '../datacore/voyage';
 import { IFBB_BossBattle_Document } from '../models/BossBattles';
 import { CrewTrial, Solve } from '../datacore/boss';
 import { VoyageTrackerAPI } from '../logic/voyagetracker';
@@ -302,9 +302,8 @@ router.post('/postTrackedData', async (req: Request, res: Response, next) => {
 		return;
 	}
 	try {
-		let dbid = req.body.dbid;
-		let voyage = req.body.voyage as ITrackedVoyage;
-		let assignments = req.body.assignments as ITrackedAssignment[];
+		let payload = req.body as ITrackedPayload;
+		const { dbid, voyage, assignments } = payload;
 		let apiResult = await VoyageTrackerAPI.postTrackedData(dbid, voyage, assignments, getLogDataFromReq(req));
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {

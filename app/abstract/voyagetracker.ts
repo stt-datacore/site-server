@@ -1,4 +1,4 @@
-import { ITrackedAssignment, ITrackedVoyage } from "../datacore/voyage";
+import { IFullPayloadAssignment, ITrackedAssignment, ITrackedVoyage } from "../datacore/voyage";
 import { TrackedCrew, TrackedVoyage } from "../models/Tracked";
 
 import { Logger, LogData } from "../logic/logger";
@@ -148,7 +148,7 @@ export abstract class VoyageTrackerBase {
     async postTrackedData(
         dbid: number,
         voyage: ITrackedVoyage,
-        assignments: ITrackedAssignment[],
+        assignments: IFullPayloadAssignment[],
         logData: LogData
     ): Promise<ApiResult> {
         Logger.info("Tracked Voyage data", { dbid, voyage, logData });

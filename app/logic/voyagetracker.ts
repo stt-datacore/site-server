@@ -1,4 +1,4 @@
-import { ITrackedAssignment, ITrackedVoyage } from "../datacore/voyage";
+import { IFullPayloadAssignment, ITrackedAssignment, ITrackedVoyage } from "../datacore/voyage";
 import { TrackedCrew, TrackedVoyage } from "../models/Tracked";
 import { makeSql } from "../sequelize";
 import { TrackerPostResult, VoyageTrackerBase } from "../abstract/voyagetracker";
@@ -126,7 +126,7 @@ export class VoyageTracker extends VoyageTrackerBase {
     protected async postOrPutTrackedData(
         dbid: number,
         voyage: ITrackedVoyage,
-        assignments: ITrackedAssignment[],
+        assignments: IFullPayloadAssignment[],
         timeStamp: Date = new Date()
     ): Promise<TrackerPostResult> {
         const sql = await makeSql(dbid);
