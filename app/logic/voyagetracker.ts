@@ -192,9 +192,9 @@ export class VoyageTracker extends VoyageTrackerBase {
                         }
                     }
                 }
-
-                return retval;
             }
+
+            return retval;
         }
 
         return { status: 500 };
