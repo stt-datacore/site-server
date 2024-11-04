@@ -201,6 +201,17 @@ export class ApiClass {
 		};
 	}
 
+	async loadEventLeaderboard(instance_id: number, max = 100): Promise<ApiResult> {
+		let response = await fetch(
+				`https://app.startrektimelines.com/event/leaderboard?access_token=${this._stt_token}&instance_id=${instance_id}&max=${max}`,
+			).then(this.checkSTTResponse.bind(this)).then(res => res.json());
+
+		return {
+			Status: 200,
+			Body: response
+		}
+	}
+
 	async loadFleetInfo(fleetId: string, logData: LogData, username?: string, password?: string, access_token?: string): Promise<ApiResult> {
 
 		return {

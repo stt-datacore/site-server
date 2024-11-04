@@ -52,7 +52,23 @@ router.get('/profile', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.get('/leaderboard', async (req: Request, res: Response, next) => {
+	if (!req.query || !req.query.instance_id) {
+		res.status(400).send('Whaat?');
+		return;
+	}
 
+	try {
+		const instance_id = Number(req.query.instance_id);
+		const max = req.query.max ? Number(req.query.max) : 100;
+
+		let apiResult = await DataCoreAPI.loadEventLeaderboard(instance_id, max);
+		res.status(apiResult.Status).send(apiResult.Body);
+	}
+	catch (e) {
+		next(e);
+	}
+});
 
 router.post('/login', async (req: Request, res: Response, next) => {
 	if (!req.body || !req.body.user || !req.body.password) {
