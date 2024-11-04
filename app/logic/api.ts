@@ -201,9 +201,9 @@ export class ApiClass {
 		};
 	}
 
-	async loadEventLeaderboard(instance_id: number, max = 100): Promise<ApiResult> {
+	async loadEventLeaderboard(instance_id: number): Promise<ApiResult> {
 		let response = await fetch(
-				`https://app.startrektimelines.com/event/leaderboard?access_token=${this._stt_token}&instance_id=${instance_id}&max=${max}`,
+				`https://app.startrektimelines.com/event/leaderboard?access_token=${this._stt_token}&instance_id=${instance_id}&max=100`,
 			).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
 		return {

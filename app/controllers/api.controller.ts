@@ -60,9 +60,8 @@ router.get('/leaderboard', async (req: Request, res: Response, next) => {
 
 	try {
 		const instance_id = Number(req.query.instance_id);
-		const max = req.query.max ? Number(req.query.max) : 100;
 
-		let apiResult = await DataCoreAPI.loadEventLeaderboard(instance_id, max);
+		let apiResult = await DataCoreAPI.loadEventLeaderboard(instance_id);
 		res.status(apiResult.Status).send(apiResult.Body);
 	}
 	catch (e) {
