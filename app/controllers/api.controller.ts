@@ -168,6 +168,15 @@ router.get('/get_dbid_from_discord', async (req: Request, res: Response, next) =
 	}
 });
 
+router.get('/celestial-market', async (req: Request, res: Response, next) => {
+	try {
+		let apiResult = await DataCoreAPI.getCelestial();
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
 router.get('/telemetry', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.type) {
 		res.status(400).send('Whaat?');

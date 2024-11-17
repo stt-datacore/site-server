@@ -11,6 +11,7 @@ import { PlayerData } from '../datacore/player';
 
 import { Profile } from '../models/Profile';
 import { voyageRawByDays } from './voyage_stats';
+import { CelestialAPI } from './celestial';
 
 require('dotenv').config();
 
@@ -482,6 +483,20 @@ export class ApiClass {
 		}
 	}
 
+	async getCelestial() {
+		let result = await CelestialAPI.getCelestialMarket(this._stt_token);
+		if (!result){
+			return {
+				Status: 500,
+				Body: JSON.stringify({ code: 500, error: "Could not read celestial market."})
+			}
+		}
+		return {
+			Status: 200,
+			Body: result
+		}
+	}
+
 	async getVoyages(crew?: string[], days?: number, opAnd?: boolean) {
 		days ??= 7;
 		if (days <= 0) days = 1;
@@ -537,8 +552,6 @@ export class ApiClass {
 	}
 
 	async sqliteGetPlayerData(dbid?: number, hash?: string): Promise<ApiResult> {
-
-
 		Logger.info('Get player data', { dbid });
 		let player: Profile | null = null;
 		let playerData: PlayerData | null = null;
