@@ -15,7 +15,7 @@ export async function getSTTToken(username?: string, password?: string) {
   params.append('grant_type', 'password');
   params.append('client_id', CLIENT_ID);
 
-	const data = await fetch(
+  const data = await fetch(
     'https://thorium.disruptorbeam.com/oauth2/token',
     { method: 'POST', body: params, headers: { 'Content-type': 'application/x-www-form-urlencoded' } }
   )
@@ -23,7 +23,7 @@ export async function getSTTToken(username?: string, password?: string) {
 
   if (data?.access_token) {
     Logger.info('New token fetched successfully');
-    return data.access_token;
+    return data.access_token as string;
   } else {
     Logger.info('Failed to fetch token', data);
     throw new Error(`Failed to fetch token: ${data}`);

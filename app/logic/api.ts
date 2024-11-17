@@ -24,8 +24,8 @@ export class ApiResult {
 }
 
 export class ApiClass {
-	private _player_data: any;
-	private _stt_token: any;
+	private _player_data: { [index: string]: Date } = {};
+	private _stt_token: string = '';
 
 	private _cancelToken: NodeJS.Timeout | undefined = undefined;
 
@@ -50,11 +50,13 @@ export class ApiClass {
 
 		getSTTToken().then((token) => {
 			this._stt_token = token;
+			return token
 		})
-			.catch((e) => {
-				Logger.info("Using fallback token.");
-				this._stt_token = 'd6458837-34ba-4883-8588-4530f1a9cc53';
-			});
+		.then((token) => CelestialAPI.refreshCelestialMarket(token))
+		.catch((e) => {
+			Logger.info("Using fallback token.");
+			this._stt_token = 'd6458837-34ba-4883-8588-4530f1a9cc53';
+		});
 	}
 
 	async checkSTTResponse(res: Response) {
@@ -118,8 +120,7 @@ export class ApiClass {
 
 		try {
 			res = await uploadProfile(dbid, player_data, new Date());
-
-			this._player_data[dbid] = new Date().toUTCString();
+			this._player_data[dbid] = new Date();
 			fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
 
 		} catch (err) {
@@ -549,7 +550,7 @@ export class ApiClass {
 			}
 		}
 
-		this._player_data[dbid] = new Date().toUTCString();
+		this._player_data[dbid] = new Date();
 		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
 
 		return {
