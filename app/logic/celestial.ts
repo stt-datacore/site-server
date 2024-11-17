@@ -115,7 +115,15 @@ class CelestialMarket {
             return null;
         }
         catch {
-            return market?.root.aggregation ?? null;
+            try {
+                if (market) {
+                    this.lastRefresh = new Date();
+                }
+                return market?.root.aggregation ?? null;
+            }
+            catch {
+                return null;
+            }
         }
     }
 }
