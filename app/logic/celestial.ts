@@ -21,7 +21,7 @@ export interface MarketListing {
     sell_count: number;
     high: number;
     low: number;
-    wishlisted?: number;
+    wishlisted?: boolean;
     last_price: number;
     count_at_low: number;
 }
@@ -63,11 +63,11 @@ class CelestialMarket {
             let market: CelestialMarketData = await response.json();
 
             if (market.root?.aggregation) {
-                // let ids = Object.keys(market.root.aggregation);
-                // console.log(`Market loaded ${ids.length} items listed ...`);
-                // for (let id of ids) {
-                //     delete market.root.aggregation[id].wishlisted;
-                // }
+                let ids = Object.keys(market.root.aggregation);
+                console.log(`Market loaded ${ids.length} items listed ...`);
+                for (let id of ids) {
+                    delete market.root.aggregation[id].wishlisted;
+                }
                 return market;
             } else {
                 return undefined;
