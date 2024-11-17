@@ -3,9 +3,6 @@ import fs from 'fs';
 require('dotenv').config();
 
 const CLIENT_API_VERSION = 24;
-export type MarketAggregation = {
-    [key: string]: MarketListing;
-};
 
 export interface CelestialMarketData {
     action: 'ephemeral';
@@ -13,6 +10,10 @@ export interface CelestialMarketData {
         aggregation: MarketAggregation;
     }
 }
+
+export type MarketAggregation = {
+    [key: string]: MarketListing;
+};
 
 export interface MarketListing {
     sold_last_day: number;
@@ -25,16 +26,12 @@ export interface MarketListing {
     count_at_low: number;
 }
 
-export interface KeystoneMarketEntry extends MarketListing {
-    date: string;
-}
-
 class CelestialMarket {
     readonly STATS_PATH: string;
     readonly MARKET_FILE: string;
 
     lastRefresh = undefined as Date | undefined;
-    currentData: boolean;
+    currentData: MarketAggregation | null = null;
 
     public get isCurrent(): boolean {
         if (!this.lastRefresh) return false;
@@ -45,14 +42,14 @@ class CelestialMarket {
     constructor() {
         this.STATS_PATH = `${process.env.PROFILE_DATA_PATH}/stats/`;
         this.MARKET_FILE = `${this.STATS_PATH}keystone_market_data.json`
+
         if (!fs.existsSync(this.STATS_PATH)) {
             fs.mkdirSync(this.STATS_PATH);
         }
 
-        this.currentData = fs.existsSync(this.MARKET_FILE);
-
-        if (this.currentData) {
+        if (fs.existsSync(this.MARKET_FILE)) {
             this.lastRefresh = fs.statSync(this.MARKET_FILE).mtime;
+            this.currentData = JSON.parse(fs.readFileSync(this.MARKET_FILE, 'utf-8'));
         }
     }
 
@@ -66,13 +63,11 @@ class CelestialMarket {
             let market: CelestialMarketData = await response.json();
 
             if (market.root?.aggregation) {
-                let ids = Object.keys(market.root.aggregation);
-                console.log(`Market loaded ${ids.length} items listed ...`);
-
-                for (let id of ids) {
-                    delete market.root.aggregation[id].wishlisted;
-                }
-
+                // let ids = Object.keys(market.root.aggregation);
+                // console.log(`Market loaded ${ids.length} items listed ...`);
+                // for (let id of ids) {
+                //     delete market.root.aggregation[id].wishlisted;
+                // }
                 return market;
             } else {
                 return undefined;
@@ -84,17 +79,11 @@ class CelestialMarket {
     }
 
     public async getCelestialMarket(access_token: string): Promise<MarketAggregation | null> {
-        let now = new Date();
         if (!this.currentData || !this.lastRefresh || !this.isCurrent) {
-            let result = await this.refreshCelestialMarket(access_token);
-            if (!result && fs.existsSync(this.MARKET_FILE)) {
-                this.lastRefresh = fs.statSync(this.MARKET_FILE).mtime;
-                return JSON.parse(fs.readFileSync(this.MARKET_FILE, 'utf-8')) as MarketAggregation;
-            }
-            return result;
+            return await this.refreshCelestialMarket(access_token);
         }
         else {
-            return JSON.parse(fs.readFileSync(this.MARKET_FILE, 'utf-8')) as MarketAggregation;
+            return this.currentData;
         }
     }
 
@@ -105,22 +94,29 @@ class CelestialMarket {
 
         let market = await this.remoteFetchCelestialMarket(access_token);
 
-        if (market) {
-            let keystonemarket = market.root.aggregation;
-            let market_file = this.MARKET_FILE;
-            fs.writeFileSync(market_file, JSON.stringify(keystonemarket));
-            this.lastRefresh = new Date();
-            this.currentData = true;
-            return keystonemarket;
+        try {
+            if (market) {
+                let keystonemarket = market.root.aggregation;
+                let market_file = this.MARKET_FILE;
+                fs.writeFileSync(market_file, JSON.stringify(keystonemarket));
+                this.lastRefresh = new Date();
+                this.currentData = keystonemarket;
+                return keystonemarket;
+            }
+            else if (fs.existsSync(this.MARKET_FILE)) {
+                this.currentData = JSON.parse(fs.readFileSync(this.MARKET_FILE, 'utf-8'));
+                this.lastRefresh = fs.statSync(this.MARKET_FILE).mtime;
+            }
+            else {
+                this.lastRefresh = undefined;
+            }
+
+            this.currentData = null;
+            return null;
         }
-        else if (fs.existsSync(this.MARKET_FILE)) {
-            this.lastRefresh = fs.statSync(this.MARKET_FILE).mtime;
+        catch {
+            return market?.root.aggregation ?? null;
         }
-        else {
-            this.lastRefresh = undefined;
-        }
-        this.currentData = false;
-        return null;
     }
 }
 
