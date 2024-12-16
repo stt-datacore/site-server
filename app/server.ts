@@ -22,7 +22,7 @@ let port: number = 4420;
 if (process.argv.length > 2) {
 	if (process.argv[2] !== 'stats') {
 		port = parseInt(process.argv[2]);
-	}	
+	}
 }
 
 let nocache = (req: Request, res: Response, next: any) => {
@@ -45,16 +45,17 @@ app.use(bodyParser.json({ limit: '20mb' })); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
 // Add CORS support
-let corsOptions: any = {	
+let corsOptions: any = {
 	origin: [
 		// Main site
-		process.env.CORS_ORIGIN, 
+		process.env.CORS_ORIGIN,
 		// Beta site
-		'https://beta.datacore.app', 
+		'https://beta.datacore.app',
 		// Alpha sites
-		/https:\/\/[a-zA-Z0-9_.-]+\.website-i3mu\.pages\.dev/, 
+		/https:\/\/[a-zA-Z0-9_.-]+\.website-i3mu\.pages\.dev/,
 		// localhost is temporary for testing
-		'http://localhost:81'
+		'http://localhost:81',
+		'http://localhost:8881'
 	],
 	optionsSuccessStatus: 200 // some legacy browsers choke on 204
 };
@@ -74,7 +75,7 @@ app.use('/api', nocache, expressLogger, ApiController);
 	if (process.argv.includes("stats")) {
 		DataCoreAPI.beginStatsCycle();
 	}
-	
+
 	if (!process.argv.includes("stats")) {
 		// Serve the application at the given port
 		app.listen(port, '0.0.0.0', () => {
