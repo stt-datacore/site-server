@@ -69,8 +69,8 @@ export function createProfileObject(dbid: string, player_data: PlayerData, lastU
 }
 
 
-export async function getProfiles(dbid: number[]) {
-	let res = await Profile.findAll({ where: { [Op.or]: [ dbid.map(d => ({dbid: d})) ] } });
+export async function getProfiles(dbids: number[]) {
+	let res = await Profile.findAll({ where: { dbid: { [Op.or]: dbids.map(d => d.toString()) } } });
 	if (res.length === 0) return null;
 	return res;
 }
