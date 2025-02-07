@@ -3,7 +3,7 @@ import { Profile } from '../models/Profile';
 import { User } from '../models/User';
 import { generate, verify } from 'password-hash';
 import { PlayerData } from '../datacore/player';
-
+import { Op } from 'sequelize';
 interface IBuffStat {
 	multiplier: number;
 	percent_increase: number;
@@ -68,6 +68,12 @@ export function createProfileObject(dbid: string, player_data: PlayerData, lastU
 	return { dbid, buffConfig: calculateBuffConfig(player_data.player), metadata, shortCrewList, captainName, lastUpdate, hash: dbidHash };
 }
 
+
+export async function getProfiles(dbid: number[]) {
+	let res = await Profile.findAll({ where: { [Op.or]: [ dbid.map(d => ({dbid: d})) ] } });
+	if (res.length === 0) return null;
+	return res;
+}
 
 export async function getProfile(dbid: number) {
 	let res = await Profile.findAll({ where: { dbid } });

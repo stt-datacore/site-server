@@ -131,15 +131,13 @@ router.post('/savecomment', async (req: Request, res: Response, next) => {
 });
 
 router.post('/fleet_info', async (req: Request, res: Response, next) => {
-	if (!req.query || !req.query.fleetid || !req.body) {
+	if (!req.query || !req.body?.dbids) {
 		res.status(400).send('Whaat?');
 		return;
 	}
 
-	const cred = req.body;
-
 	try {
-		let apiResult = await DataCoreAPI.loadFleetInfo(req.query.fleetid.toString(), getLogDataFromReq(req), cred.username, cred.password, cred.access_token);
+		let apiResult = await DataCoreAPI.getProfiles(req.body.dbids)
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
