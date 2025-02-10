@@ -49,7 +49,12 @@ class CelestialMarket {
 
         if (fs.existsSync(this.MARKET_FILE)) {
             this.lastRefresh = fs.statSync(this.MARKET_FILE).mtime;
-            this.currentData = JSON.parse(fs.readFileSync(this.MARKET_FILE, 'utf-8'));
+            try {
+                this.currentData = JSON.parse(fs.readFileSync(this.MARKET_FILE, 'utf-8'));
+            }
+            catch {
+                this.currentData = null;
+            }
         }
     }
 
