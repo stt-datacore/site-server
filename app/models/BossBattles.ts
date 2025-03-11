@@ -30,31 +30,31 @@ export interface IFBB_Trial_Document {
 
 @Table
 export class BossBattleDocument extends Model implements IFBB_BossBattle_Document {
-        
+
     @Column
     bossBattleId!: number;
-    
+
     @Column
     fleetId!: number;
-    
+
     @Column
     bossGroup!: string;
-    
+
     @Column
     difficultyId!: number;
-    
-    @Column   
+
+    @Column
     chainIndex!: number;
 
     @Column(DataType.JSON)
     chain!: Chain;
-    
+
     @Column
     description!: string;
-        
+
     @Column
     roomCode!: string;
-    
+
     @CreatedAt
     timeStamp!: Date
 
@@ -73,10 +73,11 @@ export class SolveDocument extends Model implements IFBB_Solve_Document {
 
     @CreatedAt
     timeStamp!: Date;
-    
-    
+
+
 };
 
+@Table
 export class TrialDocument extends Model implements IFBB_Trial_Document {
 
     @Column
@@ -91,4 +92,4 @@ export class TrialDocument extends Model implements IFBB_Trial_Document {
     @CreatedAt
     timeStamp!: Date;
 
-    }
+}
