@@ -497,7 +497,7 @@ router.post('/postBossBattleSolves', async (req: Request, res: Response, next) =
 		let solves = req.body.solves as Solve[];
 
 		if (fleetId === undefined || bossBattleId === undefined || chainIndex === undefined || solves === undefined) {
-			res.status(400).send("Bad data");
+			res.status(400).send("Bad request");
 			return;
 		}
 
@@ -522,7 +522,7 @@ router.post('/postBossBattleTrials', async (req: Request, res: Response, next) =
 		let trials = req.body.trials as CrewTrial[];
 
 		if (fleetId === undefined || bossBattleId === undefined || chainIndex === undefined || trials === undefined) {
-			res.status(400).send("Bad data");
+			res.status(400).send("Bad request");
 			return;
 		}
 
@@ -534,6 +534,51 @@ router.post('/postBossBattleTrials', async (req: Request, res: Response, next) =
 	}
 });
 
+router.delete('/resetFleet', async (req: Request, res: Response, next) => {
+	if (!req.query) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let fleetId = Number(req.query.fleetId as string);
+
+		if (fleetId === undefined) {
+			res.status(400).send("Bad request");
+			return;
+		}
+
+		let apiResult = await CollaborationAPI.resetFleet(fleetId);
+
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.delete('/deleteBossBattleTrial', async (req: Request, res: Response, next) => {
+	if (!req.query) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let fleetId = Number(req.query.fleetId as string);
+		let bossBattleId = Number(req.body.bossBattleId as string);
+		let chainIndex = Number(req.body.chainIndex as string);
+
+		if (fleetId === undefined || bossBattleId === undefined || chainIndex === undefined) {
+			res.status(400).send("Bad request");
+			return;
+		}
+
+		let apiResult = await CollaborationAPI.deleteTrials(fleetId, bossBattleId, chainIndex);
+
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
 
 router.get('/getBossBattle', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.fleetId || (!req.query.room && !req.query.id)) {

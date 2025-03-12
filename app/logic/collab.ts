@@ -4,6 +4,7 @@ import { BossBattleDocument, IFBB_BossBattle_Document, SolveDocument, TrialDocum
 import { makeSql } from "../sequelize";
 import seedrandom from 'seedrandom';
 import { CollaboratorBase } from "../abstract/collab";
+import { Model, Repository } from "sequelize-typescript";
 
 export class Collaborator extends CollaboratorBase {
 
@@ -87,6 +88,59 @@ export class Collaborator extends CollaboratorBase {
             let insres = await repo.bulkCreate(newdata);
             let result = !!insres?.length;
             return result ? 201 : 400;
+        }
+
+        return 500;
+    }
+
+    protected async removeTrials(
+        fleetId: number,
+        bossBattleId: number,
+        chainIndex: number): Promise<number> {
+
+        let sql = await makeSql(fleetId, true);
+
+        if (sql) {
+            const repo = sql.getRepository(TrialDocument);
+            const current = await repo.findAll({
+                where: {
+                    bossBattleId,
+                    chainIndex
+                }
+            });
+            if (current?.length) {
+                for (let record of current) {
+                    await record.destroy();
+                }
+                return 200;
+            }
+            else {
+                return 404;
+            }
+        }
+
+        return 500;
+    }
+
+    protected async clearFleetData(
+        fleetId: number): Promise<number> {
+
+        let sql = await makeSql(fleetId, true);
+
+        if (sql) {
+
+            const bbrepo = sql.getRepository(BossBattleDocument);
+            const sorepo = sql.getRepository(SolveDocument);
+            const trrepo = sql.getRepository(TrialDocument);
+            for (const repo of [bbrepo, sorepo, trrepo]) {
+                const current = await (repo as Repository<Model>).findAll();
+                if (current?.length) {
+                    for (let record of current) {
+                        await record.destroy();
+                    }
+                }
+            }
+            return 200;
         }
 
         return 500;
