@@ -496,8 +496,9 @@ router.post('/postBossBattleSolves', async (req: Request, res: Response, next) =
 		let chainIndex = req.body.chainIndex as number;
 		let solves = req.body.solves as Solve[];
 
-		if (!fleetId || !bossBattleId || !chainIndex || !solves) {
+		if (fleetId === undefined || bossBattleId === undefined || chainIndex === undefined || solves === undefined) {
 			res.status(400).send("Bad data");
+			return;
 		}
 
 		let apiResult = await CollaborationAPI.postSolves(fleetId, bossBattleId, chainIndex, solves);
@@ -520,8 +521,9 @@ router.post('/postBossBattleTrials', async (req: Request, res: Response, next) =
 		let chainIndex = req.body.chainIndex as number;
 		let trials = req.body.trials as CrewTrial[];
 
-		if (!fleetId || !bossBattleId || !chainIndex || !trials) {
+		if (fleetId === undefined || bossBattleId === undefined || chainIndex === undefined || trials === undefined) {
 			res.status(400).send("Bad data");
+			return;
 		}
 
 		let apiResult = await CollaborationAPI.postTrials(fleetId, bossBattleId, chainIndex, trials);
