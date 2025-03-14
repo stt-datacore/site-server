@@ -95,15 +95,23 @@ export abstract class CollaboratorBase {
 
 		try {
 			let res = await this.removeTrials(fleetId, bossBattleId, chainIndex);
-			return {
-				Status: res,
-				Body: { result: "ok" }
+			if (res === 404) {
+				return {
+					Status: 200,
+					Body: { result: "not_found", message: "trial not found" }
+				}
+			}
+			else {
+				return {
+					Status: res,
+					Body: { result: "ok", message: "trial deleted" }
+				}
 			}
 		}
-		catch {
+		catch (e: any) {
 			return {
 				Status: 500,
-				Body: { result: "fail" }
+				Body: { result: 'fail', message: e?.toString() ?? '' }
 			}
 		}
 	}
