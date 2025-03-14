@@ -564,8 +564,8 @@ router.delete('/deleteBossBattleTrial', async (req: Request, res: Response, next
 
 	try {
 		let fleetId = Number(req.query.fleetId as string);
-		let bossBattleId = Number(req.body.bossBattleId as string);
-		let chainIndex = Number(req.body.chainIndex as string);
+		let bossBattleId = Number(req.query.bossBattleId as string);
+		let chainIndex = Number(req.query.chainIndex as string);
 
 		if (fleetId === undefined || bossBattleId === undefined || chainIndex === undefined) {
 			res.status(400).send("Bad request");
