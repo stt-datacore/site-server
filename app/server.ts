@@ -75,8 +75,11 @@ app.use('/api', nocache, expressLogger, ApiController);
 	if (process.argv.includes("stats")) {
 		DataCoreAPI.beginStatsCycle();
 	}
+	else if (process.argv.includes("archive")) {
+		DataCoreAPI.archiveOldRecords();
+	}
 
-	if (!process.argv.includes("stats")) {
+	if (!process.argv.includes("stats") && !process.argv.includes("archive")) {
 		// Serve the application at the given port
 		app.listen(port, '0.0.0.0', () => {
 			// Success callback

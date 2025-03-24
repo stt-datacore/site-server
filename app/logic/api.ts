@@ -10,7 +10,7 @@ import { getSTTToken } from './stttools';
 import { PlayerData } from '../datacore/player';
 
 import { Profile } from '../models/Profile';
-import { voyageRawByDays } from './voyage_stats';
+import { historicalize, voyageRawByDays } from './voyage_stats';
 import { CelestialAPI } from './celestial';
 
 require('dotenv').config();
@@ -28,6 +28,10 @@ export class ApiClass {
 	private _stt_token: string = '';
 
 	private _cancelToken: NodeJS.Timeout | undefined = undefined;
+
+	async archiveOldRecords() {
+		await historicalize();
+	}
 
 	beginStatsCycle() {
 		setTimeout(async () => {

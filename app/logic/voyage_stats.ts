@@ -1,5 +1,5 @@
 import { exec } from "child_process";
-import { Op } from "sequelize";
+import { DatabaseError, Op } from "sequelize";
 import { Repository, Sequelize } from "sequelize-typescript";
 import { Voyage, Historical } from "../models/VoyageRecord";
 
@@ -86,16 +86,16 @@ export async function getVoyageStats(sqlconn?: string, filename?: string) {
 
 		n = sqlconn.lastIndexOf("/");
 		sqlconn = sqlconn.slice(0, n);
-		let histfile = sqlconn + "/" + filename;
+		let snapfile = sqlconn + "/" + filename;
 
 		sqlfile = sqlfile.replace(/\/\//g, '/');
-		histfile = histfile.replace(/\/\//g, '/');
+		snapfile = snapfile.replace(/\/\//g, '/');
 
-		let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${histfile}`);
+		let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${snapfile}`);
 
 		proc.on('exit', async (code, signal) => {
 
-			let sql = new Sequelize(`sqlite:${histfile}`, {
+			let sql = new Sequelize(`sqlite:${snapfile}`, {
 				models: [Historical],
 				logging: false,
 				repositoryMode: true
@@ -106,6 +106,96 @@ export async function getVoyageStats(sqlconn?: string, filename?: string) {
 				const repo = sql.getRepository(Historical);
 				let results = await internalgetVoyageStats(repo);
 				resolve(results);
+			}
+			else {
+				reject(new Error("Could not connect to database"));
+			}
+		});
+	});
+}
+
+export async function historicalize(sqlconn?: string, filename?: string) {
+	return new Promise<void>((resolve, reject) => {
+		let historical = 'historical.sqlite';
+		filename ??= "snapshot.sqlite";
+		sqlconn ??= process.env.DB_CONNECTION_STRING as string;
+
+		let n = sqlconn.indexOf("/");
+		sqlconn = sqlconn.slice(n);
+		let sqlfile = sqlconn;
+
+		n = sqlconn.lastIndexOf("/");
+		sqlconn = sqlconn.slice(0, n);
+		let snapfile = sqlconn + "/" + filename;
+		let histfile = sqlconn + "/" + historical;
+
+		sqlfile = sqlfile.replace(/\/\//g, '/');
+		snapfile = snapfile.replace(/\/\//g, '/');
+
+		console.log("Copying file to work file...")
+		let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${snapfile}`);
+
+		proc.on('exit', async (code, signal) => {
+			console.log("Open connection to current database...");
+			let sqlCurr = new Sequelize(`sqlite:${snapfile}`, {
+				models: [Historical],
+				logging: false,
+				repositoryMode: true
+			});
+			console.log("Open connection to historical database...");
+			let sqlHist = new Sequelize(`sqlite:${histfile}`, {
+				models: [Historical],
+				logging: false,
+				repositoryMode: true
+			});
+
+			if (sqlCurr && sqlHist) {
+				let target = new Date();
+				target.setFullYear(target.getFullYear() - 1);
+				target.setHours(0);
+				target.setMinutes(0);
+				target.setSeconds(0);
+				target.setMilliseconds(0);
+				console.log(`Transfer history from before ${target.toDateString()}...`);
+				await sqlCurr.sync({ alter: true });
+				await sqlHist.sync({ alter: true });
+				const hist = sqlHist.getRepository(Historical);
+				const repo = sqlCurr.getRepository(Historical);
+				let n = 0;
+
+				let transfers: Historical[] = [];
+				let trans = false;
+				do {
+					trans = false;
+					console.log(`Query database...`);
+					transfers = await repo.findAll({
+						where: {
+							voyageDate: {
+								[Op.lt]: target
+							}
+						},
+						limit: 1000
+					});
+					if (transfers?.length) {
+						trans = true;
+						let data = transfers.map(obj => {
+							let newobj = obj.toJSON();
+							if (newobj.id) delete newobj.id;
+							return newobj;
+						});
+						await hist.bulkCreate(data);
+						await Promise.all(transfers.map(t => t.destroy()));
+						n += transfers.length;
+
+						transfers.length = 0;
+						data.length = 0;
+
+						console.log(`${n} records transferred, vacuuming...`);
+					}
+					await sqlCurr.query(`VACUUM;`);
+				} while (trans);
+
+				resolve();
 			}
 			else {
 				reject(new Error("Could not connect to database"));
