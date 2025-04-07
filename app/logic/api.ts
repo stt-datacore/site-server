@@ -238,7 +238,7 @@ export class ApiClass {
 
 		return {
 			Status: 403,
-			Body: "No"
+			Body: "Fleet info can be loaded directly from the DataCore website. Please use that link, instead."
 		};
 
 		// Logger.info('Load fleet info', { fleetId, logData });
