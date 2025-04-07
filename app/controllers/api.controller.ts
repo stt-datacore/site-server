@@ -319,7 +319,7 @@ router.post('/postVoyage', async (req: Request, res: Response, next) => {
 });
 
 router.post('/postTrackedData', async (req: Request, res: Response, next) => {
-	if (!req.body || !req.body.dbid || !req.body.voyage || !req.body.assigments) {
+	if (!req.body || !req.body.dbid || !req.body.voyage || !req.body.assignments) {
 		res.status(400).send('Whaat?');
 		return;
 	}

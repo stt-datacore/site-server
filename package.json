@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "node ./build/server.js",
-    "debug": "node --inspect ./build/server.js"
+    "debug": "tsc && node --inspect ./build/server.js"
   },
   "keywords": [],
   "author": "",
