@@ -60,7 +60,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 					console.log(result);
 					await newdb.sync({ alter: true });
-					result = await newdb.query('PRAGMA integrity_check;');
+					[result, meta] = await newdb.query('PRAGMA integrity_check;');
 					console.log(result);
 					if ((result[0] as any)?.integrity_check !== 'ok') {
 						throw new Error("Integrity check failed.");
@@ -90,7 +90,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 					console.log(result);
 					await newdb.sync({ alter: true });
-					result = await newdb.query('PRAGMA integrity_check;');
+					[result, meta] = await newdb.query('PRAGMA integrity_check;');
 					console.log(result);
 					if ((result[0] as any)?.integrity_check !== 'ok') {
 						throw new Error("Integrity check failed.");
@@ -99,7 +99,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 				catch (e) {
 					console.log(e);
 					console.log("Reinitialize database...");
-					fs.unlinkSync(opath);
+					//fs.unlinkSync(opath);
 					i++;
 					continue;
 				}
@@ -108,6 +108,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 			return newdb;
 		}
 	}
+	return null;
 }
 
 export async function getHistoricalDb() {
