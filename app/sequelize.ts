@@ -43,31 +43,70 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 		dpath += "/" + idnumber.toString() + ".sqlite";
 	}
 
+	let opath = dpath;
 	dpath = "sqlite:" + dpath;
 
+	let i = 0;
 	if (makeFleet) {
-		const newdb = new Sequelize(dpath, {
-			models: [SolveDocument, TrialDocument, BossBattleDocument],
-			logging: false,
-			repositoryMode: true
-		});
+		while (i < 2) {
+			const newdb = new Sequelize(dpath, {
+				models: [SolveDocument, TrialDocument, BossBattleDocument],
+				logging: false,
+				repositoryMode: true
+			});
 
-		if (newdb) {
-			await newdb.sync({ alter: true });
+			if (newdb) {
+				try {
+					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
+					console.log(result);
+					await newdb.sync({ alter: true });
+					result = await newdb.query('PRAGMA integrity_check;');
+					console.log(result);
+					if ((result[0] as any)?.integrity_check !== 'ok') {
+						throw new Error("Integrity check failed.");
+					}
+				}
+				catch (e) {
+					console.log(e);
+					console.log("Reinitialize database...");
+					fs.unlinkSync(opath);
+					i++;
+					continue;
+				}
+				return newdb;
+			}
 		}
-		return newdb;
 	}
 	else {
-		const newdb = new Sequelize(dpath, {
-			models: [TrackedVoyage, TrackedCrew],
-			logging: false,
-			repositoryMode: true
-		});
+		while (i < 2) {
+			const newdb = new Sequelize(dpath, {
+				models: [TrackedVoyage, TrackedCrew],
+				logging: false,
+				repositoryMode: true
+			});
 
-		if (newdb) {
-			await newdb.sync({ alter: true });
+			if (newdb) {
+				try {
+					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
+					console.log(result);
+					await newdb.sync({ alter: true });
+					result = await newdb.query('PRAGMA integrity_check;');
+					console.log(result);
+					if ((result[0] as any)?.integrity_check !== 'ok') {
+						throw new Error("Integrity check failed.");
+					}
+				}
+				catch (e) {
+					console.log(e);
+					console.log("Reinitialize database...");
+					fs.unlinkSync(opath);
+					i++;
+					continue;
+				}
+				return newdb;
+			}
+			return newdb;
 		}
-		return newdb;
 	}
 }
 
