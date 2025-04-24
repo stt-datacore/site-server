@@ -383,6 +383,7 @@ async function internalgetVoyageStats(Table: Repository<Historical>) {
 	if ("oneYear" in output) {
 		output["allTime"] = output["oneYear"];
 	}
+	(output as any)["timestamp"] = new Date();
 	return output;
 }
 
