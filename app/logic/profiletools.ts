@@ -53,7 +53,13 @@ export function createProfileObject(dbid: string, player_data: PlayerData, lastU
 		stored_immortals: player_data.player.character.stored_immortals
 	};
 
-	let metadata = { open_collection_ids: null as number[] | null };
+	let metadata = {
+		open_collection_ids: null as number[] | null,
+		crew_avatar: {
+			symbol: player_data.player.character.crew_avatar?.symbol ?? null,
+			name: player_data.player.character.crew_avatar?.name ?? null
+		}
+	};
 
 	if (player_data.player.character.cryo_collections) {
 		let ocols = [] as number[];

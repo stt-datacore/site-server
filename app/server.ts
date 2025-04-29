@@ -1,3 +1,4 @@
+import fs from 'fs';
 import express from 'express';
 import cors from 'cors';
 import { Request, Response } from 'express';
@@ -9,6 +10,7 @@ import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
 import { exit } from 'process';
+import { upgradeAvatars } from './utils';
 
 require('dotenv').config();
 
@@ -67,6 +69,16 @@ app.use('/api', nocache, expressLogger, ApiController);
 
 (async () => {
 	await sequelize.sync();
+	const directives = `${process.env.PROFILE_DATA_PATH}/site-directives.json`;
+
+	const processDirectives = async () => {
+		const dir = JSON.parse(fs.readFileSync(directives, 'utf-8'));
+		if (dir.avatarUpgrade) {
+			await upgradeAvatars();
+			dir.avatarUpgrade = false;
+		}
+		fs.writeFileSync(directives, JSON.stringify(dir, null, 4));
+	};
 
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
@@ -79,6 +91,9 @@ app.use('/api', nocache, expressLogger, ApiController);
 		DataCoreAPI.archiveOldRecords();
 	}
 
+	if (fs.existsSync(directives)) {
+		processDirectives();
+	}
 	if (!process.argv.includes("stats") && !process.argv.includes("archive")) {
 		// Serve the application at the given port
 		app.listen(port, '0.0.0.0', () => {
