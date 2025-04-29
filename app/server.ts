@@ -92,7 +92,7 @@ app.use('/api', nocache, expressLogger, ApiController);
 	}
 
 	if (fs.existsSync(directives)) {
-		processDirectives();
+		await processDirectives();
 	}
 	if (!process.argv.includes("stats") && !process.argv.includes("archive")) {
 		// Serve the application at the given port
