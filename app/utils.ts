@@ -54,7 +54,7 @@ export async function upgradeAvatars() {
                 delete newprofile.id;
                 console.log(`Crew avatar for ${profile.captainName} set to ${diskprof.player.character.crew_avatar?.name}...`);
                 await Profile.update({ ...newprofile }, { where: { dbid: profile.dbid } } );
-                newprofile == null;
+                newprofile = null;
                 diskprof = undefined;
             }
         }
