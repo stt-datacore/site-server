@@ -40,20 +40,23 @@ export async function upgradeAvatars() {
     const path = process.env.PROFILE_DATA_PATH;
     const profiles = await Profile.findAll();
     profiles.forEach(async (profile) => {
+        if (profile.metadata?.crew_avatar) return;
         let file = `${path}/${profile.dbid}`;
         if (fs.existsSync(file)) {
-            const diskprof = JSON.parse(fs.readFileSync(file, 'utf-8')) as PlayerData;
-            let newprofile = profile.toJSON();
-            if (newprofile.metadata.crew_avatar) return;
-
-            newprofile.metadata ??= {};
-            newprofile.metadata.crew_avatar = {
-                symbol: diskprof.player?.character?.crew_avatar?.symbol ?? null,
-                name: diskprof.player?.character?.crew_avatar?.name ?? null,
-            };
-            delete newprofile.id;
-            console.log(`Crew avatar for ${profile.captainName} set to ${diskprof.player.character.crew_avatar?.name}...`);
-            await Profile.update({ ...newprofile }, { where: { dbid: profile.dbid } } );
+            let diskprof = JSON.parse(fs.readFileSync(file, 'utf-8')) as PlayerData | undefined;
+            if (diskprof) {
+                let newprofile = profile.toJSON();
+                newprofile.metadata ??= {};
+                newprofile.metadata.crew_avatar = {
+                    symbol: diskprof.player?.character?.crew_avatar?.symbol ?? null,
+                    name: diskprof.player?.character?.crew_avatar?.name ?? null,
+                };
+                delete newprofile.id;
+                console.log(`Crew avatar for ${profile.captainName} set to ${diskprof.player.character.crew_avatar?.name}...`);
+                await Profile.update({ ...newprofile }, { where: { dbid: profile.dbid } } );
+                newprofile == null;
+                diskprof = undefined;
+            }
         }
     });
     console.log("Done with Directive: Upgrade Avatars");
