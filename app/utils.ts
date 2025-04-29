@@ -44,6 +44,8 @@ export async function upgradeAvatars() {
         if (fs.existsSync(file)) {
             const diskprof = JSON.parse(fs.readFileSync(file, 'utf-8')) as PlayerData;
             let newprofile = profile.toJSON();
+            if (newprofile.metadata.crew_avatar) return;
+
             newprofile.metadata ??= {};
             newprofile.metadata.crew_avatar = {
                 symbol: diskprof.player?.character?.crew_avatar?.symbol ?? null,
