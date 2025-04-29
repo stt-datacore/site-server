@@ -97,6 +97,14 @@ router.get('/whoami', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.get('/ftm-log', async (req: Request, res: Response, next) => {
+	try {
+		let apiResult = await DataCoreAPI.getFTMLog();
+		res.status(200).send(apiResult);
+	} catch (e) {
+		next(e);
+	}
+});
 router.get('/comments', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.symbol) {
 		res.status(400).send('Whaat?');
