@@ -10,7 +10,7 @@ import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
 import { exit } from 'process';
-import { upgradeAvatars } from './utils';
+import { compareFTM, upgradeAvatars } from './utils';
 
 require('dotenv').config();
 
@@ -76,6 +76,10 @@ app.use('/api', nocache, expressLogger, ApiController);
 		if (dir.avatarUpgrade) {
 			await upgradeAvatars();
 			dir.avatarUpgrade = false;
+		}
+		if (dir.scanCapAchievers) {
+			await compareFTM();
+			dir.scanCapAchievers = false;
 		}
 		fs.writeFileSync(directives, JSON.stringify(dir, null, 4));
 	};

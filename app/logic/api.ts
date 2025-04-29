@@ -529,6 +529,11 @@ export class ApiClass {
 		}
 	}
 
+	async getFTMLog() {
+		const response = await fetch(`https://app.startrektimelines.com/crew/cap_achievers?access_token=${this._stt_token}`);
+		return await response.json();
+	}
+
 	async getVoyages(crew?: string[], days?: number, opAnd?: boolean) {
 		days ??= 7;
 		if (days <= 0) days = 1;
