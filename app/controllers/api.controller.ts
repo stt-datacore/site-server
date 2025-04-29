@@ -100,7 +100,7 @@ router.get('/whoami', async (req: Request, res: Response, next) => {
 router.get('/ftm-log', async (req: Request, res: Response, next) => {
 	try {
 		let apiResult = await DataCoreAPI.getFTMLog();
-		res.status(200).send(apiResult);
+		res.status(200).send(apiResult?.achievers ?? []);
 	} catch (e) {
 		next(e);
 	}
