@@ -189,7 +189,7 @@ export class ApiClass {
 		}
 	}
 
-	async getProfiles(dbids: number[]) {
+	async getProfiles(dbids: number[] | string[]) {
 		let results = await getProfiles(dbids);
 		if (results) {
 			return {

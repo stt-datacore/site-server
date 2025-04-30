@@ -97,14 +97,19 @@ router.get('/whoami', async (req: Request, res: Response, next) => {
 	}
 });
 
-// router.get('/ftm-log', async (req: Request, res: Response, next) => {
-// 	try {
-// 		let apiResult = await DataCoreAPI.getFTMLog();
-// 		res.status(200).send(apiResult?.achievers ?? []);
-// 	} catch (e) {
-// 		next(e);
-// 	}
-// });
+router.post('/players-by-name', async (req: Request, res: Response, next) => {
+	if (!req.body?.players) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+	try {
+		let apiResult = await DataCoreAPI.getProfiles(req.body.players as string[]);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
 router.get('/comments', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.symbol) {
 		res.status(400).send('Whaat?');

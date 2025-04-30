@@ -57,7 +57,8 @@ export function createProfileObject(dbid: string, player_data: PlayerData, lastU
 		open_collection_ids: null as number[] | null,
 		crew_avatar: {
 			symbol: player_data.player.character.crew_avatar?.symbol ?? null,
-			name: player_data.player.character.crew_avatar?.name ?? null
+			name: player_data.player.character.crew_avatar?.name ?? null,
+			icon: player_data.player?.character?.crew_avatar?.portrait ?? null
 		}
 	};
 
@@ -75,10 +76,19 @@ export function createProfileObject(dbid: string, player_data: PlayerData, lastU
 }
 
 
-export async function getProfiles(dbids: number[]) {
-	let res = await Profile.findAll({ where: { dbid: { [Op.or]: dbids.map(d => d.toString()) } } });
-	if (res.length === 0) return null;
-	return res;
+export async function getProfiles(dbids: (number | string)[]) {
+	if (!dbids.length) return null;
+	if (dbids.every((n: any) => typeof n === 'number')) {
+		let res = await Profile.findAll({ where: { dbid: { [Op.or]: dbids.map(d => d.toString()) } } });
+		if (res.length === 0) return null;
+		return res;
+	}
+	else if (dbids.every((s: any) => typeof s === 'string')) {
+		let res = await Profile.findAll({ where: { captainName: { [Op.or]: dbids.map(d => ({ [Op.like]: d })) } } });
+		if (res.length === 0) return null;
+		return res;
+	}
+	return null;
 }
 
 export async function getProfile(dbid: number) {

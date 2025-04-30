@@ -50,6 +50,7 @@ export async function upgradeAvatars() {
                 newprofile.metadata.crew_avatar = {
                     symbol: diskprof.player?.character?.crew_avatar?.symbol ?? null,
                     name: diskprof.player?.character?.crew_avatar?.name ?? null,
+                    icon: diskprof.player?.character?.crew_avatar?.portrait ?? null
                 };
                 delete newprofile.id;
                 console.log(`Crew avatar for ${profile.captainName} set to ${diskprof.player.character.crew_avatar?.name}...`);
