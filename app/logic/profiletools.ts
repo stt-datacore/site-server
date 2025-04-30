@@ -58,7 +58,9 @@ export function createProfileObject(dbid: string, player_data: PlayerData, lastU
 		crew_avatar: {
 			symbol: player_data.player.character.crew_avatar?.symbol ?? null,
 			name: player_data.player.character.crew_avatar?.name ?? null,
-			icon: player_data.player?.character?.crew_avatar?.icon ?? null
+			icon: player_data.player?.character?.crew_avatar?.icon ?? null,
+			portrait: player_data.player?.character?.crew_avatar?.portrait ?? null,
+			full_body: player_data.player?.character?.crew_avatar?.full_body ?? null,
 		}
 	};
 
