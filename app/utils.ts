@@ -40,7 +40,7 @@ export async function upgradeAvatars() {
     const path = process.env.PROFILE_DATA_PATH;
     const profiles = await Profile.findAll();
     profiles.forEach(async (profile) => {
-        if (profile.metadata?.crew_avatar) return;
+        //if (profile.metadata?.crew_avatar) return;
         let file = `${path}/${profile.dbid}`;
         if (fs.existsSync(file)) {
             let diskprof = JSON.parse(fs.readFileSync(file, 'utf-8')) as PlayerData | undefined;
