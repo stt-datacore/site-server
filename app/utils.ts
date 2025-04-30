@@ -60,6 +60,7 @@ export async function upgradeAvatars() {
             }
         }
     });
+    profiles.length = 0;
     console.log("Done with Directive: Upgrade Avatars");
 }
 
