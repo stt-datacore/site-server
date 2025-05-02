@@ -1,6 +1,6 @@
 import { PlayerCrew, Reward } from './player';
 import { Icon } from './game-elements';
-import { ShipAction } from "./ship";
+import { Ship, ShipAction } from "./ship";
 
 export interface BossBattlesRoot {
 	env: BossConfig
@@ -35,7 +35,7 @@ export interface Status {
 	blocked_by_another_boss?: boolean
 }
 
-export interface BossShip {
+export interface BossShip extends Ship {
 	icon: Icon
 	archetype_id: number
 	symbol: string
@@ -175,6 +175,7 @@ export interface SpotterPreferences {
 	alpha: string;
 	nonoptimal: string;
 	noncoverage: string;
+	confirmSolves: boolean;
 }
 
 export interface SoloPreferences {
@@ -234,19 +235,27 @@ export interface SolverNode {
 	index: number;
 	givenTraitIds: number[];
 	solve: string[];
+	solveStatus: SolveStatus;
 	traitsKnown: string[];
 	hiddenLeft: number;
-	open: boolean;
-	spotSolve: boolean;
 	alphaTest: string;
 	oneHandTest: boolean;
 	possible?: any; /* { id: number, trait: string } */
 	solveOptions?: SolveOption[];
 }
 
+export enum SolveStatus {
+	Unsolved,
+	Infallible,
+	Confirmed,
+	Unconfirmed,
+	Partial
+}
+
 export interface Solve {
 	node: number;
 	traits: string[];
+	crew: string[];	// Symbols of crew who can confirm this solve; empty array if already confirmed
 }
 
 export interface Solver {
@@ -308,6 +317,7 @@ export interface RuleException {
 export interface BossCrew extends PlayerCrew {
 	highest_owned_rarity: number;
 	only_frozen: boolean;
+	only_expiring: boolean;
 	nodes: number[];
 	nodes_rarity: number;
 	node_matches: NodeMatches;

@@ -1,5 +1,5 @@
 import { Icon } from "./game-elements"
-import { Bonuses, PotentialReward, Reward } from "./player"
+import { Reward } from "./player"
 
 export interface ShuttleAdventure {
     id: number
@@ -13,7 +13,7 @@ export interface ShuttleAdventure {
     x: number
     y: number
   }
-  
+
   export interface Shuttle {
     id: number
     name: string
@@ -25,7 +25,7 @@ export interface ShuttleAdventure {
     rewards: Reward[]
     is_rental: boolean
   }
-  
+
   export interface Slot {
     level: any
     required_trait: any
@@ -33,11 +33,23 @@ export interface ShuttleAdventure {
     trait_bonuses: TraitBonuses
     crew_symbol?: string;
   }
-  
+
   export interface TraitBonuses {
     [key: string]: any;
   }
-  
+
+  export interface StaticFaction {
+    id: number
+    name: string
+    icon: string
+    representative_icon: string
+    reputation_item_icon: string
+    home_system: string
+    shop_layout: string
+    shuttle_token_id: number
+    shuttle_token_item_icon: string
+  }
+
   export interface Faction {
     id: number
     name: string
@@ -55,7 +67,7 @@ export interface ShuttleAdventure {
     shuttle_token_preview_item: ShuttleTokenPreviewItem
     event_winner_rewards: any[]
   }
-  
+
   export interface ShuttleTokenPreviewItem {
     type: number
     id: number
@@ -68,4 +80,3 @@ export interface ShuttleAdventure {
     quantity: number
     rarity: number
   }
-  

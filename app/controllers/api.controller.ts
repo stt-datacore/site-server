@@ -203,6 +203,15 @@ router.get('/celestial-market', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.get('/cap-achievers', async (req: Request, res: Response, next) => {
+	try {
+		let apiResult = await DataCoreAPI.getFTMLog();
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
 router.get('/telemetry', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.type) {
 		res.status(400).send('Whaat?');

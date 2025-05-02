@@ -12,6 +12,7 @@ import { PlayerData } from '../datacore/player';
 import { Profile } from '../models/Profile';
 import { historicalize, voyageRawByDays } from './voyage_stats';
 import { CelestialAPI } from './celestial';
+import { AchieverAPI } from './achievers';
 
 require('dotenv').config();
 
@@ -56,7 +57,10 @@ export class ApiClass {
 			this._stt_token = token;
 			return token
 		})
-		.then((token) => CelestialAPI.refreshCelestialMarket(token))
+		.then((token) => {
+			CelestialAPI.refreshCelestialMarket(token);
+			AchieverAPI.refreshCapAchievers(token);
+		})
 		.catch((e) => {
 			Logger.info("Using fallback token.");
 			this._stt_token = 'd6458837-34ba-4883-8588-4530f1a9cc53';
@@ -530,8 +534,17 @@ export class ApiClass {
 	}
 
 	async getFTMLog() {
-		const response = await fetch(`https://app.startrektimelines.com/crew/cap_achievers?access_token=${this._stt_token}`);
-		return await response.json();
+		let result = await AchieverAPI.getCapAchievers(this._stt_token);
+		if (!result){
+			return {
+				Status: 500,
+				Body: JSON.stringify({ code: 500, error: "Could not read cap achievers."})
+			}
+		}
+		return {
+			Status: 200,
+			Body: result
+		}
 	}
 
 	async getVoyages(crew?: string[], days?: number, opAnd?: boolean) {

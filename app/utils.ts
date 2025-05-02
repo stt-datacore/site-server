@@ -67,9 +67,9 @@ export async function upgradeAvatars() {
 }
 
 export async function compareFTM() {
-    let data = (await DataCoreAPI.getFTMLog()) as CapAchievers;
+    let data = (await DataCoreAPI.getFTMLog()).Body as Achiever[];
     console.log(`Directive: Scan Cap Achievers for Matches`);
-    data.achievers.forEach(async (achiever) => {
+    data?.forEach(async (achiever) => {
         let results = await Profile.findAll({ where: { captainName: { [Op.like]: `${achiever.player_name}` } } });
         if (results?.length) {
             results.forEach((result) => {

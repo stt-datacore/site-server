@@ -1,6 +1,6 @@
+import { CrewMember, ShipScores } from "./crew";
 import { Icon } from "./game-elements";
-import { CompletionState } from "./player";
-
+import { CompletionState, PlayerCrew } from "./player";
 
 export interface Schematics {
   id: number;
@@ -18,6 +18,88 @@ export interface ShipBonus {
   crit_bonus?: number;
 }
 
+
+export interface ShipLevels {
+  "1": ShipLevelStats
+  "2": ShipLevelStats
+  "3": ShipLevelStats
+  "4": ShipLevelStats
+  "5": ShipLevelStats
+  "6": ShipLevelStats
+  "7"?: ShipLevelStats
+  "8"?: ShipLevelStats
+  "9"?: ShipLevelStats
+  "10"?: ShipLevelStats
+}
+
+export interface ShipLevel {
+  level: number
+  shields: number
+  hull: number
+  attack: number
+  evasion: number
+  accuracy: number
+  crit_chance: number
+  crit_bonus: number
+  attacks_per_second: number
+  shield_regen: number
+  antimatter: number
+  schematic_gain_cost_next_level: number
+  schematic_gain_cost?: number
+}
+
+export interface ShipLevelStats {
+  shields: number
+  hull: number
+  attack: number
+  accuracy: number
+  evasion: number
+  attack_power: number
+  attacks_per_second: number
+  dps?: number;
+  accuracy_power: number
+  evasion_power: number
+  accuracy_evasion: any
+  shield_regen: number
+  crit_chance: number
+  crit_bonus: number
+  antimatter: number
+  next_schematics: number
+}
+
+export interface ReferenceShip extends ShipBonus {
+  id: number;
+  archetype_id: number
+  symbol: string
+  name: string
+  rarity: number
+  icon: Icon
+  flavor: string
+  traits_named?: string[];
+  model: string
+  max_level: number
+  actions: ShipAction[]
+  shields: number
+  hull: number
+  attack: number
+  evasion: number
+  accuracy: number
+  crit_chance: number
+  crit_bonus: number
+  attacks_per_second: number
+  shield_regen: number
+  traits: string[]
+  traits_hidden: any[]
+  antimatter: number
+  level: number
+  schematic_gain_cost_next_level: number
+  schematic_id: number
+  schematic_icon: Icon
+  battle_stations: BattleStation[]
+  passive_status: number
+  levels: ShipLevel[];
+  ranks: ShipScores;
+}
 /**
  * Ship
  */
@@ -55,14 +137,15 @@ export interface Ship extends ShipBonus {
   index?: { left: number, right: number };
   immortal?: CompletionState | number;
   score?: number;
+  levels?: ShipLevels;
+  ranks?: ShipScores;
 }
 
 
 export interface BattleStation {
   skill: string;
+  crew?: PlayerCrew | CrewMember;
 }
-
-
 
 export interface ShipAction {
   bonus_amount: number;
@@ -71,9 +154,9 @@ export interface ShipAction {
   cooldown: number;
   initial_cooldown: number;
   duration: number;
-  
+
   /** Used internally. Not part of source data. */
-  cycle_time?: number;
+  cycle_time: number;
 
   bonus_type: number;
   crew: number;
@@ -115,3 +198,40 @@ export interface BattleStations {
 	symbol: string;
 	battle_stations: BattleStation[]
 }
+
+export type PvpDivision = 'commander' | 'captain' | 'admiral';
+
+export type BattleMode = 'pvp' | 'skirmish' | 'fbb_0' | 'fbb_1' | 'fbb_2' | 'fbb_3' | 'fbb_4' | 'fbb_5';
+
+
+export interface ShipInUse {
+    battle_mode: BattleMode;
+    pvp_division?: PvpDivision;
+    ship: Ship;
+    rarity: number;
+}
+
+export type ShipRankingMethod = 'standard' | 'min' | 'max' | 'delta_t' | 'early_boom' | 'lean_in' | 'lean_over' | 'lean_out';
+
+export interface AdvancedCrewPower {
+  attack_depth: number | null;
+  evasion_depth: number | null;
+  accuracy_depth: number | null;
+  ability_depths: (number | null)[];
+  ability_exclusions: boolean[];
+}
+
+export const DefaultAdvancedCrewPower = {
+  attack_depth: null,
+  evasion_depth: null,
+  accuracy_depth: null,
+  ability_depths: [null, null, null, null, null, null, null, null, null, null, null, null, null, null, null],
+  ability_exclusions: [false, false, false, false, false, false, false, false, false, false, false, false, false, false, false]
+} as AdvancedCrewPower;
+
+export interface AdvancedCrewPowerConfig {
+    defaultOptions: AdvancedCrewPower;
+    current: AdvancedCrewPower;
+    setCurrent: (value: AdvancedCrewPower) => void;
+}
+

@@ -1,40 +1,66 @@
-import { Icon } from "./game-elements"
-import { PlayerCrew, PlayerEquipmentItem } from "./player"
+import { PlayerEquipmentItem } from "./player"
 
-export interface EquipmentCommon extends PlayerEquipmentItem {
-  symbol: string
-  type: number
-  name: string
-  flavor: string
-  rarity: number
-  short_name?: string
-  imageUrl: string
-  bonuses?: EquipmentBonuses
-  quantity?: number;
-  needed?: number;
-  factionOnly?: boolean;
-  demandCrew?: string[];
+
+export interface IDemand {
+	count: number;
+	symbol: string;
+	equipment?: EquipmentItem;
+	factionOnly: boolean;
+	have: number;
+	crewSymbols: string[];
+  primary?: boolean;
 }
 
-export interface EquipmentItem extends EquipmentCommon {
+export interface ICrewDemandsMeta {
+	factionOnlyTotal: number;
+	totalChronCost: number;
+	craftCost: number;
+}
+
+export interface ICrewDemands extends ICrewDemandsMeta {
+	demands: IDemand[];
+	factionOnlyTotal: number;
+	totalChronCost: number;
+	craftCost: number;
+}
+
+export interface DemandCounts {
+	name: string;
+	count: number;
+}
+
+
+export interface EquipmentItem extends PlayerEquipmentItem {
   symbol: string
   type: number
   name: string
-  flavor: string
-  rarity: number
   short_name?: string
+  name_english?: string;
+  flavor: string
+  flavorContext?: any;
+  rarity: number
   imageUrl: string
+  item_sources: EquipmentItemSource[]
   bonuses?: EquipmentBonuses
+  duration?: number;
+  traits_requirement_operator?: string; // "and" | "or" | "not" | "xor";
+  traits_requirement?: string[];
+  max_rarity_requirement?: number;
+
   quantity?: number;
   needed?: number;
-  factionOnly?: boolean;
 
-  item_sources: EquipmentItemSource[]
   recipe?: EquipmentRecipe
+  demands?: IDemand[];
 
+  demandCrew?: string[];
+  needed_by?: string[];
+
+  factionOnly?: boolean;
   empty?: boolean;
   isReward?: boolean;
-
+  kwipment?: boolean;
+  kwipment_id?: number | string;
 }
 
 export interface EquipmentItemSource {
@@ -66,3 +92,5 @@ export interface EquipmentIngredient {
 export interface EquipmentBonuses {
     [key: string]: number;
 }
+
+
