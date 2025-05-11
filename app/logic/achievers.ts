@@ -15,7 +15,7 @@ class CapAchieversClass {
     public get isCurrent(): boolean {
         if (!this.lastRefresh) return false;
         let now = new Date();
-        return now.getDate() === this.lastRefresh.getDate() && (Math.abs(now.getMinutes() - this.lastRefresh.getMinutes()) < 15);
+        return now.getDate() === this.lastRefresh.getDate() && (Math.abs(now.getMinutes() - this.lastRefresh.getMinutes()) < 5);
     }
 
     constructor() {
@@ -79,7 +79,7 @@ class CapAchieversClass {
         try {
             if (achievers) {
                 let achiver_file = this.ACHIEVER_FILE;
-                fs.writeFileSync(achiver_file, JSON.stringify(achievers));
+                fs.writeFileSync(achiver_file, JSON.stringify(achievers, null, 4));
                 this.lastRefresh = new Date();
                 this.currentData = achievers;
                 return achievers;
