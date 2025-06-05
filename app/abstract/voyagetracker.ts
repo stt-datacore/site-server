@@ -11,6 +11,8 @@ export interface TrackerPostResult {
     trackerId?: any;
 }
 
+export type MultiTrackerPostResult = TrackerPostResult[];
+
 export abstract class VoyageTrackerBase {
 
     async getLastTrackedId(dbid?: number) {
@@ -192,6 +194,59 @@ export abstract class VoyageTrackerBase {
             },
         };
 
+    }
+
+    async postTrackedDataBatch(
+        dbid: number,
+        voyages: ITrackedVoyage[],
+        assignments: IFullPayloadAssignment[][],
+        logData: LogData
+    ): Promise<ApiResult> {
+        Logger.info("Tracked Voyage data", { dbid, voyage: voyages, logData });
+
+        const timeStamp = new Date();
+        let res: TrackerPostResult[] | null = null;
+
+        try {
+            res = await this.postOrPutTrackedDataBatch(dbid, voyages, assignments, timeStamp);
+            const af = res.every(s => s.status >= 300);
+            const f = res.find(s => s.status >= 300);
+            if (!res || f) {
+                return {
+                    Status: af ? f?.status ?? 500 : 200,
+                    Body: {
+                        data: res,
+                        dbid: dbid,
+                        error: "Unable to insert one or more records.",
+                        timeStamp: timeStamp.toISOString(),
+                    },
+                };
+            }
+        } catch (err) {
+            if (typeof err === "string") {
+                return {
+                    Status: 500,
+                    Body: err,
+                };
+            } else if (err instanceof Error) {
+                return {
+                    Status: 500,
+                    Body: err.toString(),
+                };
+            }
+        }
+
+        return {
+            Status: 201,
+            Body: {
+                data: res?.map(receipt => ({
+                    trackerId: receipt!.trackerId,
+                    inputId: receipt!.inputId,
+                })),
+                dbid,
+                timeStamp: timeStamp.toISOString(),
+            },
+        };
     }
 
     async getTrackedVoyages(
@@ -468,6 +523,13 @@ export abstract class VoyageTrackerBase {
         assigments: ITrackedAssignment[],
         timeStamp?: Date
     ): Promise<TrackerPostResult>;
+
+    protected abstract postOrPutTrackedDataBatch(
+        dbid: number,
+        voyages: ITrackedVoyage[],
+        assignments: IFullPayloadAssignment[][],
+        timeStamp?: Date
+    ): Promise<MultiTrackerPostResult>;
 
     protected abstract postOrPutVoyage(
         dbid: number,

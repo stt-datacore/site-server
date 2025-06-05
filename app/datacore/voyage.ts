@@ -200,6 +200,12 @@ export interface ITrackedPayload {
 	assignments: IFullPayloadAssignment[];
 };
 
+export interface ITrackedPayloadBatch {
+	dbid: number;
+	voyages: ITrackedVoyage[];
+	assignments: IFullPayloadAssignment[][];
+};
+
 export const AntimatterSeatMap =  [
     {
         "name": "astrophysicist",

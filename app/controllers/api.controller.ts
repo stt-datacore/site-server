@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { ApiResult, DataCoreAPI, LogData } from '../logic';
 import { PlayerData } from '../datacore/player';
-import { IFullPayloadAssignment, ITrackedAssignment, ITrackedPayload, ITrackedVoyage } from '../datacore/voyage';
+import { IFullPayloadAssignment, ITrackedAssignment, ITrackedPayload, ITrackedPayloadBatch, ITrackedVoyage } from '../datacore/voyage';
 import { IFBB_BossBattle_Document } from '../models/BossBattles';
 import { CrewTrial, Solve } from '../datacore/boss';
 import { VoyageTrackerAPI } from '../logic/voyagetracker';
@@ -355,7 +355,20 @@ router.post('/postTrackedData', async (req: Request, res: Response, next) => {
 	}
 });
 
-
+router.post('/postTrackedDataBatch', async (req: Request, res: Response, next) => {
+	if (!req.body || !req.body.dbid || !req.body.voyage || !req.body.assignments) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+	try {
+		let payload = req.body as ITrackedPayloadBatch;
+		const { dbid, voyages, assignments } = payload;
+		let apiResult = await VoyageTrackerAPI.postTrackedDataBatch(dbid, voyages, assignments, getLogDataFromReq(req));
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
 
 router.get('/getVoyages', async (req: Request, res: Response, next) => {
 	if (!req.query || (!req.query.dbid && !req.query.trackerId )) {

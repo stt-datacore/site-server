@@ -1,7 +1,7 @@
 import { IFullPayloadAssignment, ITrackedAssignment, ITrackedVoyage } from "../datacore/voyage";
 import { TrackedCrew, TrackedVoyage } from "../models/Tracked";
 import { makeSql } from "../sequelize";
-import { TrackerPostResult, VoyageTrackerBase } from "../abstract/voyagetracker";
+import { MultiTrackerPostResult, TrackerPostResult, VoyageTrackerBase } from "../abstract/voyagetracker";
 
 export class VoyageTracker extends VoyageTrackerBase {
 
@@ -198,6 +198,90 @@ export class VoyageTracker extends VoyageTrackerBase {
         }
 
         return { status: 500 };
+    }
+
+    protected async postOrPutTrackedDataBatch(
+        dbid: number,
+        voyages: ITrackedVoyage[],
+        assignments: IFullPayloadAssignment[][],
+        timeStamp: Date = new Date()
+    ): Promise<MultiTrackerPostResult> {
+        const sql = await makeSql(dbid);
+
+        if (sql) {
+            const repo = sql.getRepository(TrackedVoyage);
+            const crewrepo = sql.getRepository(TrackedCrew);
+            let idx = 0;
+            let results = [] as TrackerPostResult[];
+            for (let voyage of voyages) {
+                let result: TrackedVoyage;
+                let current = await repo.findOne({ where: { trackerId: voyage.tracker_id } });
+                if (current) {
+                    if (current.voyageId !== voyage.voyage_id) {
+                        if (current.voyageId) {
+                            results.push({ status: 400 } as TrackerPostResult);
+                            idx++;
+                            continue;
+                        }
+                        else if (!current.voyageId && voyage.voyage_id) {
+                            current.voyageId = voyage.voyage_id;
+                        }
+                    }
+                    current.voyage = voyage;
+                    current.updatedAt = timeStamp;
+                    result = await current.save();
+                }
+                else {
+                    result = await repo.create({
+                        dbid,
+                        trackerId: voyage.tracker_id,
+                        voyageId: voyage.voyage_id,
+                        voyage,
+                        timeStamp,
+                        updatedAt: timeStamp
+                    });
+
+                    if (result && result.id !== result.trackerId) {
+                        result.trackerId = result.id;
+                        await result.save();
+                    }
+                }
+
+                // sql?.close();
+                const retval = !!result?.id ? { status: 201, inputId: voyage.tracker_id, trackerId: result.id } : { status: 400 };
+                if (retval.status === 201 && retval.trackerId) {
+                    if (crewrepo) {
+                        let current = await crewrepo.findAll({ where: { trackerId: retval.trackerId! as number } });
+                        if (current?.length) {
+                            for (let rec of current) {
+                                rec.destroy();
+                            }
+                        }
+
+                        for (let assignment of assignments[idx]) {
+                            assignment.tracker_id = retval.trackerId;
+                            let result = await crewrepo.create({
+                                dbid,
+                                crew: assignment.crew,
+                                trackerId: assignment.tracker_id,
+                                assignment,
+                                timeStamp,
+                            });
+                            if (!result?.id) {
+                                retval.status = 500;
+                                break;
+                            }
+                        }
+                    }
+                }
+                idx++;
+                results.push(retval);
+            };
+
+            return results;
+        }
+
+        return [{ status: 500 }];
     }
 
     protected async getAssignmentsByDbid(dbid: number, limit = 100) {
