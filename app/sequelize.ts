@@ -57,13 +57,19 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
-					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
-					console.log(result);
-					await newdb.sync({ alter: true });
-					[result, meta] = await newdb.query('PRAGMA integrity_check;');
-					console.log(result);
-					if ((result[0] as any)?.integrity_check !== 'ok') {
-						throw new Error("Integrity check failed.");
+					try {
+						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
+						console.log(result);
+						await newdb.sync();
+						[result, meta] = await newdb.query('PRAGMA integrity_check;');
+						if ((result[0] as any)?.integrity_check !== 'ok') {
+							throw new Error("Integrity check failed.");
+						}
+					}
+					catch {
+						await newdb.sync({ alter: true });
+						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
+						console.log(result);
 					}
 				}
 				catch (e) {
@@ -87,13 +93,19 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
-					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
-					console.log(result);
-					await newdb.sync({ alter: true });
-					[result, meta] = await newdb.query('PRAGMA integrity_check;');
-					console.log(result);
-					if ((result[0] as any)?.integrity_check !== 'ok') {
-						throw new Error("Integrity check failed.");
+					try {
+						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
+						console.log(result);
+						await newdb.sync();
+						[result, meta] = await newdb.query('PRAGMA integrity_check;');
+						if ((result[0] as any)?.integrity_check !== 'ok') {
+							throw new Error("Integrity check failed.");
+						}
+					}
+					catch {
+						await newdb.sync({ alter: true });
+						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
+						console.log(result);
 					}
 				}
 				catch (e) {
