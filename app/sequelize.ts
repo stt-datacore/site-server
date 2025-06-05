@@ -113,7 +113,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 				catch (e) {
 					console.log(e);
 					console.log("Reinitialize database...");
-					//fs.unlinkSync(opath);
+					fs.unlinkSync(opath);
 					i++;
 					continue;
 				}
