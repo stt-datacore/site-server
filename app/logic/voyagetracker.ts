@@ -135,16 +135,8 @@ export class VoyageTracker extends VoyageTrackerBase {
             const repo = sql.getRepository(TrackedVoyage);
             let result: TrackedVoyage;
 
-            let current = await repo.findOne({ where: { trackerId: voyage.tracker_id } });
+            let current = await repo.findOne({ where: { voyageId: voyage.voyage_id } });
             if (current) {
-                if (current.voyageId !== voyage.voyage_id) {
-                    if (current.voyageId) {
-                        return { status: 400 };
-                    }
-                    else if (!current.voyageId && voyage.voyage_id) {
-                        current.voyageId = voyage.voyage_id;
-                    }
-                }
                 current.voyage = voyage;
                 current.updatedAt = timeStamp;
                 result = await current.save();
@@ -158,19 +150,19 @@ export class VoyageTracker extends VoyageTrackerBase {
                     timeStamp,
                     updatedAt: timeStamp
                 });
+            }
 
-                if (result && result.id !== result.trackerId) {
-                    result.trackerId = result.id;
-                    await result.save();
-                }
+            if (result && result.id !== result.trackerId) {
+                result.trackerId = result.id;
+                await result.save();
             }
 
             // sql?.close();
-            const retval = !!result?.id ? { status: 201, inputId: voyage.tracker_id, trackerId: result.id } : { status: 400 };
+            const retval = !!result?.id ? { status: 201, inputId: voyage.tracker_id, trackerId: result.id, voyageId: result.voyageId } : { status: 400 };
             if (retval.status === 201 && retval.trackerId) {
                 const crewrepo = sql.getRepository(TrackedCrew);
                 if (crewrepo) {
-                    let current = await crewrepo.findAll({ where: { trackerId: retval.trackerId! as number } });
+                    let current = await crewrepo.findAll({ where: { voyageId: retval.voyageId! as number } });
                     if (current?.length) {
                         for (let rec of current) {
                             rec.destroy();
@@ -215,18 +207,8 @@ export class VoyageTracker extends VoyageTrackerBase {
             let results = [] as TrackerPostResult[];
             for (let voyage of voyages) {
                 let result: TrackedVoyage;
-                let current = await repo.findOne({ where: { trackerId: voyage.tracker_id } });
+                let current = !voyage.tracker_id ? null : await repo.findOne({ where: { voyageId: voyage.voyage_id } });
                 if (current) {
-                    if (current.voyageId !== voyage.voyage_id) {
-                        if (current.voyageId) {
-                            results.push({ status: 400 } as TrackerPostResult);
-                            idx++;
-                            continue;
-                        }
-                        else if (!current.voyageId && voyage.voyage_id) {
-                            current.voyageId = voyage.voyage_id;
-                        }
-                    }
                     current.voyage = voyage;
                     current.updatedAt = timeStamp;
                     result = await current.save();
@@ -240,18 +222,18 @@ export class VoyageTracker extends VoyageTrackerBase {
                         timeStamp,
                         updatedAt: timeStamp
                     });
+                }
 
-                    if (result && result.id !== result.trackerId) {
-                        result.trackerId = result.id;
-                        await result.save();
-                    }
+                if (result && result.id !== result.trackerId) {
+                    result.trackerId = result.id;
+                    await result.save();
                 }
 
                 // sql?.close();
-                const retval = !!result?.id ? { status: 201, inputId: voyage.tracker_id, trackerId: result.id } : { status: 400 };
+                const retval = !!result?.id ? { status: 201, inputId: voyage.tracker_id, trackerId: result.id, voyageId: result.voyageId } : { status: 400 };
                 if (retval.status === 201 && retval.trackerId) {
                     if (crewrepo) {
-                        let current = await crewrepo.findAll({ where: { trackerId: retval.trackerId! as number } });
+                        let current = await crewrepo.findAll({ where: { voyageId: retval.voyageId! as number } });
                         if (current?.length) {
                             for (let rec of current) {
                                 rec.destroy();
