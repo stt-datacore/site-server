@@ -356,7 +356,7 @@ router.post('/postTrackedData', async (req: Request, res: Response, next) => {
 });
 
 router.post('/postTrackedDataBatch', async (req: Request, res: Response, next) => {
-	if (!req.body || !req.body.dbid || !req.body.voyage || !req.body.assignments) {
+	if (!req.body || !req.body.dbid || !req.body.voyages || !req.body.assignments) {
 		res.status(400).send('Whaat?');
 		return;
 	}
