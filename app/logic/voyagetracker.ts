@@ -136,8 +136,24 @@ export class VoyageTracker extends VoyageTrackerBase {
             let result: TrackedVoyage;
             let inputId = voyage.tracker_id;
 
-            let current = await repo.findOne({ where: { voyageId: voyage.voyage_id } });
+            let current: TrackedVoyage | null = null;
+
+            if (inputId) {
+                current = await repo.findOne({ where: { trackerId: inputId } });
+            }
+            if (!current && voyage.voyage_id) {
+                current = await repo.findOne({ where: { voyageId: voyage.voyage_id } });
+            }
+
             if (current) {
+                if (current.voyageId !== voyage.voyage_id && current.voyageId && voyage.voyage_id) {
+                    let correct = await repo.findOne({ where: { voyageId: voyage.voyage_id }});
+                    if (correct) {
+                        current = correct;
+                    }
+                }
+                current.voyageId = voyage.voyage_id;
+                current.trackerId = voyage.tracker_id;
                 current.voyage = voyage;
                 current.updatedAt = timeStamp;
                 result = await current.save();
@@ -210,8 +226,24 @@ export class VoyageTracker extends VoyageTrackerBase {
             for (let voyage of voyages) {
                 let inputId = voyage.tracker_id;
                 let result: TrackedVoyage;
-                let current = !voyage.tracker_id ? null : await repo.findOne({ where: { voyageId: voyage.voyage_id } });
+                let current: TrackedVoyage | null = null;
+
+                if (inputId) {
+                    current = await repo.findOne({ where: { trackerId: inputId } });
+                }
+                if (!current && voyage.voyage_id) {
+                    current = await repo.findOne({ where: { voyageId: voyage.voyage_id } });
+                }
+
                 if (current) {
+                    if (current.voyageId !== voyage.voyage_id && current.voyageId && voyage.voyage_id) {
+                        let correct = await repo.findOne({ where: { voyageId: voyage.voyage_id }});
+                        if (correct) {
+                            current = correct;
+                        }
+                    }
+                    current.voyageId = voyage.voyage_id;
+                    current.trackerId = voyage.tracker_id;
                     current.voyage = voyage;
                     current.updatedAt = timeStamp;
                     result = await current.save();
