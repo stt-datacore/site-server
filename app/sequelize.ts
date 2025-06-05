@@ -60,7 +60,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 					try {
 						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 						console.log(result);
-						await newdb.sync();
+						await newdb.sync({ alter: true });
 						[result, meta] = await newdb.query('PRAGMA integrity_check;');
 						if ((result[0] as any)?.integrity_check !== 'ok') {
 							throw new Error("Integrity check failed.");
@@ -96,7 +96,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 					try {
 						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 						console.log(result);
-						await newdb.sync();
+						await newdb.sync({ alter: true });
 						[result, meta] = await newdb.query('PRAGMA integrity_check;');
 						if ((result[0] as any)?.integrity_check !== 'ok') {
 							throw new Error("Integrity check failed.");
