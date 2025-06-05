@@ -215,7 +215,11 @@ export abstract class VoyageTrackerBase {
                 return {
                     Status: af ? f?.status ?? 500 : 200,
                     Body: {
-                        data: res,
+                        data: res?.map(receipt => ({
+                            status: receipt!.status,
+                            trackerId: receipt!.trackerId,
+                            inputId: receipt!.inputId,
+                        })),
                         dbid: dbid,
                         error: "Unable to insert one or more records.",
                         timeStamp: timeStamp.toISOString(),
@@ -240,6 +244,7 @@ export abstract class VoyageTrackerBase {
             Status: 201,
             Body: {
                 data: res?.map(receipt => ({
+                    status: receipt!.status,
                     trackerId: receipt!.trackerId,
                     inputId: receipt!.inputId,
                 })),
