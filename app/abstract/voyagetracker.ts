@@ -7,8 +7,9 @@ import { ApiResult } from "../logic/api";
 
 export interface TrackerPostResult {
     status: number;
-    inputId?: any;
-    trackerId?: any;
+    inputId?: number;
+    trackerId?: number;
+    voyageId?: number;
 }
 
 export type MultiTrackerPostResult = TrackerPostResult[];

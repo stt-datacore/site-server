@@ -134,6 +134,7 @@ export class VoyageTracker extends VoyageTrackerBase {
         if (sql) {
             const repo = sql.getRepository(TrackedVoyage);
             let result: TrackedVoyage;
+            let inputId = voyage.tracker_id;
 
             let current = await repo.findOne({ where: { voyageId: voyage.voyage_id } });
             if (current) {
@@ -158,7 +159,7 @@ export class VoyageTracker extends VoyageTrackerBase {
             }
 
             // sql?.close();
-            const retval = !!result?.id ? { status: 201, inputId: voyage.tracker_id, trackerId: result.id, voyageId: result.voyageId } : { status: 400 };
+            const retval: TrackerPostResult = !!result?.id ? { status: 201, inputId, trackerId: result.id, voyageId: result.voyageId } : { status: 400 };
             if (retval.status === 201 && retval.trackerId) {
                 const crewrepo = sql.getRepository(TrackedCrew);
                 if (crewrepo) {
@@ -175,6 +176,7 @@ export class VoyageTracker extends VoyageTrackerBase {
                             dbid,
                             crew: assignment.crew,
                             trackerId: assignment.tracker_id,
+                            voyageId: retval.voyageId,
                             assignment,
                             timeStamp,
                         });
@@ -206,6 +208,7 @@ export class VoyageTracker extends VoyageTrackerBase {
             let idx = 0;
             let results = [] as TrackerPostResult[];
             for (let voyage of voyages) {
+                let inputId = voyage.tracker_id;
                 let result: TrackedVoyage;
                 let current = !voyage.tracker_id ? null : await repo.findOne({ where: { voyageId: voyage.voyage_id } });
                 if (current) {
@@ -230,7 +233,7 @@ export class VoyageTracker extends VoyageTrackerBase {
                 }
 
                 // sql?.close();
-                const retval = !!result?.id ? { status: 201, inputId: voyage.tracker_id, trackerId: result.id, voyageId: result.voyageId } : { status: 400 };
+                const retval = !!result?.id ? { status: 201, inputId, trackerId: result.id, voyageId: result.voyageId } : { status: 400 };
                 if (retval.status === 201 && retval.trackerId) {
                     if (crewrepo) {
                         let current = await crewrepo.findAll({ where: { voyageId: retval.voyageId! as number } });
@@ -246,6 +249,7 @@ export class VoyageTracker extends VoyageTrackerBase {
                                 dbid,
                                 crew: assignment.crew,
                                 trackerId: assignment.tracker_id,
+                                voyageId: retval.voyageId,
                                 assignment,
                                 timeStamp,
                             });
