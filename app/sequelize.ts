@@ -57,6 +57,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
+					fixDB(newdb);
 					try {
 						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 						console.log(result);
@@ -93,6 +94,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
+					fixDB(newdb);
 					try {
 						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 						console.log(result);
@@ -158,3 +160,15 @@ export async function getHistoricalDb() {
 
 }
 
+export async function fixDB(db: Sequelize) {
+	const models = Object.values(db.models);
+	for (let model of models) {
+		let data = await model.findAll();
+		data.sort((a, b) => a["id"] = b["id"]);
+		let drec = 1;
+		for (let rec of data) {
+			rec["id"] = drec++;
+			await rec.save();
+		}
+	}
+}
