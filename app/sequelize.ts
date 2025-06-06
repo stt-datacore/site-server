@@ -7,6 +7,7 @@ import { Historical, Voyage, VoyageRecord } from './models/VoyageRecord';
 import fs from 'fs';
 import { TrackedVoyage, TrackedCrew } from './models/Tracked';
 import { BossBattleDocument, SolveDocument, TrialDocument } from './models/BossBattles';
+import { Logger } from './logic';
 
 require('dotenv').config();
 
@@ -155,26 +156,38 @@ export async function getHistoricalDb() {
 }
 
 export async function fixDB(db: Sequelize, hardSync: boolean) {
-	await db.sync({ alter: true, force: hardSync });
+	if (hardSync) {
+		await db.sync({ alter: true, force: hardSync });
+	}
+	else {
+		await db.sync();
+	}
 	const models = Object.values(db.models);
 	for (let model of models) {
 		try {
 			const repo = db.getRepository(model as any);
+			await repo.sync();
 
-			let [data,]: [any[], any] = await db.query(`SELECT id FROM ${model.tableName};`);
+			let [data,]: [any[], any] = await db.query(`SELECT id FROM ${repo.tableName};`);
 			let dupes = {} as {[key:string]: number};
 			for (let d of data) {
 				dupes[d["id"]] ??= 0;
 				dupes[d["id"]]++;
 			}
+			let resync = false;
 			for (let [key, value] of Object.entries(dupes)) {
 				if (value > 1) {
-					await db.query(`DELETE FROM ${model.tableName} WHERE id='${key}';`);
+					await db.query(`DELETE FROM ${repo.tableName} WHERE id='${key}';`);
+					resync = true;
 				}
 			}
+			if (resync) {
+				await repo.sync({ alter: true, force: hardSync });
+			}
 		}
-		catch {
-
+		catch (e: any) {
+			Logger.error(e);
+			continue;
 		}
 	}
 }
