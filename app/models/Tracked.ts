@@ -61,6 +61,9 @@ export class TrackedCrew extends Model implements ITrackedCrewRecord {
     @Column
     trackerId!: number;
 
+    @Column
+    voyageId?: number;
+
     @Column(DataType.JSON)
     assignment!: ITrackedAssignment | IFullPayloadAssignment;
 
