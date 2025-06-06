@@ -120,9 +120,10 @@ export async function makeSql(idnumber: number, makeFleet?: boolean, forceRecrea
 					i++;
 					continue;
 				}
+				if (makeFleet) fleets[idnumber] = newdb;
+				else players[idnumber] = newdb;
 				return newdb;
 			}
-			return newdb;
 		}
 	}
 	return null;
