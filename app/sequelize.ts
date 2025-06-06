@@ -58,7 +58,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
-					fixDB(newdb, i == 1);
+					await fixDB(newdb, i == 1);
 					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 					console.log(result);
 					if ((result[0] as any)?.integrity_check !== 'ok') {
@@ -92,7 +92,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
-					fixDB(newdb, i == 1);
+					await fixDB(newdb, i == 1);
 					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 					console.log(result);
 					if ((result[0] as any)?.integrity_check !== 'ok') {
