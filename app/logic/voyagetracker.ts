@@ -28,7 +28,7 @@ export class VoyageTracker extends VoyageTrackerBase {
             let voyages = await this.getVoyagesByDbid(dbid, cnt);
             if (voyages) {
                 voyages.sort((a, b) => (a.voyageId ?? 0) - (b.voyageId ?? 0));
-                let dupevoys = voyages.filter((fv, i) => voyages!.findIndex(fi => !!fi.voyageId && !!fv.voyageId && fi.voyageId === fv.voyageId) !== i)?.map(dv => dv.id as number | undefined).filter(f => f !== undefined);
+                let dupevoys = voyages.filter((fv, i) => !!fv.voyageId && voyages!.findIndex(fi => !!fi.voyageId && !!fv.voyageId && fi.voyageId === fv.voyageId) !== i)?.map(dv => dv.id as number | undefined).filter(f => f !== undefined);
                 voyages = voyages.filter((fv) => !dupevoys.some(dv => dv == fv.id));
                 if (dupevoys?.length) {
                     while (dupevoys.length) {
