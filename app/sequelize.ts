@@ -181,9 +181,7 @@ export async function fixDB(db: Sequelize, hardSync: boolean) {
 					resync = true;
 				}
 			}
-			if (resync) {
-				await repo.sync({ alter: true, force: hardSync });
-			}
+			await repo.sync({ alter: true });
 		}
 		catch (e: any) {
 			Logger.error(e);
