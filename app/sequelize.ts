@@ -161,7 +161,7 @@ export async function fixDB(db: Sequelize, hardSync: boolean) {
 		try {
 			const repo = db.getRepository(model as any);
 
-			let [data,]: [any[], any] = await db.query(`SELECT * FROM ${model.tableName};`);
+			let [data,]: [any[], any] = await db.query(`SELECT id FROM ${model.tableName};`);
 			let dupes = {} as {[key:string]: number};
 			for (let d of data) {
 				dupes[d["id"]] ??= 0;
