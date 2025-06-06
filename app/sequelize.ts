@@ -68,15 +68,21 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 						}
 					}
 					catch {
-						await newdb.sync({ alter: true });
+						await newdb.sync({ alter: true, force: i === 1 });
 						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 						console.log(result);
 					}
 				}
 				catch (e) {
+					if (newdb){
+						await newdb.close();
+					}
 					console.log(e);
-					console.log("Reinitialize database...");
-					fs.unlinkSync(opath);
+					console.log("Errors Detected. Force Reinitialize database...");
+					if (i === 1) {
+						console.log("Force re-init did not work. Deleting database file.");
+						fs.unlinkSync(opath);
+					}
 					i++;
 					continue;
 				}
@@ -98,7 +104,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 					try {
 						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 						console.log(result);
-						await newdb.sync({ alter: true });
+						await newdb.sync({ alter: true, force: i === 1 });
 						[result, meta] = await newdb.query('PRAGMA integrity_check;');
 						if ((result[0] as any)?.integrity_check !== 'ok') {
 							throw new Error("Integrity check failed.");
@@ -111,9 +117,15 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 					}
 				}
 				catch (e) {
+					if (newdb){
+						await newdb.close();
+					}
 					console.log(e);
-					console.log("Reinitialize database...");
-					fs.unlinkSync(opath);
+					console.log("Errors Detected. Force Reinitialize database...");
+					if (i === 1) {
+						console.log("Force re-init did not work. Deleting database file.");
+						fs.unlinkSync(opath);
+					}
 					i++;
 					continue;
 				}
