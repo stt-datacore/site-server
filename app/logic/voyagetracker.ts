@@ -28,14 +28,21 @@ export class VoyageTracker extends VoyageTrackerBase {
             let voyages = await this.getVoyagesByDbid(dbid, cnt);
             if (voyages) {
                 voyages.sort((a, b) => (a.voyageId ?? 0) - (b.voyageId ?? 0));
+                let dupevoys = voyages.filter((fv, i) => voyages!.findIndex(fi => fi.voyageId === fv.voyageId) !== i)?.map(dv => dv.id!);
                 voyages = voyages.filter((fv, i) => voyages!.findIndex(fi => fi.voyageId === fv.voyageId) === i);
+                if (dupevoys?.length) {
+                    while (dupevoys.length) {
+                        let bvs = dupevoys.splice(0, 10);
+                        await sql.query(`DELETE FROM ${voyrepo.tableName} WHERE ${bvs.map(bv => `id='${bv}'`).join(" OR ")};`);
+                    }
+                }
                 voyages.sort((a, b) => b.timeStamp.getTime() - a.timeStamp.getTime());
                 voyages.splice(1000);
                 let minDate = voyages[voyages.length - 1].timeStamp;
                 let dt = minDate.toISOString().split("T")[0];
                 await sql.query(`DELETE FROM ${voyrepo.tableName} WHERE timeStamp < '${dt}';`);
                 const assrepo = sql.getRepository(TrackedCrew);
-                [res, ] = await sql.query(`SELECT count(*) count from ${voyrepo.tableName};`);
+                [res, ] = await sql.query(`SELECT count(*) count from ${assrepo.tableName};`);
                 cnt = (res[0] as any)['count'] as number;
                 let assignments = await this.getAssignmentsByDbid(dbid, cnt);
                 if (assignments) {
