@@ -57,20 +57,11 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
-					fixDB(newdb);
-					try {
-						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
-						console.log(result);
-						await newdb.sync({ alter: true });
-						[result, meta] = await newdb.query('PRAGMA integrity_check;');
-						if ((result[0] as any)?.integrity_check !== 'ok') {
-							throw new Error("Integrity check failed.");
-						}
-					}
-					catch {
-						await newdb.sync({ alter: true, force: i === 1 });
-						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
-						console.log(result);
+					fixDB(newdb, i == 1);
+					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
+					console.log(result);
+					if ((result[0] as any)?.integrity_check !== 'ok') {
+						throw new Error("Integrity check failed.");
 					}
 				}
 				catch (e) {
@@ -100,24 +91,15 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
-					fixDB(newdb);
-					try {
-						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
-						console.log(result);
-						await newdb.sync({ alter: true, force: i === 1 });
-						[result, meta] = await newdb.query('PRAGMA integrity_check;');
-						if ((result[0] as any)?.integrity_check !== 'ok') {
-							throw new Error("Integrity check failed.");
-						}
-					}
-					catch {
-						await newdb.sync({ alter: true });
-						let [result, meta] = await newdb.query('PRAGMA integrity_check;');
-						console.log(result);
+					fixDB(newdb, i == 1);
+					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
+					console.log(result);
+					if ((result[0] as any)?.integrity_check !== 'ok') {
+						throw new Error("Integrity check failed.");
 					}
 				}
 				catch (e) {
-					if (newdb){
+					if (newdb) {
 						await newdb.close();
 					}
 					console.log(e);
@@ -172,8 +154,8 @@ export async function getHistoricalDb() {
 
 }
 
-export async function fixDB(db: Sequelize) {
-	await db.sync();
+export async function fixDB(db: Sequelize, hardSync: boolean) {
+	await db.sync({ alter: true, force: hardSync });
 	const models = Object.values(db.models);
 	for (let model of models) {
 		try {
