@@ -177,7 +177,8 @@ export async function fixDB(db: Sequelize) {
 	const models = Object.values(db.models);
 	for (let model of models) {
 		const repo = db.getRepository(model as any);
-		let data = await repo.findAll();
+
+		let [data,]: [any[], any] = await db.query(`SELECT * FROM ${model.tableName}`);
 		data.sort((a, b) => a["id"] = b["id"]);
 		let drec = 1;
 		for (let rec of data) {
