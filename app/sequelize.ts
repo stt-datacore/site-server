@@ -182,6 +182,9 @@ export async function fixDB(db: Sequelize) {
 		let drec = 1;
 		for (let rec of data) {
 			rec["id"] = drec++;
+		}
+		data.reverse();
+		for (let rec of data) {
 			await rec.save();
 		}
 	}
