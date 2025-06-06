@@ -475,7 +475,7 @@ router.get('/getTrackedData', async (req: Request, res: Response, next) => {
 	try {
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
-		let limit = req.query?.limit ? Number.parseInt(req.query.limit.toString()) : undefined;
+		let limit = req.query?.limit ? Number.parseInt(req.query.limit.toString()) : 12000;
 		let apiResult = await VoyageTrackerAPI.getTrackedData(dbid, trackerId, limit);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
