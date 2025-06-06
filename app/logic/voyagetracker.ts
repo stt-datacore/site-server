@@ -27,6 +27,18 @@ export class VoyageTracker extends VoyageTrackerBase {
         if (sql) {
             const repo = sql.getRepository(TrackedVoyage);
             res = await repo.findAll({ where: { dbid }, order: [['updatedAt', 'DESC']], limit });
+            for (let r of res) {
+                let n = false;
+                if (r.voyage.tracker_id !== r.id) {
+                    r.voyage.tracker_id = r.id;
+                    n = true;
+                }
+                if (r.trackerId !== r.id) {
+                    r.trackerId = r.id;
+                    n = true;
+                }
+                if (n) await r.save();
+            }
             // sql?.close();
         }
 
@@ -169,8 +181,9 @@ export class VoyageTracker extends VoyageTrackerBase {
                 });
             }
 
-            if (result && result.id !== result.trackerId) {
+            if (result && (result.id !== result.trackerId || result.id !== result.voyage.tracker_id)) {
                 result.trackerId = result.id;
+                result.voyage.tracker_id = result.id;
                 await result.save();
             }
 
@@ -259,8 +272,9 @@ export class VoyageTracker extends VoyageTrackerBase {
                     });
                 }
 
-                if (result && result.id !== result.trackerId) {
+                if (result && (result.id !== result.trackerId || result.id !== result.voyage.tracker_id)) {
                     result.trackerId = result.id;
+                    result.voyage.tracker_id = result.id;
                     await result.save();
                 }
 
