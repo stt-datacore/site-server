@@ -37,7 +37,7 @@ export class VoyageTracker extends VoyageTrackerBase {
                     }
                 }
                 voyages.sort((a, b) => b.timeStamp.getTime() - a.timeStamp.getTime());
-                voyages.splice(1000);
+                voyages.splice(10000);
                 let minDate = voyages[voyages.length - 1].timeStamp;
                 let dt = minDate.toISOString().split("T")[0];
                 await sql.query(`DELETE FROM ${voyrepo.tableName} WHERE timeStamp < '${dt}';`);
@@ -56,7 +56,7 @@ export class VoyageTracker extends VoyageTrackerBase {
         }
     }
 
-    protected async getVoyagesByDbid(dbid: number, limit = 1000) {
+    protected async getVoyagesByDbid(dbid: number, limit = 10000) {
         let res: TrackedVoyage[] | null = null;
 
         const sql = await makeSql(dbid);
@@ -380,7 +380,7 @@ export class VoyageTracker extends VoyageTrackerBase {
         return [{ status: 500 }];
     }
 
-    protected async getAssignmentsByDbid(dbid: number, limit = 12000) {
+    protected async getAssignmentsByDbid(dbid: number, limit = 120000) {
         let res: TrackedCrew[] | null = null;
 
         const sql = await makeSql(dbid);
