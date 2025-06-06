@@ -11,6 +11,7 @@ export interface ITrackedVoyageRecord {
     dbid: number;
     trackerId: number;
     voyage: ITrackedVoyage;
+    voyageId?: number;
     timeStamp: Date;
 }
 
@@ -19,6 +20,7 @@ export interface ITrackedCrewRecord {
     crew: string;
     trackerId: number;
     assignment: ITrackedAssignment;
+    voyageId?: number;
     timeStamp: Date;
 }
 
