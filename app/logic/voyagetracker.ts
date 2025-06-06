@@ -20,7 +20,7 @@ export class VoyageTracker extends VoyageTrackerBase {
     }
 
 
-    protected async getVoyagesByDbid(dbid: number, limit = 100) {
+    protected async getVoyagesByDbid(dbid: number, limit = 12000) {
         let res: TrackedVoyage[] | null = null;
 
         const sql = await makeSql(dbid);
@@ -316,7 +316,7 @@ export class VoyageTracker extends VoyageTrackerBase {
         return [{ status: 500 }];
     }
 
-    protected async getAssignmentsByDbid(dbid: number, limit = 100) {
+    protected async getAssignmentsByDbid(dbid: number, limit = 12000) {
         let res: TrackedCrew[] | null = null;
 
         const sql = await makeSql(dbid);
