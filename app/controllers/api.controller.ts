@@ -475,8 +475,23 @@ router.get('/getTrackedData', async (req: Request, res: Response, next) => {
 	try {
 		let dbid = req.query?.dbid ? Number.parseInt(req.query.dbid.toString()) : undefined;
 		let trackerId = req.query?.trackerId ? Number.parseInt(req.query.trackerId.toString()) : undefined;
-		let limit = req.query?.limit ? Number.parseInt(req.query.limit.toString()) : 12000;
+		let limit = req.query?.limit ? Number.parseInt(req.query.limit.toString()) : undefined;
 		let apiResult = await VoyageTrackerAPI.getTrackedData(dbid, trackerId, limit);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.get('/repairVoyages', async (req: Request, res: Response, next) => {
+	if (!req.query || !req.query.dbid) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = Number(req.query.dbid);
+		let apiResult = await VoyageTrackerAPI.repairVoyages(dbid);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);

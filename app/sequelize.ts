@@ -49,7 +49,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 	let i = 0;
 	if (makeFleet) {
-		while (i < 2) {
+		while (i < 3) {
 			const newdb = new Sequelize(dpath, {
 				models: [SolveDocument, TrialDocument, BossBattleDocument],
 				logging: false,
@@ -58,7 +58,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
-					await fixDB(newdb, i == 1);
+					await initAndRepairDb(newdb, i == 1);
 					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 					console.log(result);
 					if ((result[0] as any)?.integrity_check !== 'ok') {
@@ -83,7 +83,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 		}
 	}
 	else {
-		while (i < 2) {
+		while (i < 3) {
 			const newdb = new Sequelize(dpath, {
 				models: [TrackedVoyage, TrackedCrew],
 				logging: false,
@@ -92,7 +92,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 
 			if (newdb) {
 				try {
-					await fixDB(newdb, i == 1);
+					await initAndRepairDb(newdb, i == 1);
 					let [result, meta] = await newdb.query('PRAGMA integrity_check;');
 					console.log(result);
 					if ((result[0] as any)?.integrity_check !== 'ok') {
@@ -155,18 +155,13 @@ export async function getHistoricalDb() {
 
 }
 
-export async function fixDB(db: Sequelize, hardSync: boolean) {
-	if (hardSync) {
-		await db.sync({ alter: true, force: hardSync });
-	}
-	else {
-		await db.sync();
-	}
+async function initAndRepairDb(db: Sequelize, hardSync: boolean) {
+	await db.sync({ alter: hardSync, force: hardSync });
 	const models = Object.values(db.models);
 	for (let model of models) {
 		try {
 			const repo = db.getRepository(model as any);
-			await repo.sync();
+			await repo.sync({ alter: hardSync, force: hardSync });
 
 			let [data,]: [any[], any] = await db.query(`SELECT id FROM ${repo.tableName};`);
 			let dupes = {} as {[key:string]: number};
@@ -174,14 +169,11 @@ export async function fixDB(db: Sequelize, hardSync: boolean) {
 				dupes[d["id"]] ??= 0;
 				dupes[d["id"]]++;
 			}
-			let resync = false;
 			for (let [key, value] of Object.entries(dupes)) {
 				if (value > 1) {
 					await db.query(`DELETE FROM ${repo.tableName} WHERE id='${key}';`);
-					resync = true;
 				}
 			}
-			await repo.sync({ alter: true });
 		}
 		catch (e: any) {
 			Logger.error(e);

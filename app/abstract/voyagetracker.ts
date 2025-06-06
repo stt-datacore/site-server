@@ -517,11 +517,23 @@ export abstract class VoyageTrackerBase {
         }
     }
 
+    public async repairVoyages(dbid: number) {
+        await this.repairAccount(dbid);
+        return {
+            Status: 200, // 204
+            Body: { status: 'OK' },
+        };
+    }
+
     protected abstract deleteVoyageByTrackerId(dbid: number, trackerId: number): Promise<boolean>;
+
+    protected abstract deleteVoyageByVoyageId(dbid: number, voyageId: number): Promise<boolean>;
 
     protected abstract getVoyagesByDbid(dbid: number, limit?: number): Promise<TrackedVoyage[] | null>;
 
     protected abstract getVoyagesByTrackerId(dbid: number, trackerId: number): Promise<TrackedVoyage[] | null>;
+
+    protected abstract repairAccount(dbid: number): Promise<void>;
 
     protected abstract postOrPutTrackedData(
         dbid: number,

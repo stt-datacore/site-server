@@ -19,8 +19,37 @@ export class VoyageTracker extends VoyageTrackerBase {
         return 0;
     }
 
+    protected async repairAccount(dbid: number): Promise<void> {
+        const sql = await makeSql(dbid);
+        if (sql) {
+            const voyrepo = sql.getRepository(TrackedVoyage);
+            let [res, ] = await sql.query(`SELECT count(*) count from ${voyrepo.tableName};`);
+            let cnt = (res[0] as any)['count'] as number;
+            let voyages = await this.getVoyagesByDbid(dbid, cnt);
+            if (voyages) {
+                voyages.sort((a, b) => (a.voyageId ?? 0) - (b.voyageId ?? 0));
+                voyages = voyages.filter((fv, i) => voyages!.findIndex(fi => fi.voyageId === fv.voyageId) === i);
+                voyages.sort((a, b) => b.timeStamp.getTime() - a.timeStamp.getTime());
+                voyages.splice(1000);
+                let minDate = voyages[voyages.length - 1].timeStamp;
+                let dt = minDate.toISOString().split("T")[0];
+                await sql.query(`DELETE FROM ${voyrepo.tableName} WHERE timeStamp < '${dt}';`);
+                const assrepo = sql.getRepository(TrackedCrew);
+                [res, ] = await sql.query(`SELECT count(*) count from ${voyrepo.tableName};`);
+                cnt = (res[0] as any)['count'] as number;
+                let assignments = await this.getAssignmentsByDbid(dbid, cnt);
+                if (assignments) {
+                    let badvoys = assignments.filter(f => !voyages!.some(v => v.voyageId === f.voyageId)).map(a => a.id! as number);
+                    while (badvoys.length) {
+                        let bvs = badvoys.splice(0, 10);
+                        await sql.query(`DELETE FROM ${assrepo.tableName} WHERE ${bvs.map(bv => `id='${bv}'`).join(" OR ")};`);
+                    }
+                }
+            }
+        }
+    }
 
-    protected async getVoyagesByDbid(dbid: number, limit = 12000) {
+    protected async getVoyagesByDbid(dbid: number, limit = 1000) {
         let res: TrackedVoyage[] | null = null;
 
         const sql = await makeSql(dbid);
@@ -43,6 +72,34 @@ export class VoyageTracker extends VoyageTrackerBase {
         }
 
         return res;
+    }
+
+    protected async deleteVoyageByVoyageId(dbid: number, voyageId: number): Promise<boolean> {
+        let res: TrackedVoyage[] | null = null;
+        let result = false;
+
+        const sql = await makeSql(dbid);
+        if (sql) {
+            const repo = sql.getRepository(TrackedVoyage);
+            res = await repo.findAll({ where: { voyageId } });
+            if (res) {
+                for (let rec of res) {
+                    rec.destroy();
+                }
+                result = true;
+            }
+
+            const crewrepo = sql.getRepository(TrackedCrew);
+            let crewres = await crewrepo.findAll({ where: { voyageId } });
+            if (crewres) {
+                for (let rec of crewres) {
+                    rec.destroy();
+                }
+                result = true;
+            }
+        }
+
+        return result;
     }
 
     protected async deleteVoyageByTrackerId(dbid: number, trackerId: number): Promise<boolean> {
