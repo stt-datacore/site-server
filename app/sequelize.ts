@@ -11,18 +11,24 @@ import { Logger } from './logic';
 
 require('dotenv').config();
 
+const players = {} as {[key:string]: Sequelize};
+const fleets = {} as {[key:string]: Sequelize};
+
 export const sequelize = new Sequelize(process.env.DB_CONNECTION_STRING!, {
 	models: [User, Profile, Comment, VoyageRecord, Voyage],
 	logging: false
 });
 
-export async function makeSql(idnumber: number, makeFleet?: boolean) {
+export async function makeSql(idnumber: number, makeFleet?: boolean, forceRecreate?: boolean) {
+	if (!forceRecreate) {
+		if (makeFleet && fleets[idnumber]) return fleets[idnumber];
+		else if (!makeFleet && players[idnumber]) return players[idnumber];
+	}
 	var dpath = process.env.PROFILE_DATA_PATH;
 	if (!dpath) return null;
 	if (!fs.existsSync(dpath)) {
 		fs.mkdirSync(dpath);
 	}
-
 	if (fs.existsSync(dpath)) {
 		if (dpath[dpath.length - 1] === '/') {
 			dpath += "database";
@@ -78,6 +84,8 @@ export async function makeSql(idnumber: number, makeFleet?: boolean) {
 					i++;
 					continue;
 				}
+				if (makeFleet) fleets[idnumber] = newdb;
+				else players[idnumber] = newdb;
 				return newdb;
 			}
 		}

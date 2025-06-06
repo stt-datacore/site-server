@@ -20,7 +20,7 @@ export class VoyageTracker extends VoyageTrackerBase {
     }
 
     protected async repairAccount(dbid: number): Promise<void> {
-        const sql = await makeSql(dbid);
+        const sql = await makeSql(dbid, false, true);
         if (sql) {
             const voyrepo = sql.getRepository(TrackedVoyage);
             let [res, ] = await sql.query(`SELECT count(*) count from ${voyrepo.tableName};`);
