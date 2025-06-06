@@ -178,15 +178,16 @@ export async function fixDB(db: Sequelize) {
 	for (let model of models) {
 		const repo = db.getRepository(model as any);
 
-		let [data,]: [any[], any] = await db.query(`SELECT * FROM ${model.tableName}`);
-		data.sort((a, b) => a["id"] = b["id"]);
-		let drec = 1;
-		for (let rec of data) {
-			rec["id"] = drec++;
+		let [data,]: [any[], any] = await db.query(`SELECT * FROM ${model.tableName};`);
+		let dupes = {} as {[key:string]: number};
+		for (let d of data) {
+			dupes[d["id"]] ??= 0;
+			dupes[d["id"]]++;
 		}
-		data.reverse();
-		for (let rec of data) {
-			await rec.save();
+		for (let [key, value] of Object.entries(dupes)) {
+			if (value > 1) {
+				await db.query(`DELETE FROM ${model.tableName} WHERE id='${key}';`);
+			}
 		}
 	}
 }
