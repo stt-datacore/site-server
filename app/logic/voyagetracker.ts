@@ -23,6 +23,14 @@ export class VoyageTracker extends VoyageTrackerBase {
         const sql = await makeSql(dbid, false, true);
         if (sql) {
             const voyrepo = sql.getRepository(TrackedVoyage);
+
+            try {
+                await voyrepo.sync({ alter: true });
+            }
+            catch {
+                await voyrepo.sync({ alter: true, force: true });
+            }
+
             let [res, ] = await sql.query(`SELECT count(*) count from ${voyrepo.tableName};`);
             let cnt = (res[0] as any)['count'] as number;
             let voyages = await this.getVoyagesByDbid(dbid, cnt);
@@ -41,7 +49,16 @@ export class VoyageTracker extends VoyageTrackerBase {
                 let minDate = voyages[voyages.length - 1].timeStamp;
                 let dt = minDate.toISOString().split("T")[0];
                 await sql.query(`DELETE FROM ${voyrepo.tableName} WHERE timeStamp < '${dt}';`);
+
                 const assrepo = sql.getRepository(TrackedCrew);
+
+                try {
+                    await assrepo.sync({ alter: true });
+                }
+                catch {
+                    await assrepo.sync({ alter: true, force: true });
+                }
+
                 [res, ] = await sql.query(`SELECT count(*) count from ${assrepo.tableName};`);
                 cnt = (res[0] as any)['count'] as number;
                 let assignments = await this.getAssignmentsByDbid(dbid, cnt);
