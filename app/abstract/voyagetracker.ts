@@ -5,6 +5,19 @@ import { Logger, LogData } from "../logic/logger";
 
 import { ApiResult } from "../logic/api";
 
+export type ErrorType = { error: number, message: string };
+
+export const MAX_VOYAGES = 10000;
+
+export type RepairType = {
+    duplicate_voyages_removed: number;
+    voyage_tracker_ids_corrected: number;
+    assigment_tracker_ids_corrected: number;
+    assigment_voyage_ids_corrected: number;
+    voyages_trimmed: number;
+    max_voyages: number;
+}
+
 export interface TrackerPostResult {
     status: number;
     inputId?: number;
@@ -518,10 +531,17 @@ export abstract class VoyageTrackerBase {
     }
 
     public async repairVoyages(dbid: number) {
-        await this.repairAccount(dbid);
+        let result = await this.repairAccount(dbid);
+
+        if ("error" in result) {
+            return {
+                Status: result.error,
+                Body: { status: 'FAIL', message: result.message, code: result.error }
+            }
+        }
         return {
             Status: 200, // 204
-            Body: { status: 'OK' },
+            Body: { status: 'OK', message: 'Database repaired.', report: result },
         };
     }
 
@@ -533,7 +553,7 @@ export abstract class VoyageTrackerBase {
 
     protected abstract getVoyagesByTrackerId(dbid: number, trackerId: number): Promise<TrackedVoyage[] | null>;
 
-    protected abstract repairAccount(dbid: number): Promise<void>;
+    protected abstract repairAccount(dbid: number): Promise<RepairType | ErrorType>;
 
     protected abstract postOrPutTrackedData(
         dbid: number,

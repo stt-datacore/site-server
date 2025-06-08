@@ -1,7 +1,7 @@
 import { IFullPayloadAssignment, ITrackedAssignment, ITrackedVoyage } from "../datacore/voyage";
 import { TrackedCrew, TrackedVoyage } from "../models/Tracked";
 import { makeSql } from "../sequelize";
-import { MultiTrackerPostResult, TrackerPostResult, VoyageTrackerBase } from "../abstract/voyagetracker";
+import { ErrorType, MAX_VOYAGES, MultiTrackerPostResult, RepairType, TrackerPostResult, VoyageTrackerBase } from "../abstract/voyagetracker";
 
 export class VoyageTracker extends VoyageTrackerBase {
 
@@ -19,58 +19,194 @@ export class VoyageTracker extends VoyageTrackerBase {
         return 0;
     }
 
-    protected async repairAccount(dbid: number): Promise<void> {
-        const sql = await makeSql(dbid, false, true);
-        if (sql) {
-            const voyrepo = sql.getRepository(TrackedVoyage);
+    protected async repairAccount(dbid: number, force?: boolean): Promise<RepairType | ErrorType> {
+        const result: RepairType = {
+            duplicate_voyages_removed: 0,
+            voyage_tracker_ids_corrected: 0,
+            assigment_voyage_ids_corrected: 0,
+            assigment_tracker_ids_corrected: 0,
+            voyages_trimmed: 0,
+            max_voyages: MAX_VOYAGES
+        };
 
-            try {
-                await voyrepo.sync({ alter: true });
+        interface CompareOpts {
+            omitTrackerId?: boolean,
+            omitVoyageId?: boolean,
+            omitCreatedAt?: boolean,
+        }
+
+        function compareVoyages(voyage1: ITrackedVoyage, voyage2: ITrackedVoyage, opts?: CompareOpts) {
+            opts ??= {};
+            const { omitCreatedAt, omitTrackerId, omitVoyageId } = opts;
+
+            if (!omitTrackerId && voyage1.tracker_id !== voyage2.tracker_id) return false;
+            if (!omitVoyageId && voyage1.voyage_id !== voyage2.voyage_id) return false;
+            if (!omitCreatedAt && voyage1.created_at !== voyage2.created_at) return false;
+            if (voyage1.skills.primary_skill !== voyage2.skills.primary_skill) return false;
+            if (voyage1.skills.secondary_skill !== voyage2.skills.secondary_skill) return false;
+            if (voyage1.ship_trait !== voyage2.ship_trait) return false;
+            if (voyage1.estimate.dilemma.chance !== voyage2.estimate.dilemma.chance) return false;
+            if (voyage1.estimate.dilemma.hour !== voyage2.estimate.dilemma.hour) return false;
+            if (voyage1.estimate.median !== voyage2.estimate.median) return false;
+            if (voyage1.estimate.minimum !== voyage2.estimate.minimum) return false;
+            if (voyage1.estimate.moonshot !== voyage2.estimate.moonshot) return false;
+            if (voyage1.ship !== voyage2.ship) return false;
+            if (voyage1.max_hp !== voyage2.max_hp) return false;
+            for (let agg of ['command_skill', 'science_skill', 'diplomacy_skill', 'security_skill', 'medicine_skill', 'engineering_skill']) {
+                if (!voyage1.skill_aggregates[agg] && !voyage2.skill_aggregates[agg]) continue;
+                else if (!voyage1.skill_aggregates[agg] || !voyage2.skill_aggregates[agg]) return false;
+
+                if (voyage1.skill_aggregates[agg].core !== voyage2.skill_aggregates[agg].core) return false;
+                if (voyage1.skill_aggregates[agg].range_min !== voyage2.skill_aggregates[agg].range_min) return false;
+                if (voyage1.skill_aggregates[agg].range_max !== voyage2.skill_aggregates[agg].range_max) return false;
             }
-            catch {
-                await voyrepo.sync({ alter: true, force: true });
-            }
+            return true;
+        }
 
-            let [res, ] = await sql.query(`SELECT count(*) count from ${voyrepo.tableName};`);
-            let cnt = (res[0] as any)['count'] as number;
-            let voyages = await this.getVoyagesByDbid(dbid, cnt);
-            if (voyages) {
-                voyages.sort((a, b) => (a.voyageId ?? 0) - (b.voyageId ?? 0));
-                let dupevoys = voyages.filter((fv, i) => !!fv.voyageId && voyages!.findIndex(fi => !!fi.voyageId && !!fv.voyageId && fi.voyageId === fv.voyageId) !== i)?.map(dv => dv.id as number | undefined).filter(f => f !== undefined);
-                voyages = voyages.filter((fv) => !dupevoys.some(dv => dv == fv.id));
-                if (dupevoys?.length) {
-                    while (dupevoys.length) {
-                        let bvs = dupevoys.splice(0, 10);
-                        await sql.query(`DELETE FROM ${voyrepo.tableName} WHERE ${bvs.map(bv => `id='${bv}'`).join(" OR ")};`);
-                    }
-                }
-                voyages.sort((a, b) => b.timeStamp.getTime() - a.timeStamp.getTime());
-                voyages.splice(10000);
-                let minDate = voyages[voyages.length - 1].timeStamp;
-                let dt = minDate.toISOString().split("T")[0];
-                await sql.query(`DELETE FROM ${voyrepo.tableName} WHERE timeStamp < '${dt}';`);
-
-                const assrepo = sql.getRepository(TrackedCrew);
+        try {
+            const sql = await makeSql(dbid, false, true);
+            if (sql) {
+                const voyrepo = sql.getRepository(TrackedVoyage);
 
                 try {
-                    await assrepo.sync({ alter: true });
+                    await voyrepo.sync({ alter: true });
                 }
-                catch {
-                    await assrepo.sync({ alter: true, force: true });
+                catch (e: any) {
+                    if (force) {
+                        try {
+                            await voyrepo.sync({ alter: true, force: true });
+                        }
+                        catch (e: any) {
+                            return { error: 500, message: "Force sync did not succeed. Contact administrator." };
+                        }
+                    }
+                    else {
+                        return { error: 500, message: "Sync did not succeed. Contact administrator." };
+                    }
                 }
 
-                [res, ] = await sql.query(`SELECT count(*) count from ${assrepo.tableName};`);
-                cnt = (res[0] as any)['count'] as number;
-                let assignments = await this.getAssignmentsByDbid(dbid, cnt);
-                if (assignments) {
-                    let badvoys = assignments.filter(f => !voyages!.some(v => v.voyageId === f.voyageId)).map(a => a.id! as number);
-                    while (badvoys.length) {
-                        let bvs = badvoys.splice(0, 10);
-                        await sql.query(`DELETE FROM ${assrepo.tableName} WHERE ${bvs.map(bv => `id='${bv}'`).join(" OR ")};`);
+                let res: any[] = [];
+
+                try {
+                    [res,] = await sql.query(`SELECT count(*) count from ${voyrepo.tableName};`);
+                }
+                catch (e: any) {
+                    return { error: 500, message: `Attempt to count voyages: ${e}`, };
+                }
+
+                let cnt = (res[0] as any)['count'] as number;
+                let voyages = await this.getVoyagesByDbid(dbid, cnt);
+                if (voyages) {
+                    voyages.sort((a, b) => (a.voyageId ?? 0) - (b.voyageId ?? 0));
+                    let dupevoys = voyages.filter((fv, i) => !!fv.voyageId && voyages!.findIndex(fi => !!fi.voyageId && !!fv.voyageId && fi.voyageId === fv.voyageId) !== i)?.map(dv => dv.id as number | undefined).filter(f => f !== undefined);
+
+                    voyages.sort((a, b) => b.voyage.voyage_id - a.voyage.voyage_id || b.voyage.tracker_id - a.voyage.tracker_id || b.voyage.created_at - a.voyage.created_at);
+                    dupevoys = dupevoys.concat(
+                        voyages.filter((fv, i) => voyages!.findIndex(fi => compareVoyages(fi.voyage, fv.voyage, { omitTrackerId: true, omitVoyageId: true, omitCreatedAt: true })) !== i)?.map(dv => dv.id as number | undefined).filter(f => f !== undefined)
+                    );
+                    if (dupevoys?.length) {
+                        dupevoys = [...new Set(dupevoys)];
+                        voyages = voyages.filter((fv) => !dupevoys.some(dv => dv == fv.id));
+
+                        result.duplicate_voyages_removed = dupevoys.length;
+                        while (dupevoys.length) {
+                            let bvs = dupevoys.splice(0, 10);
+
+                            try {
+                                await sql.query(`DELETE FROM ${voyrepo.tableName} WHERE ${bvs.map(bv => `id='${bv}'`).join(" OR ")};`);
+                            }
+                            catch (e: any) {
+                                return { error: 500, message: `Attempt to delete duplicate voyages ${bvs.join()}: ${e}`, };
+                            }
+
+                        }
+                    }
+
+                    voyages.sort((a, b) => b.id - a.id);
+                    if (voyages.length > MAX_VOYAGES) {
+                        result.voyages_trimmed = voyages.length - MAX_VOYAGES;
+                    }
+
+                    voyages.splice(MAX_VOYAGES);
+                    let min_id = voyages[voyages.length - 1].id;
+
+                    try {
+                        await sql.query(`DELETE FROM ${voyrepo.tableName} WHERE id < '${min_id}';`);
+                    }
+                    catch (e: any) {
+                        return { error: 500, message: `Attempt to delete voyage records with IDs less than ${min_id}: ${e}`, };
+                    }
+
+                    for (let voy of voyages) {
+                        if (voy.trackerId !== voy.id || voy.voyage.tracker_id !== voy.id) {
+                            voy.trackerId = voy.id;
+                            voy.voyage.tracker_id = voy.trackerId;
+                            result.voyage_tracker_ids_corrected++;
+                            await voy.save();
+                        }
+                    }
+
+                    const assrepo = sql.getRepository(TrackedCrew);
+
+                    try {
+                        await assrepo.sync({ alter: true });
+                    }
+                    catch {
+                        await assrepo.sync({ alter: true, force: true });
+                    }
+
+
+                    try {
+                        [res,] = await sql.query(`SELECT count(*) count from ${assrepo.tableName};`);
+                    }
+                    catch (e: any) {
+                        return { error: 500, message: `Attempt to count assignments: ${e}`, };
+                    }
+
+                    cnt = (res[0] as any)['count'] as number;
+                    let assignments = await this.getAssignmentsByDbid(dbid, cnt);
+                    if (assignments) {
+                        let badvoys = assignments.filter(f => !voyages!.some(v => v.trackerId === f.trackerId)).map(a => a.id! as number);
+                        while (badvoys.length) {
+                            let bvs = badvoys.splice(0, 10);
+                            assignments = assignments?.filter(f => !bvs.includes(f.id));
+
+                            try {
+                                await sql.query(`DELETE FROM ${assrepo.tableName} WHERE ${bvs.map(bv => `id='${bv}'`).join(" OR ")};`);
+                            }
+                            catch (e: any) {
+                                return { error: 500, message: `Attempt to delete defunct assignments ${bvs.join()}: ${e}`, };
+                            }
+
+                        }
+                        for (let ass of assignments) {
+                            if (ass.voyageId) {
+                                let voy = voyages.find(f => f.voyageId === ass.voyageId);
+                                if (voy && voy.trackerId && ass.trackerId !== voy.trackerId) {
+                                    ass.trackerId = voy.trackerId;
+                                    result.assigment_voyage_ids_corrected++;
+                                    await ass.save();
+                                }
+                                voy = voyages.find(f => f.trackerId === ass.trackerId);
+                                if (voy && voy.voyageId && ass.voyageId !== voy.voyageId) {
+                                    ass.voyageId = voy.voyageId;
+                                    result.assigment_voyage_ids_corrected++;
+                                    await ass.save();
+                                }
+                            }
+                        }
                     }
                 }
             }
+            else {
+                return { error: 500, message: "Acquiring voyage database did not succeed. Try again in a few minutes or contact the administrator." };
+            }
         }
+        catch (e: any) {
+            return { error: 500, message: `Database Error, Contact The Administrator: ${e}`, };
+        }
+
+        return result;
     }
 
     protected async getVoyagesByDbid(dbid: number, limit = 10000) {
@@ -240,7 +376,7 @@ export class VoyageTracker extends VoyageTrackerBase {
 
             if (current) {
                 if (current.voyageId !== voyage.voyage_id && current.voyageId && voyage.voyage_id) {
-                    let correct = await repo.findOne({ where: { voyageId: voyage.voyage_id }});
+                    let correct = await repo.findOne({ where: { voyageId: voyage.voyage_id } });
                     if (correct) {
                         current = correct;
                     }
@@ -331,7 +467,7 @@ export class VoyageTracker extends VoyageTrackerBase {
 
                 if (current) {
                     if (current.voyageId !== voyage.voyage_id && current.voyageId && voyage.voyage_id) {
-                        let correct = await repo.findOne({ where: { voyageId: voyage.voyage_id }});
+                        let correct = await repo.findOne({ where: { voyageId: voyage.voyage_id } });
                         if (correct) {
                             current = correct;
                         }
