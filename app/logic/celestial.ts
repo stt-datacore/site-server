@@ -2,7 +2,7 @@ import fs from 'fs';
 
 require('dotenv').config();
 
-const CLIENT_API_VERSION = 26;
+const CLIENT_API_VERSION = 27;
 
 export interface CelestialMarketData {
     action: 'ephemeral';
