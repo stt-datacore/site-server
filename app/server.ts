@@ -10,7 +10,7 @@ import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
 import { exit } from 'process';
-import { compareFTM, upgradeAvatars } from './utils';
+import { compareFTM, obliterateDBID, upgradeAvatars } from './utils';
 
 require('dotenv').config();
 
@@ -84,6 +84,15 @@ app.use('/api', nocache, expressLogger, ApiController);
 		fs.writeFileSync(directives, JSON.stringify(dir, null, 4));
 	};
 
+	const checkObliterate = async () => {
+		let x = process.argv.indexOf('--obliterate');
+		if (x !== -1 && process.argv.length > x + 1) {
+			let dbid = Number(process.argv[x+1]);
+			await obliterateDBID(dbid);
+			process.exit(0);
+		}
+	};
+
 	// Now that the DB is actually up, initialize the cache
 	await DataCoreAPI.initializeCache();
 	console.log(JSON.stringify(process.argv));
@@ -98,6 +107,9 @@ app.use('/api', nocache, expressLogger, ApiController);
 	if (fs.existsSync(directives)) {
 		await processDirectives();
 	}
+
+	await checkObliterate();
+
 	if (!process.argv.includes("stats") && !process.argv.includes("archive")) {
 		// Serve the application at the given port
 		app.listen(port, '0.0.0.0', () => {

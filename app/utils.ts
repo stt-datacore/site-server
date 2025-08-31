@@ -7,7 +7,7 @@ import bodyParser from 'body-parser';
 import expressWinston from 'express-winston';
 
 import { ApiController } from './controllers';
-import { Logger, DataCoreAPI } from './logic';
+import { Logger, DataCoreAPI, getProfiles } from './logic';
 import { sequelize } from './sequelize';
 import { exit } from 'process';
 import { User } from './models/User';
@@ -83,4 +83,10 @@ export async function compareFTM() {
             });
         }
     });
+}
+
+export async function obliterateDBID(dbid: number) {
+    console.log(`Destroying all records for DBID: ${dbid}...`)
+    let response = await Profile.destroy({ where: { dbid }});
+    console.log(`Destroyed ${response} rows.`);
 }
