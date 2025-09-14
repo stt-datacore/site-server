@@ -36,7 +36,7 @@ class CelestialMarket {
     public get isCurrent(): boolean {
         if (!this.lastRefresh) return false;
         let now = new Date();
-        return now.getDate() === this.lastRefresh.getDate() && (Math.abs(now.getHours() - this.lastRefresh.getHours()) < 1);
+        return now.getDate() === this.lastRefresh.getDate() && (Math.abs(now.getMinutes() - this.lastRefresh.getMinutes()) < 5);
     }
 
     constructor() {
