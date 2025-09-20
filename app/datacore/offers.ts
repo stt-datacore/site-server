@@ -2,6 +2,24 @@ import { CrewMember } from "./crew";
 import { Icon } from "./game-elements";
 import { Reward } from "./player";
 
+export interface OffersRoot {
+  action: string
+  player?: OfferPlayer
+  symbol?: string
+  grids?: Offer[]
+  refresh_guards?: any[]
+  refreshable?: boolean
+}
+
+export interface OfferPlayer {
+  id: number
+  money: number
+  premium_purchasable: number
+  premium_earnable: number
+  honor: number
+  shuttle_rental_tokens: number
+}
+
 export interface OfferCrew {
     name: string;
     drop_info: DropInfo[];

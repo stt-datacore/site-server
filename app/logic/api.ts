@@ -13,6 +13,8 @@ import { Profile } from '../models/Profile';
 import { historicalize, voyageRawByDays } from './voyage_stats';
 import { CelestialAPI } from './celestial';
 import { AchieverAPI } from './achievers';
+import { SaleDetectorAPI } from './saledetector';
+import { Offer, OffersRoot } from '../datacore/offers';
 
 require('dotenv').config();
 
@@ -60,6 +62,7 @@ export class ApiClass {
 		.then((token) => {
 			CelestialAPI.refreshCelestialMarket(token);
 			AchieverAPI.refreshCapAchievers(token);
+			SaleDetectorAPI.refreshData(token);
 		})
 		.catch((e) => {
 			Logger.info("Using fallback token.");
@@ -421,19 +424,17 @@ export class ApiClass {
 
 	async loadStoreCrewOffers(logData: LogData): Promise<ApiResult> {
 		Logger.info('Load store crew offers', { logData });
-
-		let response = await fetch(
+		let response: OffersRoot[] = await fetch(
 			`https://app.startrektimelines.com/commerce/store_layout_v2/crew?access_token=${this._stt_token}&client_api=${CLIENT_API}`
 		).then(this.checkSTTResponse.bind(this)).then(res => res.json());
-		let reply = undefined;
+		let reply: Offer[] | undefined = undefined;
 		if (response) {
-			let content = response.find((r: any) => r.symbol === 'crew');
-			let limitedTimeOffers = content.grids.filter((offer: any) => {
+			let content = response.find((r: any) => r.symbol === 'crew')!;
+			let limitedTimeOffers = content.grids!.filter((offer) => {
 				return offer?.primary_content[0].offer?.seconds_remain > 0
 			});
 			reply = limitedTimeOffers
 		}
-
 		return {
 			Status: 200,
 			Body: reply
@@ -520,6 +521,7 @@ export class ApiClass {
 	}
 
 	async getCelestial() {
+		Logger.info('Get Celestial Market');
 		let result = await CelestialAPI.getCelestialMarket(this._stt_token);
 		if (!result){
 			return {
@@ -534,6 +536,7 @@ export class ApiClass {
 	}
 
 	async getFTMLog() {
+		Logger.info('Get FTM Log');
 		let result = await AchieverAPI.getCapAchievers(this._stt_token);
 		if (!result){
 			return {
@@ -545,6 +548,22 @@ export class ApiClass {
 			Status: 200,
 			Body: result
 		}
+	}
+
+	async getSales() {
+		Logger.info('Get Sales');
+		let result = await SaleDetectorAPI.getSaleData(this._stt_token);
+		if (!result) {
+			return {
+				Status: 500,
+				Body: JSON.stringify({ code: 500, error: "Could not read sale data."})
+			}
+		}
+		return {
+			Status: 200,
+			Body: result
+		}
+
 	}
 
 	async getVoyages(crew?: string[], days?: number, opAnd?: boolean) {
