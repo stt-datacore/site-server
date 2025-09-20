@@ -15,22 +15,12 @@ export interface SaleData {
 }
 
 class SaleDetector {
-    readonly STATS_PATH: string;
-    readonly DATA_FILE: string;
-
     lastRefresh = undefined as Date | undefined;
-
-    offers: Offer[] | null = null;
-    playerData: PlayerData | null = null;
     saleData: SaleData | null = null;
 
-    public get slotCost(): number {
-        return this.playerData?.player?.character?.next_crew_limit_increase_cost?.amount || 250000;
-    }
-
-    public get slotsPerCost(): number {
-        return this.playerData?.player?.character?.crew_limit_increase_per_purchase || 5;
-    }
+    private _slotCost = 250000;
+    private _slotPerCost = 5;
+    private _honorSale = false;
 
     public get isCurrent(): boolean {
         if (!this.lastRefresh) return false;
@@ -39,22 +29,6 @@ class SaleDetector {
     }
 
     constructor() {
-        this.STATS_PATH = `${process.env.PROFILE_DATA_PATH}/stats/`;
-        this.DATA_FILE = `${this.STATS_PATH}reference_player.json`
-
-        if (!fs.existsSync(this.STATS_PATH)) {
-            fs.mkdirSync(this.STATS_PATH);
-        }
-
-        if (fs.existsSync(this.DATA_FILE)) {
-            this.lastRefresh = fs.statSync(this.DATA_FILE).mtime;
-            try {
-                this.playerData = JSON.parse(fs.readFileSync(this.DATA_FILE, 'utf-8'));
-            }
-            catch {
-                this.playerData = null;
-            }
-        }
     }
 
     private async remoteFetchPlayerData(access_token: string) {
@@ -77,52 +51,41 @@ class SaleDetector {
         return undefined;
     }
 
-    public async getPlayerData(access_token: string): Promise<PlayerData | null> {
-        if (!this.playerData || !this.lastRefresh || !this.isCurrent) {
+    public async getOrRefreshSaleData(access_token: string): Promise<SaleData | null> {
+        if (!this.saleData || !this.lastRefresh || !this.isCurrent) {
             return await this.refreshData(access_token);
         }
         else {
-            return this.playerData;
+            return this.saleData;
         }
     }
 
     public async getSaleData(access_token: string): Promise<SaleData | null> {
-        await this.getPlayerData(access_token);
-        if (!this.playerData || !this.offers) return null;
-        const output: SaleData = {
-            slot_sale: this.slotCost < 250000,
-            honor_sale: this.offers.some(offer => offer.primary_content?.some(pc => pc.symbol?.startsWith("honor_tp_large_pack_listing")))
-        }
-        return output;
+        await this.getOrRefreshSaleData(access_token);
+        return this.saleData;
     }
 
     public async refreshData(access_token: string) {
-        if (!fs.existsSync(this.STATS_PATH)) {
-            fs.mkdirSync(this.STATS_PATH);
-        }
+        console.log("Refresh Sale Data ...");
         let player = await this.remoteFetchPlayerData(access_token);
         let offers = await this.loadStoreCrewOffers(access_token);
         try {
             if (offers) {
-                this.offers = offers;
+                this._honorSale = offers.some(offer => offer.primary_content?.some(pc => pc.symbol?.startsWith("honor_tp_large_pack_listing")));
             }
             if (player) {
-                let playerData = player;
-                let player_file = this.DATA_FILE;
-                fs.writeFileSync(player_file, JSON.stringify(playerData));
+                this._slotCost = player?.player?.character?.next_crew_limit_increase_cost?.amount || 250000;
+                this._slotPerCost = player?.player?.character?.crew_limit_increase_per_purchase || 5;
+                this.saleData = {
+                    honor_sale: this._honorSale,
+                    slot_sale: this._slotCost < 250000
+                };
                 this.lastRefresh = new Date();
-                this.playerData = playerData;
-                return playerData;
-            }
-            else if (fs.existsSync(this.DATA_FILE)) {
-                this.playerData = JSON.parse(fs.readFileSync(this.DATA_FILE, 'utf-8'));
-                this.lastRefresh = fs.statSync(this.DATA_FILE).mtime;
+                return this.saleData;
             }
             else {
                 this.lastRefresh = undefined;
             }
-
-            this.playerData = null;
             return null;
         }
         catch {
@@ -130,7 +93,7 @@ class SaleDetector {
                 if (player) {
                     this.lastRefresh = new Date();
                 }
-                return player ?? null;
+                return this.saleData ?? null;
             }
             catch {
                 return null;
@@ -139,6 +102,7 @@ class SaleDetector {
     }
 
     private async loadStoreCrewOffers(access_token: string): Promise<Offer[] | undefined> {
+        console.log("Loading Offers ...");
         let response: OffersRoot[] = await fetch(
             `https://app.startrektimelines.com/commerce/store_layout_v2/crew?access_token=${access_token}&client_api=${CLIENT_API}`
         ).then(res => res.json());
