@@ -22,7 +22,7 @@ let port: number = 4420;
 //let port: number = 4421;
 
 if (process.argv.length > 2) {
-	if (process.argv[2] !== 'stats') {
+	if (!Number.isNaN(Number(process.argv[2]))) {
 		port = parseInt(process.argv[2]);
 	}
 }
@@ -99,9 +99,6 @@ app.use('/api', nocache, expressLogger, ApiController);
 	// Begin Voyage Stats generation cycle
 	if (process.argv.includes("stats")) {
 		DataCoreAPI.beginStatsCycle();
-	}
-	else if (process.argv.includes("archive")) {
-		DataCoreAPI.archiveOldRecords();
 	}
 
 	if (fs.existsSync(directives)) {

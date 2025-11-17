@@ -3,6 +3,8 @@ import { DatabaseError, Op } from "sequelize";
 import { Repository, Sequelize } from "sequelize-typescript";
 import { Voyage, Historical } from "../models/VoyageRecord";
 
+require('dotenv').config();
+
 export interface Voyager {
 	crewSymbol: string,
 	seats: { seat_skill: string, seat_index: number, crewCount: number, averageDuration: number }[],
@@ -116,6 +118,7 @@ export async function getVoyageStats(sqlconn?: string, filename?: string) {
 
 export async function historicalize(sqlconn?: string, filename?: string) {
 	return new Promise<void>((resolve, reject) => {
+
 		let historical = 'historical.sqlite';
 		filename ??= "snapshot.sqlite";
 		sqlconn ??= process.env.DB_CONNECTION_STRING as string;
@@ -131,11 +134,15 @@ export async function historicalize(sqlconn?: string, filename?: string) {
 
 		sqlfile = sqlfile.replace(/\/\//g, '/');
 		snapfile = snapfile.replace(/\/\//g, '/');
+		histfile = histfile.replace(/\/\//g, '/');
 
-		console.log("Copying file to work file...")
+		console.log("Copying production database to work database...")
 		let proc = exec(`flock ${sqlfile} cp ${sqlfile} ${snapfile}`);
 
 		proc.on('exit', async (code, signal) => {
+			console.log("Copying production database to secondary backup...")
+			exec(`flock ${sqlfile} cp ${sqlfile} ${snapfile}_backup`);
+
 			console.log("Open connection to current database...");
 			let sqlCurr = new Sequelize(`sqlite:${snapfile}`, {
 				models: [Historical],
@@ -157,8 +164,13 @@ export async function historicalize(sqlconn?: string, filename?: string) {
 				target.setSeconds(0);
 				target.setMilliseconds(0);
 				console.log(`Transfer history from before ${target.toDateString()}...`);
+
+				console.log(`Sync current database...`);
 				await sqlCurr.sync({ alter: true });
+
+				console.log(`Sync historical database...`);
 				await sqlHist.sync({ alter: true });
+
 				const hist = sqlHist.getRepository(Historical);
 				const repo = sqlCurr.getRepository(Historical);
 				let n = 0;
@@ -195,7 +207,13 @@ export async function historicalize(sqlconn?: string, filename?: string) {
 					await sqlCurr.query(`VACUUM;`);
 				} while (trans);
 
-				resolve();
+				console.log(`Closing databases...`);
+				await sqlCurr.close();
+				await sqlHist.close();
+
+				console.log(`Copy work database back to production...`);
+				let proc = exec(`flock ${sqlfile} cp ${snapfile} ${sqlfile}`);
+				proc.on('exit', resolve);
 			}
 			else {
 				reject(new Error("Could not connect to database"));
@@ -387,3 +405,8 @@ async function internalgetVoyageStats(Table: Repository<Historical>) {
 	return output;
 }
 
+(async () => {
+	if (process.argv.includes("--archive")) {
+		await historicalize();
+	}
+})();
