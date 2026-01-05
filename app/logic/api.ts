@@ -19,7 +19,7 @@ import { Offer, OffersRoot } from '../datacore/offers';
 require('dotenv').config();
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'not_very_secret';
-export const CLIENT_API = 24;
+export const CLIENT_API_VERSION = 29;
 
 export class ApiResult {
 	Status: number = 200;
@@ -216,7 +216,7 @@ export class ApiClass {
 		Logger.info('Load gauntlet status', { logData });
 
 		let response = await fetch(
-			`https://app.startrektimelines.com/gauntlet/status?access_token=${this._stt_token}&client_api=${CLIENT_API}`
+			`https://app.startrektimelines.com/gauntlet/status?access_token=${this._stt_token}&client_api=${CLIENT_API_VERSION}`
 		).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
 		let reply = undefined;
@@ -425,7 +425,7 @@ export class ApiClass {
 	async loadStoreCrewOffers(logData: LogData): Promise<ApiResult> {
 		Logger.info('Load store crew offers', { logData });
 		let response: OffersRoot[] = await fetch(
-			`https://app.startrektimelines.com/commerce/store_layout_v2/crew?access_token=${this._stt_token}&client_api=${CLIENT_API}`
+			`https://app.startrektimelines.com/commerce/store_layout_v2/crew?access_token=${this._stt_token}&client_api=${CLIENT_API_VERSION}`
 		).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 		let reply: Offer[] | undefined = undefined;
 		if (response) {

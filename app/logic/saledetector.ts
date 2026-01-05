@@ -1,12 +1,12 @@
 import fs from 'fs';
 import { PlayerData } from '../datacore/player';
 import { OffersRoot, Offer } from '../datacore/offers';
-import { ApiResult, CLIENT_API } from './api';
+import { ApiResult } from './api';
 import { LogData, Logger } from './logger';
 
 require('dotenv').config();
 
-const CLIENT_API_VERSION = 27;
+const CLIENT_API_VERSION = 29;
 
 
 export interface SaleData {
@@ -104,7 +104,7 @@ class SaleDetector {
     private async loadStoreCrewOffers(access_token: string): Promise<Offer[] | undefined> {
         console.log("Loading Offers ...");
         let response: OffersRoot[] = await fetch(
-            `https://app.startrektimelines.com/commerce/store_layout_v2/crew?access_token=${access_token}&client_api=${CLIENT_API}`
+            `https://app.startrektimelines.com/commerce/store_layout_v2/crew?access_token=${access_token}&client_api=${CLIENT_API_VERSION}`
         ).then(res => res.json());
         let reply: Offer[] | undefined = undefined;
         if (response) {
