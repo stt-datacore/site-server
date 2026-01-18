@@ -1,6 +1,7 @@
 import { Collaboration, CrewTrial, Solve } from "../datacore/boss";
 import { IFBB_BossBattle_Document } from "../models/BossBattles";
 import { Logger } from '../logic/logger';
+import { apiResult } from "../logic";
 
 export abstract class CollaboratorBase {
 
@@ -11,16 +12,10 @@ export abstract class CollaboratorBase {
 
 		try {
 			let res = await this.postOrPutBossBattle(battle);
-			return {
-				Status: res,
-				Body: { result: "ok" }
-			}
+			return apiResult({ result: 'ok' }, res);
 		}
-		catch {
-			return {
-				Status: 500,
-				Body: { result: "fail" }
-			}
+		catch (err: any) {
+			return apiResult({ result: 'fail', error: err?.toString() }, 500);
 		}
 	}
 
@@ -31,23 +26,13 @@ export abstract class CollaboratorBase {
 		try {
 			let battle = await this.getCollaborationById(fleetId, bossBattleId, roomCode);
 			if (!battle) {
-				return {
-					Status: 200, // 204
-					Body: []
-				}
+				return apiResult([])
 			}
-			return {
-				Status: 200,
-				Body: battle
-			}
+			return apiResult(battle)
 		}
-		catch {
-			return {
-				Status: 500,
-				Body: { result: "fail" }
-			}
+		catch (err: any) {
+			return apiResult({ result: 'fail', error: err?.toString() }, 500);
 		}
-
 	}
 
 	async postSolves(fleetId: number, bossBattleId: number, chainIndex: number, solves: Solve[]) {
@@ -56,19 +41,12 @@ export abstract class CollaboratorBase {
 
 		try {
 			let res = await this.postOrPutSolves(fleetId, bossBattleId, chainIndex, solves);
-			return {
-				Status: res,
-				Body: { result: "ok" }
-			}
+			return apiResult({ result: "ok" }, res);
 		}
-		catch {
-			return {
-				Status: 500,
-				Body: { result: "fail" }
-			}
+		catch (err: any) {
+			return apiResult({ result: 'fail', error: err?.toString() }, 500);
 		}
 	}
-
 
 	async postTrials(fleetId: number, bossBattleId: number, chainIndex: number, trials: CrewTrial[]) {
 
@@ -76,16 +54,10 @@ export abstract class CollaboratorBase {
 
 		try {
 			let res = await this.postOrPutTrials(fleetId, bossBattleId, chainIndex, trials);
-			return {
-				Status: res,
-				Body: { result: "ok" }
-			}
+			return apiResult({ result: "ok" }, res);
 		}
-		catch {
-			return {
-				Status: 500,
-				Body: { result: "fail" }
-			}
+		catch (err: any) {
+			return apiResult({ result: 'fail', error: err?.toString() }, 500);
 		}
 	}
 
@@ -96,23 +68,14 @@ export abstract class CollaboratorBase {
 		try {
 			let res = await this.removeTrials(fleetId, bossBattleId, chainIndex);
 			if (res === 404) {
-				return {
-					Status: 200,
-					Body: { result: "not_found", message: "trial not found" }
-				}
+				return apiResult({ result: "not_found", message: "trial not found" });
 			}
 			else {
-				return {
-					Status: res,
-					Body: { result: "ok", message: "trial deleted" }
-				}
+				return apiResult({ result: "ok", message: "trial deleted" }, res);
 			}
 		}
-		catch (e: any) {
-			return {
-				Status: 500,
-				Body: { result: 'fail', message: e?.toString() ?? '' }
-			}
+		catch (err: any) {
+			return apiResult({ result: 'fail', error: err?.toString() }, 500);
 		}
 	}
 
@@ -122,16 +85,10 @@ export abstract class CollaboratorBase {
 
 		try {
 			let res = await this.clearFleetData(fleetId);
-			return {
-				Status: res,
-				Body: { result: "ok" }
-			}
+			return apiResult({ result: 'ok' }, res);
 		}
-		catch {
-			return {
-				Status: 500,
-				Body: { result: "fail" }
-			}
+		catch (err: any) {
+			return apiResult({ result: 'fail', error: err?.toString() }, 500);
 		}
 	}
 

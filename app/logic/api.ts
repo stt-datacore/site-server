@@ -22,8 +22,14 @@ export const JWT_SECRET = process.env.JWT_SECRET || 'not_very_secret';
 export const CLIENT_API_VERSION = 29;
 
 export class ApiResult {
-	Status: number = 200;
-	Body: any = undefined;
+	constructor(
+		public Status: number = 200,
+		public Body: any = undefined) {
+	}
+}
+
+export function apiResult(data: any, code = 200) {
+	return new ApiResult(code, data);
 }
 
 export class ApiClass {
@@ -97,15 +103,9 @@ export class ApiClass {
 		let userDB = await loginUser(user, password);
 		if (userDB) {
 			let token = sign({ user: userDB.loginUserName, id: userDB.id }, JWT_SECRET);
-			return {
-				Status: 200,
-				Body: JSON.stringify({ token })
-			};
+			return apiResult({ token });
 		} else {
-			return {
-				Status: 401,
-				Body: JSON.stringify({ error: 'Invalid username or password' })
-			};
+			return apiResult({ error: 'Invalid username or password' }, 401);
 		}
 	}
 
@@ -113,15 +113,9 @@ export class ApiClass {
 		Logger.info('whoami', { logData });
 		let payload = verify(token, JWT_SECRET);
 		if (payload) {
-			return {
-				Status: 200,
-				Body: JSON.stringify(payload)
-			};
+			return apiResult(payload);
 		} else {
-			return {
-				Status: 401,
-				Body: JSON.stringify({ error: 'Invalid user' })
-			};
+			return apiResult({ error: 'Invalid user' }, 401);
 		}
 	}
 
@@ -136,30 +130,18 @@ export class ApiClass {
 
 		} catch (err) {
 			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: { error: err }
-				};
+				return apiResult({ error: err }, 500);
 			}
 			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: { error: err.toString() }
-				};
+				return apiResult({ error: err.toString() }, 500);
 			}
 		}
 
 		if (res) {
-			return {
-				Status: 200,
-				Body: res
-			};
+			return apiResult(res);
 		}
 		else {
-			return {
-				Status: 500,
-				Body: { 'error': 'Unknown error' }
-			};
+			return apiResult({ 'error': 'Unknown error' }, 500);
 		}
 	}
 
@@ -167,48 +149,27 @@ export class ApiClass {
 		let profile = await loadProfile(dbid);
 		if (profile) {
 			if (short_crew) {
-				return {
-					Status: 200,
-					Body: {
-						lastUpdate: profile.lastUpdate,
-						shortCrewList: profile.shortCrewList
-					}
-				}
+				return apiResult({ lastUpdate: profile.lastUpdate, shortCrewList: profile.shortCrewList });
 			}
 			else if (fs.existsSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`)) {
-				return {
-					Status: 200,
-					Body: JSON.parse(fs.readFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, 'utf-8'))
-				}
+				return apiResult(JSON.parse(fs.readFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, 'utf-8')));
 			}
 			else {
-				return {
-					Status: 404,
-					Body: 'Profile file not found'
-				}
+				return apiResult({ error: 'Profile file not found' }, 404);
 			}
 		}
 		else {
-			return {
-				Status: 404,
-				Body: 'Profile record not found'
-			}
+			return apiResult({ error: 'Profile record not found' }, 404);
 		}
 	}
 
 	async getProfiles(dbids: number[] | string[]) {
 		let results = await getProfiles(dbids);
 		if (results) {
-			return {
-				Status: 200,
-				Body: results
-			}
+			return apiResult(results);
 		}
 		else {
-			return {
-				Status: 404,
-				Body: 'Profile record not found'
-			}
+			return apiResult({ error: 'Profile record not found' }, 404);
 		}
 	}
 
@@ -224,10 +185,7 @@ export class ApiClass {
 			reply = response.character.gauntlets[0];
 		}
 
-		return {
-			Status: 200,
-			Body: reply
-		};
+		return apiResult(reply);
 	}
 
 	async loadEventLeaderboard(instance_id: number): Promise<ApiResult> {
@@ -235,18 +193,14 @@ export class ApiClass {
 				`https://app.startrektimelines.com/event/leaderboard?access_token=${this._stt_token}&instance_id=${instance_id}&max=100`,
 			).then(this.checkSTTResponse.bind(this)).then(res => res.json());
 
-		return {
-			Status: 200,
-			Body: response
-		}
+		return apiResult(response);
 	}
 
 	async loadFleetInfo(fleetId: string, logData: LogData, username?: string, password?: string, access_token?: string): Promise<ApiResult> {
 
-		return {
-			Status: 403,
-			Body: "Fleet info can be loaded directly from the DataCore website. Please use that link, instead."
-		};
+		return apiResult({
+			error: "Fleet info can be loaded directly from the DataCore website. Please use that link, instead.",
+		}, 403);
 
 		// Logger.info('Load fleet info', { fleetId, logData });
 
@@ -435,21 +389,14 @@ export class ApiClass {
 			});
 			reply = limitedTimeOffers
 		}
-		return {
-			Status: 200,
-			Body: reply
-		};
+		return apiResult(reply);
 	}
 
 	async loadComments(symbol: string, logData: LogData): Promise<ApiResult> {
 		Logger.info('Load comments', { symbol, logData });
 
 		let comments = await loadCommentsDB(symbol);
-
-		return {
-			Status: 200,
-			Body: comments
-		};
+		return apiResult(comments);
 	}
 
 	async saveComment(token: string, symbol: string, markdown: string, logData: LogData): Promise<ApiResult> {
@@ -457,20 +404,13 @@ export class ApiClass {
 
 		let payload = verify(token, JWT_SECRET);
 		if (!payload) {
-			return {
-				Status: 200, // 204
-				Body: 'Aah, something went wrong!'
-			};
+			return apiResult({ error: 'Something went wrong.' }, 401);
 		}
 
 		let user_id = (payload as any).id;
 
 		let comments = await saveCommentDB(symbol, markdown, user_id);
-
-		return {
-			Status: 200,
-			Body: comments
-		};
+		return apiResult(comments);
 	}
 
 	async getDBIDbyDiscord(discordUserName: string, discordUserDiscriminator: string): Promise<ApiResult> {
@@ -479,15 +419,9 @@ export class ApiClass {
 		let dbid = await getDBIDbyDiscord(discordUserName, discordUserDiscriminator);
 
 		if (dbid) {
-			return {
-				Status: 200,
-				Body: JSON.stringify({ dbid }),
-			}
+			return apiResult({ dbid });
 		} else {
-			return {
-				Status: 200, // 204
-				Body: JSON.stringify({ error: 'No DBID found for Discord user' }),
-			}
+			return apiResult({ error: 'No DBID found for Discord user' });
 		}
 	}
 
@@ -497,16 +431,10 @@ export class ApiClass {
 		let result = await recordTelemetryDB(type, data);
 		if (result) {
 			if (DEBUG) console.log("Telemetry success.")
-			return {
-				Status: 200,
-				Body: JSON.stringify({ success: true }),
-			}
+			return apiResult({ success: true });
 		} else {
 			if (DEBUG) console.log("Telemetry fail.")
-			return {
-				Status: 500,
-				Body: JSON.stringify({ success: false }),
-			}
+			return apiResult({ success: false }, 500);
 		}
 	}
 
@@ -514,56 +442,34 @@ export class ApiClass {
 		Logger.info('Get telemetry', { type });
 
 		let result = await getTelemetryDB(type);
-		return {
-			Status: 200,
-			Body: result
-		}
+		return apiResult(result);
 	}
 
 	async getCelestial() {
 		Logger.info('Get Celestial Market');
 		let result = await CelestialAPI.getCelestialMarket(this._stt_token);
 		if (!result){
-			return {
-				Status: 500,
-				Body: JSON.stringify({ code: 500, error: "Could not read celestial market."})
-			}
+			return apiResult({ error: "Could not read celestial market." }, 500);
 		}
-		return {
-			Status: 200,
-			Body: result
-		}
+		return apiResult(result);
 	}
 
 	async getFTMLog() {
 		Logger.info('Get FTM Log');
 		let result = await AchieverAPI.getCapAchievers(this._stt_token);
-		if (!result){
-			return {
-				Status: 500,
-				Body: JSON.stringify({ code: 500, error: "Could not read cap achievers."})
-			}
+		if (!result) {
+			return apiResult({ error: "Could not read cap achievers."});
 		}
-		return {
-			Status: 200,
-			Body: result
-		}
+		return apiResult(result);
 	}
 
 	async getSales() {
 		Logger.info('Get Sales');
 		let result = await SaleDetectorAPI.getSaleData(this._stt_token);
 		if (!result) {
-			return {
-				Status: 500,
-				Body: JSON.stringify({ code: 500, error: "Could not read sale data."})
-			}
+			return apiResult({ error: "Could not read sale data."}, 500);
 		}
-		return {
-			Status: 200,
-			Body: result
-		}
-
+		return apiResult(result);
 	}
 
 	async getVoyages(crew?: string[], days?: number, opAnd?: boolean) {
@@ -574,11 +480,7 @@ export class ApiClass {
 
 		Logger.info('Get voyages', { crew, days });
 		let result = await voyageRawByDays(days, crew, opAnd)
-
-		return {
-			Status: 200,
-			Body: result
-		}
+		return apiResult(result);
 	}
 
 	/* New SQLite Stuff! */
@@ -593,30 +495,16 @@ export class ApiClass {
 		try {
 			res = await uploadProfile(dbid.toString(), player_data, timeStamp);
 		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
+			return apiResult({ error: err?.toString() }, 500);
 		}
 
 		this._player_data[dbid] = new Date();
 		fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
 
-		return {
-			Status: 200,
-			Body: {
-				'dbid': dbid,
-				timeStamp: timeStamp.toISOString()
-			}
-		};
+		return apiResult({
+			'dbid': dbid,
+			timeStamp: timeStamp.toISOString()
+		});
 
 	}
 
@@ -637,35 +525,18 @@ export class ApiClass {
 				playerData = JSON.parse(fs.readFileSync(path, 'utf-8'));
 			}
 		} catch (err) {
-			if (typeof err === 'string') {
-				return {
-					Status: 500,
-					Body: err
-				};
-			}
-			else if (err instanceof Error) {
-				return {
-					Status: 500,
-					Body: err.toString()
-				};
-			}
+			return apiResult({ error: err?.toString() }, 500);
 		}
 
 		if (player && playerData) {
-			return {
-				Status: 200,
-				Body: {
-					timeStamp: player.updatedAt,
-					dbid: player.dbid,
-					playerData
-				}
-			};
+			return apiResult({
+				timeStamp: player.updatedAt,
+				dbid: player.dbid,
+				playerData
+			});
 		}
 		else {
-			return {
-				Status: 404, // 204
-				Body: null
-			};
+			return apiResult(null, 404);
 		}
 
 	}

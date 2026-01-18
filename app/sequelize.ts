@@ -8,6 +8,7 @@ import fs from 'fs';
 import { TrackedVoyage, TrackedCrew } from './models/Tracked';
 import { BossBattleDocument, SolveDocument, TrialDocument } from './models/BossBattles';
 import { Logger } from './logic';
+import { PlayerResourceRecord } from './models/PlayerResources';
 
 require('dotenv').config();
 
@@ -93,7 +94,7 @@ export async function makeSql(idnumber: number, makeFleet?: boolean, forceRecrea
 	else {
 		while (i < 3) {
 			const newdb = new Sequelize(dpath, {
-				models: [TrackedVoyage, TrackedCrew],
+				models: [TrackedVoyage, TrackedCrew, PlayerResourceRecord],
 				logging: false,
 				repositoryMode: true
 			});

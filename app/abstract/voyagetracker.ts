@@ -3,7 +3,7 @@ import { TrackedCrew, TrackedVoyage } from "../models/Tracked";
 
 import { Logger, LogData } from "../logic/logger";
 
-import { ApiResult } from "../logic/api";
+import { apiResult, ApiResult } from "../logic/api";
 
 export type ErrorType = { error: number, message: string };
 
@@ -32,35 +32,18 @@ export abstract class VoyageTrackerBase {
     async getLastTrackedId(dbid?: number) {
         Logger.info("Last Tracked Id", { dbid });
         let trackerId = 0;
-        if (!dbid)
-            return {
-                Status: 400,
-                Body: { result: "bad input" },
-            };
+        if (!dbid) return apiResult({ error: "Bad input" }, 400);
 
-            try {
-                trackerId = await this.getLastInsertId(dbid);
-            } catch (err) {
-                if (typeof err === "string") {
-                    return {
-                        Status: 500,
-                        Body: err,
-                    };
-                } else if (err instanceof Error) {
-                    return {
-                        Status: 500,
-                        Body: err.toString(),
-                    };
-                }
-            }
+        try {
+            trackerId = await this.getLastInsertId(dbid);
+        } catch (err) {
+            return apiResult({ error: err?. toString() }, 500);
+        }
 
-            return {
-                Status: 200,
-                Body: {
-                    dbid: dbid,
-                    lastId: trackerId
-                },
-            };
+        return apiResult({
+            dbid: dbid,
+            lastId: trackerId
+        });
     }
 
     async deleteTrackedVoyage(
@@ -69,11 +52,7 @@ export abstract class VoyageTrackerBase {
     ): Promise<ApiResult> {
         Logger.info("Tracked Voyage Delete", { dbid, trackerId });
 
-        if (!dbid || !trackerId)
-            return {
-                Status: 400,
-                Body: { result: "bad input" },
-            };
+        if (!dbid || !trackerId) return apiResult({ error: "Bad input" }, 400);
 
         const timeStamp = new Date();
         let res: boolean;
@@ -81,36 +60,16 @@ export abstract class VoyageTrackerBase {
         try {
             res = await this.deleteVoyageByTrackerId(dbid, trackerId);
             if (!res) {
-                return {
-                    Status: 400,
-                    Body: {
-                        dbid: dbid,
-                        error: "Unable to delete record."
-                    },
-                };
+                return apiResult({ error: "Unable to delete record." }, 500);
             }
         } catch (err) {
-            if (typeof err === "string") {
-                return {
-                    Status: 500,
-                    Body: err,
-                };
-            } else if (err instanceof Error) {
-                return {
-                    Status: 500,
-                    Body: err.toString(),
-                };
-            }
+            return apiResult({ error: err?.toString() }, 500);
         }
 
-        return {
-            Status: 200,
-            Body: {
-                dbid: dbid,
-                trackerId: trackerId
-            },
-        };
-
+        return apiResult({
+            dbid: dbid,
+            trackerId: trackerId
+        });
     }
 
     async postTrackedVoyage(
@@ -126,39 +85,22 @@ export abstract class VoyageTrackerBase {
         try {
             res = await this.postOrPutVoyage(dbid, voyage, timeStamp);
             if (!res || res.status >= 300) {
-                return {
-                    Status: res?.status ?? 500,
-                    Body: {
-                        dbid: dbid,
-                        error: "Unable to insert record.",
-                        timeStamp: timeStamp.toISOString(),
-                    },
-                };
+                return apiResult({
+                    dbid: dbid,
+                    error: "Unable to insert record.",
+                    timeStamp: timeStamp.toISOString(),
+                }, res?.status || 500);
             }
         } catch (err) {
-            if (typeof err === "string") {
-                return {
-                    Status: 500,
-                    Body: err,
-                };
-            } else if (err instanceof Error) {
-                return {
-                    Status: 500,
-                    Body: err.toString(),
-                };
-            }
+            return apiResult({ error: err?.toString() }, 500);
         }
 
-        return {
-            Status: 201,
-            Body: {
-                dbid: dbid,
-                trackerId: res!.trackerId,
-                inputId: res!.inputId,
-                timeStamp: timeStamp.toISOString(),
-            },
-        };
-
+        return apiResult({
+            dbid: dbid,
+            trackerId: res!.trackerId,
+            inputId: res!.inputId,
+            timeStamp: timeStamp.toISOString(),
+        }, 201);
     }
 
     async postTrackedData(
@@ -175,39 +117,22 @@ export abstract class VoyageTrackerBase {
         try {
             res = await this.postOrPutTrackedData(dbid, voyage, assignments, timeStamp);
             if (!res || res.status >= 300) {
-                return {
-                    Status: res?.status ?? 500,
-                    Body: {
-                        dbid: dbid,
-                        error: "Unable to insert record.",
-                        timeStamp: timeStamp.toISOString(),
-                    },
-                };
+                return apiResult({
+                    dbid: dbid,
+                    error: "Unable to insert record.",
+                    timeStamp: timeStamp.toISOString(),
+                }, res?.status || 500);
             }
         } catch (err) {
-            if (typeof err === "string") {
-                return {
-                    Status: 500,
-                    Body: err,
-                };
-            } else if (err instanceof Error) {
-                return {
-                    Status: 500,
-                    Body: err.toString(),
-                };
-            }
+            return apiResult({ error: err?.toString() }, 500);
         }
 
-        return {
-            Status: 201,
-            Body: {
-                dbid: dbid,
-                trackerId: res!.trackerId,
-                inputId: res!.inputId,
-                timeStamp: timeStamp.toISOString(),
-            },
-        };
-
+        return apiResult({
+            dbid: dbid,
+            trackerId: res!.trackerId,
+            inputId: res!.inputId,
+            timeStamp: timeStamp.toISOString(),
+        }, 201);
     }
 
     async postTrackedDataBatch(
@@ -226,46 +151,30 @@ export abstract class VoyageTrackerBase {
             const af = res.every(s => s.status >= 300);
             const f = res.find(s => s.status >= 300);
             if (!res || f) {
-                return {
-                    Status: af ? f?.status ?? 500 : 200,
-                    Body: {
-                        data: res?.map(receipt => ({
-                            status: receipt!.status,
-                            trackerId: receipt!.trackerId,
-                            inputId: receipt!.inputId,
-                        })),
-                        dbid: dbid,
-                        error: "Unable to insert one or more records.",
-                        timeStamp: timeStamp.toISOString(),
-                    },
-                };
+                return apiResult({
+                    data: res?.map(receipt => ({
+                        status: receipt!.status,
+                        trackerId: receipt!.trackerId,
+                        inputId: receipt!.inputId,
+                    })),
+                    dbid: dbid,
+                    error: "Unable to insert one or more records.",
+                    timeStamp: timeStamp.toISOString(),
+                }, af ? f?.status ?? 500 : 200);
             }
         } catch (err) {
-            if (typeof err === "string") {
-                return {
-                    Status: 500,
-                    Body: err,
-                };
-            } else if (err instanceof Error) {
-                return {
-                    Status: 500,
-                    Body: err.toString(),
-                };
-            }
+            return apiResult({ error: err?.toString() }, 500);
         }
 
-        return {
-            Status: 201,
-            Body: {
-                data: res?.map(receipt => ({
-                    status: receipt!.status,
-                    trackerId: receipt!.trackerId,
-                    inputId: receipt!.inputId,
-                })),
-                dbid,
-                timeStamp: timeStamp.toISOString(),
-            },
-        };
+        return apiResult({
+            data: res?.map(receipt => ({
+                status: receipt!.status,
+                trackerId: receipt!.trackerId,
+                inputId: receipt!.inputId,
+            })),
+            dbid,
+            timeStamp: timeStamp.toISOString(),
+        }, 201);
     }
 
     async getTrackedVoyages(
@@ -276,17 +185,13 @@ export abstract class VoyageTrackerBase {
         Logger.info("Get voyage data", { dbid, trackerId });
         let voyages: TrackedVoyage[] | null = null;
 
-        if (!dbid && !trackerId)
-            return {
-                Status: 400,
-                Body: { result: "bad input" },
-            };
+        // if (!dbid && !trackerId)
+        //     return {
+        //         Status: 400,
+        //         Body: { result: "bad input" },
+        //     };
 
-        if (!dbid)
-            return {
-                Status: 400,
-                Body: { result: "bad input" },
-            };
+        if (!dbid) return apiResult({ result: "bad input" }, 400);
 
         try {
             if (trackerId) {
@@ -297,29 +202,13 @@ export abstract class VoyageTrackerBase {
                 voyages = await this.getVoyagesByDbid(dbid);
             }
         } catch (err) {
-            if (typeof err === "string") {
-                return {
-                    Status: 500,
-                    Body: err,
-                };
-            } else if (err instanceof Error) {
-                return {
-                    Status: 500,
-                    Body: err.toString(),
-                };
-            }
+            return apiResult({ error: err?.toString() }, 500);
         }
 
         if (voyages) {
-            return {
-                Status: 200,
-                Body: voyages,
-            };
+            return apiResult(voyages);
         } else {
-            return {
-                Status: 200, // 204
-                Body: [],
-            };
+            return apiResult([]);
         }
     }
 
@@ -341,37 +230,21 @@ export abstract class VoyageTrackerBase {
                 timeStamp
             );
             if (res >= 300) {
-                return {
-                    Status: res,
-                    Body: {
-                        dbid: dbid,
-                        error: "Unable to insert record.",
-                        timeStamp: timeStamp.toISOString(),
-                    },
-                };
+                return apiResult({
+                    dbid: dbid,
+                    error: "Unable to insert record.",
+                    timeStamp: timeStamp.toISOString(),
+                }, 500);
             }
         } catch (err) {
-            if (typeof err === "string") {
-                return {
-                    Status: 500,
-                    Body: err,
-                };
-            } else if (err instanceof Error) {
-                return {
-                    Status: 500,
-                    Body: err.toString(),
-                };
-            }
+            return apiResult({ error: err?.toString() }, 500);
         }
 
-        return {
-            Status: 201,
-            Body: {
-                dbid: dbid,
-                trackerId: assignment.tracker_id,
-                timeStamp: timeStamp.toISOString(),
-            },
-        };
+        return apiResult({
+            dbid: dbid,
+            trackerId: assignment.tracker_id,
+            timeStamp: timeStamp.toISOString(),
+        }, 201);
     }
 
     async postTrackedAssignmentsMany(
@@ -392,37 +265,21 @@ export abstract class VoyageTrackerBase {
                 timeStamp
             );
             if (res >= 300) {
-                return {
-                    Status: res,
-                    Body: {
-                        dbid: dbid,
-                        error: "Unable to insert record.",
-                        timeStamp: timeStamp.toISOString(),
-                    },
-                };
+                return apiResult({
+                    dbid: dbid,
+                    error: "Unable to insert record.",
+                    timeStamp: timeStamp.toISOString(),
+                }, 500);
             }
         } catch (err) {
-            if (typeof err === "string") {
-                return {
-                    Status: 500,
-                    Body: err,
-                };
-            } else if (err instanceof Error) {
-                return {
-                    Status: 500,
-                    Body: err.toString(),
-                };
-            }
+            return apiResult({ error: err?.toString() }, 500);
         }
 
-        return {
-            Status: 201,
-            Body: {
-                dbid: dbid,
-                trackerIds: assignments.map((a) => a.tracker_id),
-                timeStamp: timeStamp.toISOString(),
-            },
-        };
+        return apiResult({
+            dbid: dbid,
+            trackerIds: assignments.map((a) => a.tracker_id),
+            timeStamp: timeStamp.toISOString(),
+        }, 201);
     }
 
     async getTrackedAssignments(
@@ -447,30 +304,10 @@ export abstract class VoyageTrackerBase {
                 assignments = await this.getAssignmentsByDbid(dbid);
             }
         } catch (err) {
-            if (typeof err === "string") {
-                return {
-                    Status: 500,
-                    Body: err,
-                };
-            } else if (err instanceof Error) {
-                return {
-                    Status: 500,
-                    Body: err.toString(),
-                };
-            }
+            return apiResult({ error: err?.toString() }, 500);
         }
-
-        if (assignments) {
-            return {
-                Status: 200,
-                Body: assignments,
-            };
-        } else {
-            return {
-                Status: 200, // 204
-                Body: [],
-            };
-        }
+        assignments ??= [];
+        return apiResult(assignments);
     }
 
     async getTrackedData(
@@ -483,10 +320,7 @@ export abstract class VoyageTrackerBase {
         let assignments: TrackedCrew[] | null = null;
 
         if (!dbid)
-            return {
-                Status: 400,
-                Body: { result: "bad input" },
-            };
+            return apiResult({ result: "bad input" }, 400);
 
         try {
             if (trackerId) {
@@ -501,48 +335,23 @@ export abstract class VoyageTrackerBase {
                 assignments = await this.getAssignmentsByDbid(dbid, limit);
             }
         } catch (err) {
-            if (typeof err === "string") {
-                return {
-                    Status: 500,
-                    Body: err,
-                };
-            } else if (err instanceof Error) {
-                return {
-                    Status: 500,
-                    Body: err.toString(),
-                };
-            }
+            return apiResult({ error: err?.toString() }, 500);
         }
-
-        if (voyages || assignments) {
-            return {
-                Status: 200,
-                Body: {
-                    voyages,
-                    assignments,
-                },
-            };
-        } else {
-            return {
-                Status: 200, // 204
-                Body: { voyages: [], assignments: [] },
-            };
-        }
+        voyages ??= [];
+        assignments ??= [];
+        return apiResult({
+            voyages,
+            assignments,
+        });
     }
 
     public async repairVoyages(dbid: number) {
         let result = await this.repairAccount(dbid);
 
         if ("error" in result) {
-            return {
-                Status: result.error,
-                Body: { status: 'FAIL', message: result.message, code: result.error }
-            }
+            return apiResult({ status: 'FAIL', message: result.message, code: result.error }, result.error);
         }
-        return {
-            Status: 200, // 204
-            Body: { status: 'OK', message: 'Database repaired.', report: result },
-        };
+        return apiResult({ status: 'OK', message: 'Database repaired.', report: result });
     }
 
     protected abstract deleteVoyageByTrackerId(dbid: number, trackerId: number): Promise<boolean>;

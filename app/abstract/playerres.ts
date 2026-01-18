@@ -1,0 +1,50 @@
+import { apiResult } from "../logic";
+import { IPlayerResourceRecord } from "../models/PlayerResources";
+
+
+export abstract class PlayerResourceBase {
+    public async postPlayerResources(dbid: number, resources: {[key:string]: number}) {
+        try {
+            let res = await this.postResources({
+                dbid,
+                timestamp: new Date(),
+                resources
+            });
+            if (res === 200) {
+                return apiResult({ result: "ok" });
+            }
+            else {
+                return apiResult({ result: "fail" }, res);
+            }
+        }
+        catch (err) {
+            return apiResult({ error: err?.toString() }, 500);
+        }
+    }
+
+    public async getPlayerResources(dbid: number, startDate?: Date, endDate?: Date) {
+        try {
+            if (startDate) {
+                startDate = new Date(startDate);
+            }
+            if (endDate) {
+                endDate = new Date(endDate);
+            }
+            let res = await this.getResources(dbid, startDate, endDate);
+            if (typeof res === 'number') {
+                return apiResult({ result: 'fail' }, res);
+            }
+            else {
+                return apiResult(res);
+            }
+        }
+        catch (err) {
+            return apiResult({ error: err?.toString() }, 500);
+        }
+    }
+
+    protected abstract postResources(record: IPlayerResourceRecord): Promise<number>;
+
+    protected abstract getResources(dbid: number, startDate?: Date, endDate?: Date): Promise<IPlayerResourceRecord[] | number>;
+
+}
