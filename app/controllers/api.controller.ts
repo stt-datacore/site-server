@@ -6,6 +6,7 @@ import { IFBB_BossBattle_Document } from '../models/BossBattles';
 import { CrewTrial, Solve } from '../datacore/boss';
 import { VoyageTrackerAPI } from '../logic/voyagetracker';
 import { CollaborationAPI } from '../logic/collab';
+import { PlayerResourcesAPI } from '../logic/playerres';
 
 // Assign router to the express.Router() instance
 const router: Router = Router();
@@ -665,6 +666,51 @@ router.get('/getBossBattle', async (req: Request, res: Response, next) => {
 		}
 
 		let apiResult = await CollaborationAPI.getCollaboration(fleetId, id, room);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.post('/playerResources', async (req: Request, res: Response, next) => {
+	if (!req.body?.dbid || !req.body?.resources) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = req.body.dbid as number;
+		let resources = req.body.resources as {[key:string]: number};
+
+		if (dbid === undefined || resources === undefined) {
+			res.status(400).send("Bad request");
+			return;
+		}
+
+		let apiResult = await PlayerResourcesAPI.postPlayerResources(dbid, resources);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.get('/player-resources', async (req: Request, res: Response, next) => {
+	if (!req.query || !req.query.dbid) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = Number(req.query.dbid);
+		let startDate: any = req.query.startDate;
+		let endDate: any = req.query.endDate;
+		if (startDate) {
+			startDate = new Date(startDate);
+		}
+		if (endDate) {
+			endDate = new Date(endDate);
+		}
+		let apiResult = await PlayerResourcesAPI.getPlayerResources(dbid, startDate, endDate)
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);

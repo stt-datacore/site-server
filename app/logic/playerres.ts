@@ -3,7 +3,7 @@ import { PlayerResourceBase } from "../abstract/playerres";
 import { IPlayerResourceRecord, PlayerResourceRecord } from "../models/PlayerResources";
 import { makeSql } from "../sequelize";
 
-export class PlayerResourcesAPI extends PlayerResourceBase {
+export class PlayerResources extends PlayerResourceBase {
     protected async postResources(record: IPlayerResourceRecord): Promise<number> {
         let sql = await makeSql(record.dbid, false);
         if (sql) {
@@ -49,3 +49,5 @@ export class PlayerResourcesAPI extends PlayerResourceBase {
     }
 
 }
+
+export let PlayerResourcesAPI = new PlayerResources();
