@@ -694,7 +694,7 @@ router.post('/playerResources', async (req: Request, res: Response, next) => {
 	}
 });
 
-router.get('/player-resources', async (req: Request, res: Response, next) => {
+router.get('/playerResources', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.dbid) {
 		res.status(400).send('Whaat?');
 		return;
