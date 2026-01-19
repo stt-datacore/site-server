@@ -7,6 +7,7 @@ import { CrewTrial, Solve } from '../datacore/boss';
 import { VoyageTrackerAPI } from '../logic/voyagetracker';
 import { CollaborationAPI } from '../logic/collab';
 import { PlayerResourcesAPI } from '../logic/playerres';
+import { IPlayerResourceRecord } from '../models/PlayerResources';
 
 // Assign router to the express.Router() instance
 const router: Router = Router();
@@ -666,6 +667,28 @@ router.get('/getBossBattle', async (req: Request, res: Response, next) => {
 		}
 
 		let apiResult = await CollaborationAPI.getCollaboration(fleetId, id, room);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.post('/playerResourcesBatch', async (req: Request, res: Response, next) => {
+	if (!req.body?.dbid || !req.body?.resources) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = req.body.dbid as number;
+		let resources = req.body.resources as IPlayerResourceRecord[];
+
+		if (dbid === undefined || resources === undefined) {
+			res.status(400).send("Bad request");
+			return;
+		}
+
+		let apiResult = await PlayerResourcesAPI.postPlayerResourcesBatch(dbid, resources);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);

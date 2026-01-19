@@ -3,6 +3,22 @@ import { IPlayerResourceRecord } from "../models/PlayerResources";
 
 
 export abstract class PlayerResourceBase {
+
+    public async postPlayerResourcesBatch(dbid: number, resources: IPlayerResourceRecord[]) {
+        try {
+            let res = await this.postResourcesBatch(dbid, resources);
+            if (res === 200) {
+                return apiResult({ result: "ok" });
+            }
+            else {
+                return apiResult({ result: "fail" }, res);
+            }
+        }
+        catch (err) {
+            return apiResult({ error: err?.toString() }, 500);
+        }
+    }
+
     public async postPlayerResources(dbid: number, resources: {[key:string]: number}) {
         try {
             let res = await this.postResources({
@@ -42,6 +58,8 @@ export abstract class PlayerResourceBase {
             return apiResult({ error: err?.toString() }, 500);
         }
     }
+
+    protected abstract postResourcesBatch(dbid: number, records: IPlayerResourceRecord[]): Promise<number>;
 
     protected abstract postResources(record: IPlayerResourceRecord): Promise<number>;
 
