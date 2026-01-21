@@ -6,7 +6,7 @@ import { LogData, Logger } from './logger';
 
 require('dotenv').config();
 
-const CLIENT_API_VERSION = 29;
+const CLIENT_API_VERSION = 30;
 
 
 export interface SaleData {

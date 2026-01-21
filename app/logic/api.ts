@@ -19,7 +19,7 @@ import { Offer, OffersRoot } from '../datacore/offers';
 require('dotenv').config();
 
 export const JWT_SECRET = process.env.JWT_SECRET || 'not_very_secret';
-export const CLIENT_API_VERSION = 29;
+export const CLIENT_API_VERSION = 30;
 
 export class ApiResult {
 	constructor(
