@@ -77,6 +77,8 @@ export class PlayerResources extends PlayerResourceBase {
                     }
                 }
             });
+            const toDestroy = [] as PlayerResourceRecord[];
+
             if (current?.length) {
                 let response = [] as IPlayerResourceRecord[];
                 for (let obj of current) {
@@ -84,9 +86,17 @@ export class PlayerResources extends PlayerResourceBase {
                         response.push(obj);
                     }
                     else {
-                        await obj.destroy();
                         await this.postResourcesBatch(dbid, obj.resources as any);
                         response = response.concat(obj.resources as any);
+                        toDestroy.push(obj);
+                    }
+                }
+                if (toDestroy.length) {
+                    await repo.destroy({
+                        where: { [Op.or]: toDestroy.map(td => ({ id: td.id })) }
+                    });
+                    if (repo.sequelize) {
+                        await repo.sequelize.query("VACUUM;");
                     }
                 }
                 return response.filter((r, i) => response.findIndex(r2 => r.timestamp.getTime() === r2.timestamp.getTime()) === i);
