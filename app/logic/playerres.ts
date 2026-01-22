@@ -56,7 +56,7 @@ export class PlayerResources extends PlayerResourceBase {
         return 500;
     }
 
-    protected async getResources(dbid: number, startDate?: Date, endDate?: Date): Promise<IPlayerResourceRecord[] | number> {
+    protected async getResources(dbid: number, startDate?: Date, endDate?: Date, options?: any): Promise<IPlayerResourceRecord[] | number> {
         let sql = await makeSql(dbid, false);
 
         if (!startDate) {
@@ -95,9 +95,10 @@ export class PlayerResources extends PlayerResourceBase {
                     await repo.destroy({
                         where: { [Op.or]: toDestroy.map(td => ({ id: td.id })) }
                     });
-                    if (repo.sequelize) {
-                        await repo.sequelize.query("VACUUM;");
-                    }
+
+                }
+                if ((toDestroy.length || options?.vacuum) && repo.sequelize) {
+                    await repo.sequelize.query("VACUUM;");
                 }
                 return response.filter((r, i) => response.findIndex(r2 => r.timestamp.getTime() === r2.timestamp.getTime()) === i);
             }
