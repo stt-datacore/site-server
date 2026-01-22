@@ -6,6 +6,7 @@ import { makeSql } from "../sequelize";
 export class PlayerResources extends PlayerResourceBase {
 
     protected async postResourcesBatch(dbid: number, records: IPlayerResourceRecord[]): Promise<number> {
+        if (!records?.length || !Array.isArray(records)) return 400;
         let sql = await makeSql(dbid, false);
         if (sql) {
             for (let record of records) {
@@ -32,6 +33,7 @@ export class PlayerResources extends PlayerResourceBase {
     }
 
     protected async postResources(record: IPlayerResourceRecord): Promise<number> {
+        if (!record || Array.isArray(record)) return 400;
         let sql = await makeSql(record.dbid, false);
         if (sql) {
             const repo = sql.getRepository(PlayerResourceRecord);
@@ -56,6 +58,7 @@ export class PlayerResources extends PlayerResourceBase {
 
     protected async getResources(dbid: number, startDate?: Date, endDate?: Date): Promise<IPlayerResourceRecord[] | number> {
         let sql = await makeSql(dbid, false);
+
         if (!startDate) {
             startDate = new Date();
             startDate.setDate(startDate.getDate() - 365);
@@ -75,7 +78,18 @@ export class PlayerResources extends PlayerResourceBase {
                 }
             });
             if (current?.length) {
-                return current;
+                let response = [] as IPlayerResourceRecord[];
+                for (let obj of current) {
+                    if (!Array.isArray(obj.resources)) {
+                        response.push(obj);
+                    }
+                    else {
+                        await obj.destroy();
+                        await this.postResourcesBatch(dbid, obj.resources as any);
+                        response = response.concat(obj.resources as any);
+                    }
+                }
+                return response.filter((r, i) => response.findIndex(r2 => r.timestamp.getTime() === r2.timestamp.getTime()) === i);
             }
             else {
                 return 404;
