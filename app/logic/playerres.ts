@@ -85,21 +85,21 @@ export class PlayerResources extends PlayerResourceBase {
                     if (!Array.isArray(obj.resources)) {
                         response.push(obj);
                     }
-                    else {
-                        await this.postResourcesBatch(dbid, obj.resources as any);
-                        response = response.concat(obj.resources as any);
-                        toDestroy.push(obj);
-                    }
+                    // else {
+                    //     await this.postResourcesBatch(dbid, obj.resources as any);
+                    //     response = response.concat(obj.resources as any);
+                    //     toDestroy.push(obj);
+                    // }
                 }
-                if (toDestroy.length) {
-                    await repo.destroy({
-                        where: { [Op.or]: toDestroy.map(td => ({ id: td.id })) }
-                    });
+                // if (toDestroy.length) {
+                //     await repo.destroy({
+                //         where: { [Op.or]: toDestroy.map(td => ({ id: td.id })) }
+                //     });
 
-                }
-                if ((toDestroy.length || options?.vacuum) && repo.sequelize) {
-                    await repo.sequelize.query("VACUUM;");
-                }
+                // }
+                // if ((toDestroy.length || options?.vacuum) && repo.sequelize) {
+                //     await repo.sequelize.query("VACUUM;");
+                // }
                 return response.filter((r, i) => response.findIndex(r2 => r.timestamp.getTime() === r2.timestamp.getTime()) === i);
             }
             else {
