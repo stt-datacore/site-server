@@ -59,10 +59,43 @@ export abstract class PlayerResourceBase {
         }
     }
 
+    public async repairPlayerResources(dbid: number) {
+        try {
+            let res = await this.repairResources(dbid);
+            if (res !== 200) {
+                return apiResult({ result: 'fail' }, res);
+            }
+            else {
+                return apiResult({ result: 'ok' }, res);
+            }
+        }
+        catch (err) {
+            return apiResult({ error: err?.toString() }, 500);
+        }
+    }
+
+    public async clearPlayerResources(dbid: number) {
+        try {
+            let res = await this.clearResources(dbid);
+            if (res !== 200) {
+                return apiResult({ result: 'fail' }, res);
+            }
+            else {
+                return apiResult({ result: 'ok' }, res);
+            }
+        }
+        catch (err) {
+            return apiResult({ error: err?.toString() }, 500);
+        }
+    }
+
     protected abstract postResourcesBatch(dbid: number, records: IPlayerResourceRecord[]): Promise<number>;
 
     protected abstract postResources(record: IPlayerResourceRecord): Promise<number>;
 
     protected abstract getResources(dbid: number, startDate?: Date, endDate?: Date): Promise<IPlayerResourceRecord[] | number>;
 
+    protected abstract repairResources(dbid: number): Promise<number>;
+
+    protected abstract clearResources(dbid: number): Promise<number>;
 }

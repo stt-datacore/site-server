@@ -77,29 +77,16 @@ export class PlayerResources extends PlayerResourceBase {
                     }
                 }
             });
-            const toDestroy = [] as PlayerResourceRecord[];
-
             if (current?.length) {
                 let response = [] as IPlayerResourceRecord[];
                 for (let obj of current) {
                     if (!Array.isArray(obj.resources)) {
                         response.push(obj);
                     }
-                    // else {
-                    //     await this.postResourcesBatch(dbid, obj.resources as any);
-                    //     response = response.concat(obj.resources as any);
-                    //     toDestroy.push(obj);
-                    // }
+                    else {
+                        response = response.concat(obj.resources as any);
+                    }
                 }
-                // if (toDestroy.length) {
-                //     await repo.destroy({
-                //         where: { [Op.or]: toDestroy.map(td => ({ id: td.id })) }
-                //     });
-
-                // }
-                // if ((toDestroy.length || options?.vacuum) && repo.sequelize) {
-                //     await repo.sequelize.query("VACUUM;");
-                // }
                 return response.filter((r, i) => response.findIndex(r2 => r.timestamp.getTime() === r2.timestamp.getTime()) === i);
             }
             else {
@@ -108,6 +95,59 @@ export class PlayerResources extends PlayerResourceBase {
         }
         return 500;
     }
+
+    protected async repairResources(dbid: number): Promise<number> {
+        let sql = await makeSql(dbid, false);
+        if (sql) {
+            const repo = sql.getRepository(PlayerResourceRecord);
+            const current = await repo.findAll({
+                where: {
+                    dbid
+                }
+            });
+            const toDestroy = [] as PlayerResourceRecord[];
+            let toAdd = [] as PlayerResourceRecord[];
+
+            if (current?.length) {
+                for (let obj of current) {
+                    if (Array.isArray(obj.resources)) {
+                        toDestroy.push(obj);
+                        toAdd = toAdd.concat(obj.resources as any);
+                    }
+                }
+                if (toDestroy.length && repo.sequelize) {
+                    await repo.destroy({
+                        where: { [Op.or]: toDestroy.map(td => ({ id: td.id })) }
+                    });
+                    await repo.sequelize.query("VACUUM;");
+                }
+                if (toAdd.length) {
+                    toAdd = toAdd.filter((r, i) => toAdd.findIndex(r2 => r.timestamp.getTime() === r2.timestamp.getTime()) === i);
+                    await this.postResourcesBatch(dbid, toAdd);
+                }
+                return 200;
+            }
+            else {
+                return 404;
+            }
+        }
+        return 500;
+    }
+
+    protected async clearResources(dbid: number): Promise<number> {
+        let sql = await makeSql(dbid, false);
+        if (sql) {
+            const repo = sql.getRepository(PlayerResourceRecord);
+            await repo.destroy({
+                where: {
+                    dbid
+                }
+            });
+            return 200;
+        }
+        return 500;
+    }
+
 
 }
 

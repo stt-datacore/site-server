@@ -733,7 +733,37 @@ router.get('/playerResources', async (req: Request, res: Response, next) => {
 		if (endDate) {
 			endDate = new Date(endDate);
 		}
-		let apiResult = await PlayerResourcesAPI.getPlayerResources(dbid, startDate, endDate)
+		let apiResult = await PlayerResourcesAPI.getPlayerResources(dbid, startDate, endDate);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.post('/repairPlayerResources', async (req: Request, res: Response, next) => {
+	if (!req.body || !req.body.dbid) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = Number(req.body.dbid);
+		let apiResult = await PlayerResourcesAPI.repairPlayerResources(dbid);
+		res.status(apiResult.Status).send(apiResult.Body);
+	} catch (e) {
+		next(e);
+	}
+});
+
+router.post('/clearPlayerResources', async (req: Request, res: Response, next) => {
+	if (!req.body || !req.body.dbid) {
+		res.status(400).send('Whaat?');
+		return;
+	}
+
+	try {
+		let dbid = Number(req.body.dbid);
+		let apiResult = await PlayerResourcesAPI.clearPlayerResources(dbid);
 		res.status(apiResult.Status).send(apiResult.Body);
 	} catch (e) {
 		next(e);
