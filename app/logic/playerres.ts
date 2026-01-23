@@ -116,9 +116,16 @@ export class PlayerResources extends PlayerResourceBase {
                     }
                 }
                 if (toDestroy.length && repo.sequelize) {
-                    await repo.destroy({
-                        where: { [Op.or]: toDestroy.map(td => ({ id: td.id })) }
-                    });
+                    let destroy = toDestroy.splice(0, 100);
+                    while (destroy.length) {
+                        await repo.destroy({
+                            where: {
+                                [Op.or]: destroy.map(td => ({ id: td.id }))
+                            }
+                        });
+                        if (!toDestroy.length) break;
+                        destroy = toDestroy.splice(0, 100);
+                    }
                     await repo.sequelize.query("VACUUM;");
                 }
                 if (toAdd.length) {
