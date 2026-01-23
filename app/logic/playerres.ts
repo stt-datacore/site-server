@@ -71,7 +71,18 @@ export class PlayerResources extends PlayerResourceBase {
             startDate = new Date();
             startDate.setDate(startDate.getDate() - 365);
         }
+
         endDate ??= new Date();
+
+        if (typeof startDate === 'string') startDate = new Date(startDate);
+        if (typeof endDate === 'string') endDate = new Date(endDate);
+
+        if (endDate.getTime() < startDate.getTime()) {
+            let ed = endDate;
+            endDate = startDate;
+            startDate = ed;
+        }
+
         if (sql) {
             const repo = sql.getRepository(PlayerResourceRecord);
             const current = await repo.findAll({
