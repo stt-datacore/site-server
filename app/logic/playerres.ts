@@ -56,7 +56,7 @@ export class PlayerResources extends PlayerResourceBase {
         return 500;
     }
 
-    protected async getResources(dbid: number, startDate?: Date, endDate?: Date, options?: any): Promise<IPlayerResourceRecord[] | number> {
+    protected async getResources(dbid: number, startDate?: Date, endDate?: Date): Promise<IPlayerResourceRecord[] | number> {
         let sql = await makeSql(dbid, false);
 
         if (!startDate) {
@@ -87,7 +87,7 @@ export class PlayerResources extends PlayerResourceBase {
                         response = response.concat(obj.resources as any);
                     }
                 }
-                return response.filter((r, i) => response.findIndex(r2 => r.timestamp.getTime() === r2.timestamp.getTime()) === i);
+                return response.filter((r, i) => response.findIndex(r2 => (new Date(r.timestamp)).getTime() === (new Date(r2.timestamp)).getTime()) === i);
             }
             else {
                 return 404;
@@ -122,7 +122,7 @@ export class PlayerResources extends PlayerResourceBase {
                     await repo.sequelize.query("VACUUM;");
                 }
                 if (toAdd.length) {
-                    toAdd = toAdd.filter((r, i) => toAdd.findIndex(r2 => r.timestamp.getTime() === r2.timestamp.getTime()) === i);
+                    toAdd = toAdd.filter((r, i) => toAdd.findIndex(r2 => (new Date(r.timestamp)).getTime() === (new Date(r2.timestamp)).getTime()) === i);
                     await this.postResourcesBatch(dbid, toAdd);
                 }
                 return 200;
