@@ -18,6 +18,7 @@ export class PlayerResources extends PlayerResourceBase {
         if (sql) {
             for (let record of records) {
                 const repo = sql.getRepository(PlayerResourceRecord);
+                record.timestamp ??= new Date();
                 let rec = await repo.findOne({ where: {
                     dbid: record.dbid,
                     timestamp: new Date(record.timestamp)
@@ -28,7 +29,7 @@ export class PlayerResources extends PlayerResourceBase {
                     continue;
                 }
                 rec = await repo.create();
-                rec.timestamp = new Date();
+                rec.timestamp = record.timestamp ?? new Date();
                 rec.dbid = record.dbid;
                 rec.resources = record.resources;
                 let res = await rec.save();
@@ -120,6 +121,9 @@ export class PlayerResources extends PlayerResourceBase {
                     if (Array.isArray(obj.resources)) {
                         toDestroy.push(obj);
                         toAdd = toAdd.concat(obj.resources as any);
+                    }
+                    else {
+                        toAdd.push(obj);
                     }
                 }
                 if (toDestroy.length && repo.sequelize) {

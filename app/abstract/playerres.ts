@@ -19,11 +19,12 @@ export abstract class PlayerResourceBase {
         }
     }
 
-    public async postPlayerResources(dbid: number, resources: {[key:string]: number}) {
+    public async postPlayerResources(dbid: number, resources: {[key:string]: number}, date?: Date) {
+        date ??= new Date();
         try {
             let res = await this.postResources({
                 dbid,
-                timestamp: new Date(),
+                timestamp: date,
                 resources
             });
             if (res === 200) {
