@@ -4,7 +4,10 @@ import { IPlayerResourceRecord, PlayerResourceRecord } from "../models/PlayerRes
 import { makeSql } from "../sequelize";
 
 function tcomp(t1: Date, t2: Date) {
-    return (new Date(t1)).toISOString().slice(0, 16) == (new Date(t2)).toISOString().slice(0, 16);
+    if (!t1 || !t2) return false;
+    if (typeof t1 === 'string') t1 = new Date(t1);
+    if (typeof t2 === 'string') t2 = new Date(t2);
+    return t1.toISOString().slice(0, 16) == t2.toISOString().slice(0, 16);
 }
 
 export class PlayerResources extends PlayerResourceBase {
