@@ -3,7 +3,7 @@ import { Achiever, CapAchievers } from '../datacore/crew';
 
 require('dotenv').config();
 
-const CLIENT_API_VERSION = 30;
+const CLIENT_API_VERSION = 32;
 
 class CapAchieversClass {
     readonly STATS_PATH: string;
