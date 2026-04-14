@@ -182,6 +182,15 @@ router.get('/offer_info', async (req: Request, res: Response, next) => {
 	}
 });
 
+router.get('/offer_info2', async (req: Request, res: Response, next) => {
+	try {
+		let rawData = await DataCoreAPI.sttGetBeamableStore(getLogDataFromReq(req));
+		res.status(200).send(rawData);
+	} catch (e) {
+		next(e);
+	}
+});
+
 router.get('/get_dbid_from_discord', async (req: Request, res: Response, next) => {
 	if (!req.query || !req.query.username || !req.query.discriminator) {
 		res.status(400).send('Whaat?');

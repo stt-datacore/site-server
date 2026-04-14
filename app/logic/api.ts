@@ -15,6 +15,7 @@ import { CelestialAPI } from './celestial';
 import { AchieverAPI } from './achievers';
 import { SaleDetectorAPI } from './saledetector';
 import { Offer, OffersRoot } from '../datacore/offers';
+import { BeamableStoreRoot } from '../models/beamable';
 
 require('dotenv').config();
 
@@ -35,7 +36,7 @@ export function apiResult(data: any, code = 200) {
 export class ApiClass {
 	private _player_data: { [index: string]: Date } = {};
 	private _stt_token: string = '';
-
+	private _dbid: number = 0;
 	private _cancelToken: NodeJS.Timeout | undefined = undefined;
 
 	async archiveOldRecords() {
@@ -58,17 +59,23 @@ export class ApiClass {
 
 	async initializeCache() {
 		this._player_data = await loadProfileCache();
-
 		Logger.info('Initializing API', { player_data: Object.keys(this._player_data).length });
 
 		getSTTToken().then((token) => {
 			this._stt_token = token;
 			return token
 		})
-		.then((token) => {
+		.then(async (token) => {
 			CelestialAPI.refreshCelestialMarket(token);
 			AchieverAPI.refreshCapAchievers(token);
 			SaleDetectorAPI.refreshData(token);
+			let res = await fetch(`https://app.startrektimelines.com/player?access_token=${token}`);
+			if (res.ok) {
+				console.log(`Fetch player data.`);
+				let data = await res.json();
+				this._dbid = data.player.dbid;
+				console.log(`Player data fetched.`);
+			}
 		})
 		.catch((e) => {
 			Logger.info("Using fallback token.");
@@ -390,6 +397,25 @@ export class ApiClass {
 			reply = limitedTimeOffers
 		}
 		return apiResult(reply);
+	}
+
+	async sttGetBeamableStore(logData: LogData) {
+		Logger.info('Load store crew offers', { logData });
+		let response = await fetch(
+			`https://api.beamable.com/object/commerce/${this._dbid}?scope=event_crew,event,crew`,
+			{
+				headers: {
+					"Authorization": `Bearer ${this._stt_token}`,
+					"Referer": "https://app.startrektimelines.com",
+					"Origin": "https://app.startrektimelines.com",
+					"X-De-Scope": "326859044761600.sttprod"
+				}
+			}
+		);
+		if (response?.ok) {
+			return (await response.json()) as BeamableStoreRoot;
+		}
+		return null;
 	}
 
 	async loadComments(symbol: string, logData: LogData): Promise<ApiResult> {
