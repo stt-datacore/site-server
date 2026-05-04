@@ -129,9 +129,15 @@ export class ApiClass {
 	async postPlayerData(dbid: string, player_data: any, logData: LogData): Promise<ApiResult> {
 		Logger.info('Post player data', { dbid, logData });
 		let res: Profile | undefined = undefined;
-
+		let curr_short: ApiResult | undefined = await this.getProfile(dbid, true);
+		if (curr_short?.Status === 200) {
+			curr_short = curr_short.Body.shortCrewList;
+		}
+		else {
+			curr_short = undefined;
+		}
 		try {
-			res = await uploadProfile(dbid, player_data, new Date());
+			res = await uploadProfile(dbid, player_data, new Date(), curr_short);
 			this._player_data[dbid] = new Date();
 			fs.writeFileSync(`${process.env.PROFILE_DATA_PATH}/${dbid}`, JSON.stringify(player_data));
 

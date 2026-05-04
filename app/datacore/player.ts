@@ -295,7 +295,8 @@ export interface CrewAvatar {
 
 export interface StoredImmortal {
   id: number
-  quantity: number
+  quantity: number,
+  qbits?: number
 }
 
 export interface BoostWindow {

@@ -39,7 +39,7 @@ function calculateBuffConfig(playerData: any): { [index: string]: IBuffStat } {
 	return buffConfig;
 }
 
-export function createProfileObject(dbid: string, player_data: PlayerData, lastUpdate: Date) {
+export function createProfileObject(dbid: string, player_data: PlayerData, lastUpdate: Date, curr_short?: any) {
 	if (!player_data || !player_data.player || !player_data.player.character || player_data.player.dbid.toString() !== dbid) {
 		throw new Error('Invalid player_data!');
 	}
@@ -50,8 +50,25 @@ export function createProfileObject(dbid: string, player_data: PlayerData, lastU
 	let shortCrewList = {
 		crew: player_data.player.character.crew.map((crew: any) => ({ id: crew.archetype_id, rarity: crew.rarity })),
 		c_stored_immortals: player_data.player.character.c_stored_immortals,
-		stored_immortals: player_data.player.character.stored_immortals
+		stored_immortals: player_data.player.character.stored_immortals,
+		first_sight: {}
 	};
+
+	for (let c of shortCrewList.crew) {
+		shortCrewList.first_sight[c.id] ??= new Date();
+	}
+
+	for (let n of shortCrewList.c_stored_immortals ?? []) {
+		shortCrewList.first_sight[n] ??= new Date();
+	}
+
+	for (let si of shortCrewList.stored_immortals) {
+		shortCrewList.first_sight[si.id] ??= new Date();
+	}
+
+	if (curr_short?.first_sight) {
+		shortCrewList.first_sight = {...shortCrewList.first_sight, ...curr_short.first_sight };
+	}
 
 	let metadata = {
 		open_collection_ids: null as number[] | null,
@@ -105,10 +122,10 @@ export async function getProfileByHash(dbidHash: string) {
 	return res[0];
 }
 
-export async function uploadProfile(dbid: string, player_data: any, lastUpdate: Date = new Date()) {
+export async function uploadProfile(dbid: string, player_data: any, lastUpdate: Date = new Date(), curr_short: any = undefined) {
 	// Validate player_data
 
-	let profile = createProfileObject(dbid, player_data, lastUpdate);
+	let profile = createProfileObject(dbid, player_data, lastUpdate, curr_short);
 
 	let res = await Profile.findAll({ where: { dbid } });
 	if (res.length === 0) {
