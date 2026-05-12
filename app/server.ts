@@ -53,8 +53,10 @@ let corsOptions: any = {
 		process.env.CORS_ORIGIN,
 		// Beta site
 		'https://beta.datacore.app',
-		// Alpha sites
-		/https:\/\/[a-zA-Z0-9_.-]+\.website-i3mu\.pages\.dev/,
+		// Alpha site
+		'https://dev.datacore.app',
+		// Old Alpha sites
+		// /https:\/\/[a-zA-Z0-9_.-]+\.website-i3mu\.pages\.dev/,
 		// localhost is temporary for testing
 		'http://localhost:81',
 		'http://localhost:8881'
