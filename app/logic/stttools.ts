@@ -1,6 +1,6 @@
-import { logger } from 'express-winston';
 import fetch from 'node-fetch';
-import { Logger } from './logger';
+import { LogData, Logger } from './logger';
+import { BeamableStoreRoot } from '../models/beamable';
 
 // Facebook STT client ID
 // const CLIENT_ID = '1425f8c5-b07f-45ba-b490-3dfd4561d5cf';
@@ -29,4 +29,29 @@ export async function getSTTToken(username?: string, password?: string) {
         Logger.info('Failed to fetch token', data);
         throw new Error(`Failed to fetch token: ${data}`);
     }
+}
+
+export async function getBeamableStore(dbid: string | number, stt_token: string, logData?: LogData) {
+    if (logData) Logger.info('Load store crew offers', { logData });
+    try {
+        let response = await fetch(
+            `https://api.beamable.com/object/commerce/${dbid}?scope=event_crew,event,crew`,
+            {
+                headers: {
+                    "Authorization": `Bearer ${stt_token}`,
+                    "Referer": "https://app.startrektimelines.com",
+                    "Origin": "https://app.startrektimelines.com",
+                    "X-De-Scope": "326859044761600.sttprod"
+                }
+            }
+        );
+        if (response?.ok) {
+            return (await response.json()) as BeamableStoreRoot;
+        }
+    }
+    catch (e: any) {
+        console.log("Cannot load beamable store!");
+        console.log(e);
+    }
+    return null;
 }

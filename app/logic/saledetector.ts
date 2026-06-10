@@ -1,8 +1,6 @@
-import fs from 'fs';
 import { PlayerData } from '../datacore/player';
-import { OffersRoot, Offer } from '../datacore/offers';
-import { ApiResult } from './api';
-import { LogData, Logger } from './logger';
+import { BeamableStoreRoot } from '../models/beamable';
+import { getBeamableStore } from './stttools';
 
 require('dotenv').config();
 
@@ -68,10 +66,14 @@ class SaleDetector {
     public async refreshData(access_token: string) {
         console.log("Refresh Sale Data ...");
         let player = await this.remoteFetchPlayerData(access_token);
-        let offers = await this.loadStoreCrewOffers(access_token);
+        if (!player) return null;
+        let beamable = await this.loadStoreCrewOffers(access_token, player.player.dbid);
+        if (beamable === null) return null;
+        let offers = beamable.stores.map(store => store.listings).reduce((p, n) => p.concat(n), [].slice());
         try {
             if (offers) {
-                this._honorSale = offers.some(offer => offer.primary_content?.some(pc => pc.symbol?.startsWith("honor_tp_large_pack_listing")));
+                this._honorSale = offers.some(offer => offer.symbol?.startsWith("honor_tp_large_pack_listing"));
+                if (this._honorSale) console.log("Honor sale detected!");
             }
             if (player) {
                 this._slotCost = player?.player?.character?.next_crew_limit_increase_cost?.amount || 250000;
@@ -101,20 +103,11 @@ class SaleDetector {
         }
     }
 
-    private async loadStoreCrewOffers(access_token: string): Promise<Offer[] | undefined> {
-        console.log("Loading Offers ...");
-        let response: OffersRoot[] = await fetch(
-            `https://app.startrektimelines.com/commerce/store_layout_v2/crew?access_token=${access_token}&client_api=${CLIENT_API_VERSION}`
-        ).then(res => res.json());
-        let reply: Offer[] | undefined = undefined;
-        if (response) {
-            let content = response.find((r: any) => r.symbol === 'crew')!;
-            let limitedTimeOffers = content.grids!.filter((offer) => {
-                return offer?.primary_content[0].offer?.seconds_remain > 0
-            });
-            reply = limitedTimeOffers
-        }
-        return reply;
+    private async loadStoreCrewOffers(access_token: string, dbid: number): Promise<BeamableStoreRoot | null> {
+        console.log("Loading Offers From Beamable ...");
+        let store = await getBeamableStore(dbid, access_token);
+        if (store) console.log("Beamable store loaded!");
+        return store;
     }
 
 }

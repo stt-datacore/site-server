@@ -6,7 +6,7 @@ import { Logger, LogData } from './logger';
 import { loadProfileCache, loginUser, getDBIDbyDiscord, uploadProfile, getProfile, getProfileByHash, loadProfile, getProfiles } from './profiletools';
 import { loadCommentsDB, saveCommentDB } from './commenttools';
 import { DEBUG, recordTelemetryDB, getTelemetryDB, createStats } from './telemetry';
-import { getSTTToken } from './stttools';
+import { getBeamableStore, getSTTToken } from './stttools';
 import { PlayerData } from '../datacore/player';
 
 import { Profile } from '../models/Profile';
@@ -15,7 +15,6 @@ import { CelestialAPI } from './celestial';
 import { AchieverAPI } from './achievers';
 import { SaleDetectorAPI } from './saledetector';
 import { Offer, OffersRoot } from '../datacore/offers';
-import { BeamableStoreRoot } from '../models/beamable';
 
 require('dotenv').config();
 
@@ -406,22 +405,7 @@ export class ApiClass {
 	}
 
 	async sttGetBeamableStore(logData: LogData) {
-		Logger.info('Load store crew offers', { logData });
-		let response = await fetch(
-			`https://api.beamable.com/object/commerce/${this._dbid}?scope=event_crew,event,crew`,
-			{
-				headers: {
-					"Authorization": `Bearer ${this._stt_token}`,
-					"Referer": "https://app.startrektimelines.com",
-					"Origin": "https://app.startrektimelines.com",
-					"X-De-Scope": "326859044761600.sttprod"
-				}
-			}
-		);
-		if (response?.ok) {
-			return (await response.json()) as BeamableStoreRoot;
-		}
-		return null;
+		return getBeamableStore(this._dbid, this._stt_token, logData);
 	}
 
 	async loadComments(symbol: string, logData: LogData): Promise<ApiResult> {

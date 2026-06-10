@@ -9,7 +9,6 @@ import expressWinston from 'express-winston';
 import { ApiController } from './controllers';
 import { Logger, DataCoreAPI } from './logic';
 import { sequelize } from './sequelize';
-import { exit } from 'process';
 import { compareFTM, obliterateDBID, upgradeAvatars } from './utils';
 
 require('dotenv').config();
@@ -18,7 +17,7 @@ require('dotenv').config();
 const app: express.Application = express();
 
 // When used with nginx reverse proxy, pick a rerouting port
-let port: number = 4420;
+let port: number = Number(process.env['PORT'] || 4420);
 //let port: number = 4421;
 
 if (process.argv.length > 2) {
