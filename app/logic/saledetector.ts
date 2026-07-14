@@ -4,7 +4,7 @@ import { getBeamableStore } from './stttools';
 
 require('dotenv').config();
 
-const CLIENT_API_VERSION = 32;
+const CLIENT_API_VERSION = 33;
 
 
 export interface SaleData {
